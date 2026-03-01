@@ -1,0 +1,395 @@
+// SportApp Database Schema
+// PostgreSQL with Prisma ORM
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// ENUMS
+// ==========================================
+
+enum UserRole {
+  CUSTOMER
+  OWNER
+  ADMIN
+}
+
+enum VenueStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum FieldType {
+  STANDARD
+  COMBINED
+}
+
+enum BookingStatus {
+  PENDING_DEPOSIT
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  EXPIRED
+}
+
+enum PaymentType {
+  DEPOSIT
+  FULL_PAYMENT
+  REFUND
+}
+
+enum PaymentMethod {
+  ONLINE
+  DIRECT
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+enum MatchPostStatus {
+  OPEN
+  MATCHED
+  CANCELLED
+  EXPIRED
+}
+
+enum MatchRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  AUTO_MATCHED
+  CANCELLED
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  SYSTEM
+}
+
+enum ChatRoomType {
+  DIRECT
+  MATCH_GROUP
+}
+
+enum NotificationType {
+  BOOKING_CONFIRMED
+  BOOKING_CANCELLED
+  VENUE_APPROVED
+  VENUE_REJECTED
+  MATCH_REQUEST
+  MATCH_ACCEPTED
+  MATCH_REJECTED
+  MATCH_AUTO
+  MATCH_CANCELLED
+  NEW_MESSAGE
+  NEW_REVIEW
+  PAYMENT_SUCCESS
+  PAYMENT_FAILED
+  HOLD_EXPIRING
+}
+
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+}
+
+enum CancelledBy {
+  CUSTOMER
+  OWNER
+  SYSTEM
+}
+
+enum Language {
+  vi
+  en
+}
+
+// ==========================================
+// MODELS
+// ==========================================
+
+model User {
+  id                String   @id @default(uuid())
+  email             String   @unique
+  passwordHash      String   @map("password_hash")
+  fullName          String   @map("full_name")
+  phone             String?
+  avatarUrl         String?  @map("avatar_url")
+  role              UserRole @default(CUSTOMER)
+  isVerified        Boolean  @default(false) @map("is_verified")
+  preferredLanguage Language @default(vi) @map("preferred_language")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  venues            Venue[]
+  bookings          Booking[]
+  matchmakingPosts  MatchmakingPost[]
+  matchRequests     MatchRequest[]
+  reviews           Review[]
+  chatRoomMembers   ChatRoomMember[]
+  sentMessages      Message[]
+  notifications     Notification[]
+
+  @@map("users")
+}
+
+model Venue {
+  id                   String      @id @default(uuid())
+  ownerId              String      @map("owner_id")
+  name                 String
+  phone                String?
+  address              String
+  city                 String
+  district             String
+  latitude             Decimal?    @db.Decimal(10, 8)
+  longitude            Decimal?    @db.Decimal(11, 8)
+  sportTypes           Json        @default("[]") @map("sport_types") // String[]
+  description          String?     @db.Text
+  images               Json        @default("[]") // String[] of URLs
+  status               VenueStatus @default(PENDING)
+  bookingUrl           String?     @unique @map("booking_url")
+  qrCodeUrl            String?     @map("qr_code_url")
+  holdDurationMinutes  Int         @default(10) @map("hold_duration_minutes")
+  commissionRate       Decimal     @default(0.05) @db.Decimal(4, 3) @map("commission_rate")
+  openTime             String?     @map("open_time") // "06:00"
+  closeTime            String?     @map("close_time") // "23:00"
+  createdAt            DateTime    @default(now()) @map("created_at")
+  updatedAt            DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  owner  User    @relation(fields: [ownerId], references: [id])
+  fields Field[]
+  reviews Review[]
+
+  @@map("venues")
+}
+
+model Field {
+  id            String    @id @default(uuid())
+  venueId       String    @map("venue_id")
+  name          String
+  sportType     String    @map("sport_type")
+  fieldType     FieldType @default(STANDARD)
+  capacity      Int?
+  isActive      Boolean   @default(true) @map("is_active")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  venue              Venue              @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  pricingRules       FieldPricingRule[]
+  bookings           Booking[]
+  matchmakingPosts   MatchmakingPost[]
+
+  // Composite field relations (parent-child)
+  parentComposites   FieldComposite[]   @relation("ParentField")
+  childComposites    FieldComposite[]   @relation("ChildField")
+
+  @@map("fields")
+}
+
+model FieldComposite {
+  id            String @id @default(uuid())
+  parentFieldId String @map("parent_field_id")
+  childFieldId  String @map("child_field_id")
+
+  parentField Field @relation("ParentField", fields: [parentFieldId], references: [id], onDelete: Cascade)
+  childField  Field @relation("ChildField", fields: [childFieldId], references: [id], onDelete: Cascade)
+
+  @@unique([parentFieldId, childFieldId])
+  @@map("field_composites")
+}
+
+model FieldPricingRule {
+  id         String   @id @default(uuid())
+  fieldId    String   @map("field_id")
+  dayOfWeek  Int[]    @map("day_of_week") // 0=Sun, 1=Mon... empty=all days
+  startTime  String   @map("start_time") // "17:00"
+  endTime    String   @map("end_time")   // "19:00"
+  price      Decimal  @db.Decimal(12, 0) // VND, no decimals needed
+  label      String?  // "Cao điểm", "Giờ thường"
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  field Field @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+
+  @@map("field_pricing_rules")
+}
+
+model Booking {
+  id               String        @id @default(uuid())
+  customerId       String        @map("customer_id")
+  fieldId          String        @map("field_id")
+  bookingDate      DateTime      @map("booking_date") @db.Date
+  startTime        String        @map("start_time") // "17:00"
+  endTime          String        @map("end_time")   // "19:00"
+  totalPrice       Decimal       @db.Decimal(12, 0) @map("total_price")
+  depositAmount    Decimal       @db.Decimal(12, 0) @map("deposit_amount")
+  commissionAmount Decimal       @db.Decimal(12, 0) @map("commission_amount")
+  paymentMethod    PaymentMethod @map("payment_method")
+  status           BookingStatus @default(PENDING_DEPOSIT)
+  holdExpiresAt    DateTime?     @map("hold_expires_at")
+  cancelledBy      CancelledBy?  @map("cancelled_by")
+  cancelledAt      DateTime?     @map("cancelled_at")
+  cancellationFee  Decimal?      @db.Decimal(12, 0) @map("cancellation_fee")
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  customer User  @relation(fields: [customerId], references: [id])
+  field    Field @relation(fields: [fieldId], references: [id])
+  payments Payment[]
+  review   Review?
+
+  @@map("bookings")
+}
+
+model Payment {
+  id            String        @id @default(uuid())
+  bookingId     String        @map("booking_id")
+  amount        Decimal       @db.Decimal(12, 0)
+  type          PaymentType
+  method        String        // "MOCK_VNPAY", "MOCK_MOMO", "BANK_TRANSFER"
+  status        PaymentStatus @default(PENDING)
+  transactionId String?       @unique @map("transaction_id")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  booking Booking @relation(fields: [bookingId], references: [id])
+
+  @@map("payments")
+}
+
+model MatchmakingPost {
+  id               String          @id @default(uuid())
+  userId           String          @map("user_id")
+  fieldId          String?         @map("field_id")
+  bookingDate      DateTime        @map("booking_date") @db.Date
+  startTime        String          @map("start_time")
+  endTime          String          @map("end_time")
+  sportType        String          @map("sport_type")
+  city             String
+  district         String?
+  description      String?         @db.Text
+  autoMatchEnabled Boolean         @default(false) @map("auto_match_enabled")
+  status           MatchPostStatus @default(OPEN)
+  expiresAt        DateTime?       @map("expires_at")
+  createdAt        DateTime        @default(now()) @map("created_at")
+  updatedAt        DateTime        @updatedAt @map("updated_at")
+
+  // Relations
+  user          User            @relation(fields: [userId], references: [id])
+  field         Field?          @relation(fields: [fieldId], references: [id])
+  matchRequests MatchRequest[]
+
+  @@map("matchmaking_posts")
+}
+
+model MatchRequest {
+  id          String             @id @default(uuid())
+  postId      String             @map("post_id")
+  requesterId String             @map("requester_id")
+  status      MatchRequestStatus @default(PENDING)
+  createdAt   DateTime           @default(now()) @map("created_at")
+  updatedAt   DateTime           @updatedAt @map("updated_at")
+
+  // Relations
+  post      MatchmakingPost @relation(fields: [postId], references: [id])
+  requester User            @relation(fields: [requesterId], references: [id])
+
+  @@map("match_requests")
+}
+
+model ChatRoom {
+  id        String       @id @default(uuid())
+  type      ChatRoomType @default(DIRECT)
+  name      String?
+  createdAt DateTime     @default(now()) @map("created_at")
+
+  // Relations
+  members  ChatRoomMember[]
+  messages Message[]
+
+  @@map("chat_rooms")
+}
+
+model ChatRoomMember {
+  id        String   @id @default(uuid())
+  roomId    String   @map("room_id")
+  userId    String   @map("user_id")
+  joinedAt  DateTime @default(now()) @map("joined_at")
+
+  // Relations
+  room ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user User     @relation(fields: [userId], references: [id])
+
+  @@unique([roomId, userId])
+  @@map("chat_room_members")
+}
+
+model Message {
+  id        String      @id @default(uuid())
+  roomId    String      @map("room_id")
+  senderId  String      @map("sender_id")
+  content   String      @db.Text
+  type      MessageType @default(TEXT)
+  isRead    Boolean     @default(false) @map("is_read")
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  // Relations
+  room   ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  sender User     @relation(fields: [senderId], references: [id])
+
+  @@map("messages")
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  venueId   String   @map("venue_id")
+  bookingId String   @unique @map("booking_id")
+  rating    Int      // 1-5
+  comment   String?  @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user    User    @relation(fields: [userId], references: [id])
+  venue   Venue   @relation(fields: [venueId], references: [id])
+  booking Booking @relation(fields: [bookingId], references: [id])
+
+  @@map("reviews")
+}
+
+model Notification {
+  id        String              @id @default(uuid())
+  userId    String              @map("user_id")
+  type      NotificationType
+  title     String
+  body      String              @db.Text
+  data      Json?               // { bookingId, postId, etc. }
+  isRead    Boolean             @default(false) @map("is_read")
+  channel   NotificationChannel @default(IN_APP)
+  createdAt DateTime            @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+}
