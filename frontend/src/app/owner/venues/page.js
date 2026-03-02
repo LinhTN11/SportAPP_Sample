@@ -269,7 +269,7 @@ export default function OwnerVenuesPage() {
                                 {/* Venue images */}
                                 {venue.images?.length > 0 && (
                                     <div className={styles.venueImages}>
-                                        <img src={`${API_BASE}${venue.images[0]}`} alt={venue.name} className={styles.venueThumb} />
+                                        <img src={`${SERVER_URL}${venue.images[0]}`} alt={venue.name} className={styles.venueThumb} />
                                         {venue.images.length > 1 && <span className={styles.imageCount}>+{venue.images.length - 1}</span>}
                                     </div>
                                 )}
