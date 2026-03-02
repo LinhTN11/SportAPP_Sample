@@ -1,0 +1,134 @@
+.page {
+    padding: var(--space-2xl) 0;
+    min-height: calc(100vh - var(--nav-height));
+}
+
+.page h1 {
+    margin-bottom: var(--space-lg);
+}
+
+.controls {
+    display: flex;
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.filterTabs {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-lg);
+    flex-wrap: wrap;
+}
+
+.stats {
+    display: flex;
+    gap: var(--space-md);
+    margin-bottom: var(--space-xl);
+}
+
+.statCard {
+    flex: 1;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-xl);
+    padding: var(--space-lg);
+    text-align: center;
+}
+
+.statCard strong {
+    display: block;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 4px;
+}
+
+.statCard span {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.dateGroup {
+    margin-bottom: var(--space-xl);
+}
+
+.dateLabel {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-md);
+}
+
+.bookingList {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.bookingRow {
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
+    padding: var(--space-md) var(--space-lg);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+}
+
+.timeCol {
+    min-width: 120px;
+}
+
+.timeCol strong {
+    font-size: 16px;
+}
+
+.timeCol span {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.infoCol {
+    flex: 1;
+    min-width: 0;
+}
+
+.fieldName {
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.customerName {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+}
+
+.priceCol {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--primary);
+    white-space: nowrap;
+}
+
+.skeletonRow {
+    padding: var(--space-md) var(--space-lg);
+    background: var(--bg-elevated);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--space-sm);
+}
+
+@media (max-width: 768px) {
+    .bookingRow {
+        flex-wrap: wrap;
+        gap: var(--space-sm);
+    }
+
+    .stats {
+        flex-direction: column;
+    }
+}

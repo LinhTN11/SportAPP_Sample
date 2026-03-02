@@ -1,0 +1,329 @@
+.page {
+    height: calc(100vh - var(--nav-height));
+    overflow: hidden;
+}
+
+.chatLayout {
+    display: flex;
+    height: 100%;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 340px;
+    border-right: 1px solid var(--border-light);
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-elevated);
+    flex-shrink: 0;
+}
+
+.sidebarHeader {
+    padding: var(--space-lg);
+    border-bottom: 1px solid var(--border-light);
+}
+
+.sidebarHeader h2 {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 2px;
+}
+
+.roomList {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-sm);
+}
+
+.roomItem {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-md);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    width: 100%;
+    text-align: left;
+    transition: background var(--transition-fast);
+    font-family: var(--font-sans);
+}
+
+.roomItem:hover {
+    background: var(--bg-secondary);
+}
+
+.roomActive {
+    background: var(--primary-light) !important;
+}
+
+.roomInfo {
+    flex: 1;
+    min-width: 0;
+}
+
+.roomName {
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text-primary);
+}
+
+.roomPreview {
+    font-size: 13px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 2px;
+}
+
+.roomTime {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+}
+
+.roomSkeleton {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-md);
+}
+
+.emptyRooms {
+    text-align: center;
+    padding: var(--space-3xl) var(--space-lg);
+    color: var(--text-secondary);
+}
+
+.emptyRooms span:first-child {
+    font-size: 40px;
+    display: block;
+    margin-bottom: var(--space-sm);
+}
+
+.emptyRooms p {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+/* Main Chat */
+.chatMain {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-secondary);
+    min-width: 0;
+}
+
+.noChatSelected {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+}
+
+.noChatIcon {
+    font-size: 56px;
+    margin-bottom: var(--space-md);
+    opacity: 0.5;
+}
+
+.noChatSelected h3 {
+    margin-bottom: var(--space-xs);
+}
+
+/* Chat Header */
+.chatHeader {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-md) var(--space-lg);
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border-light);
+    flex-shrink: 0;
+}
+
+.backBtn {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px;
+    color: var(--text-primary);
+}
+
+.typingIndicator {
+    font-size: 12px;
+    color: var(--primary);
+    font-style: italic;
+    animation: fadeIn 0.3s ease;
+}
+
+/* Messages */
+.messageList {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-lg);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.dateDivider {
+    text-align: center;
+    margin: var(--space-md) 0;
+}
+
+.dateDivider span {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    background: var(--bg-tertiary);
+    padding: 4px 12px;
+    border-radius: var(--radius-full);
+}
+
+.systemMsg {
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-tertiary);
+    font-style: italic;
+    padding: var(--space-sm) 0;
+}
+
+.messageBubble {
+    max-width: 70%;
+    padding: 10px 14px;
+    border-radius: 18px;
+    font-size: 14px;
+    line-height: 1.4;
+    animation: slideUp 0.15s ease-out;
+}
+
+.own {
+    align-self: flex-end;
+    background: var(--primary);
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.other {
+    align-self: flex-start;
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    border: 1px solid var(--border-light);
+    border-bottom-left-radius: 4px;
+}
+
+.msgSender {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--primary);
+    margin-bottom: 2px;
+}
+
+.msgContent {
+    word-break: break-word;
+}
+
+.msgMeta {
+    display: flex;
+    gap: 4px;
+    justify-content: flex-end;
+    margin-top: 4px;
+    font-size: 11px;
+    opacity: 0.7;
+}
+
+.readStatus {
+    color: inherit;
+}
+
+/* Input */
+.chatInput {
+    display: flex;
+    gap: var(--space-sm);
+    padding: var(--space-md) var(--space-lg);
+    background: var(--bg-elevated);
+    border-top: 1px solid var(--border-light);
+    flex-shrink: 0;
+}
+
+.chatInput input {
+    flex: 1;
+    padding: 12px 18px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-full);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    outline: none;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    transition: border-color var(--transition-fast);
+}
+
+.chatInput input:focus {
+    border-color: var(--primary);
+}
+
+.sendBtn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.sendBtn:hover {
+    background: var(--primary-hover);
+    transform: scale(1.05);
+}
+
+.sendBtn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 100%;
+        position: absolute;
+        inset: 0;
+        z-index: 10;
+    }
+
+    .chatMain {
+        position: absolute;
+        inset: 0;
+        z-index: 20;
+    }
+
+    .backBtn {
+        display: block;
+    }
+
+    .chatLayout {
+        position: relative;
+    }
+
+    .messageBubble {
+        max-width: 85%;
+    }
+}

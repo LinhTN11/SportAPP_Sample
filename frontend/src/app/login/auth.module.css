@@ -1,0 +1,147 @@
+/* ── Auth Pages (Login / Register) ─────── */
+
+.authPage {
+    min-height: calc(100vh - var(--nav-height));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-xl);
+}
+
+.authCard {
+    background: var(--bg-elevated);
+    border-radius: var(--radius-2xl);
+    border: 1px solid var(--border-light);
+    padding: var(--space-2xl);
+    width: 100%;
+    max-width: 440px;
+    box-shadow: var(--shadow-lg);
+}
+
+.authHeader {
+    text-align: center;
+    margin-bottom: var(--space-xl);
+}
+
+.authTitle {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: var(--space-xs);
+}
+
+.authSubtitle {
+    color: var(--text-secondary);
+    font-size: 15px;
+}
+
+.authBtn {
+    width: 100%;
+    margin-top: var(--space-sm);
+    padding: 14px;
+    font-size: 16px;
+}
+
+.errorBox {
+    background: var(--danger-bg);
+    color: var(--danger);
+    padding: var(--space-md);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    margin-bottom: var(--space-lg);
+    text-align: center;
+}
+
+.authSwitch {
+    text-align: center;
+    margin-top: var(--space-lg);
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.authSwitch a {
+    color: var(--primary);
+    font-weight: 600;
+}
+
+/* Role selector */
+.roleSelector {
+    display: flex;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-lg);
+}
+
+.roleOption {
+    flex: 1;
+    padding: var(--space-md);
+    border: 2px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    text-align: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    background: var(--bg-primary);
+    font-family: var(--font-sans);
+}
+
+.roleOption:hover {
+    border-color: var(--primary);
+}
+
+.roleOption.selected {
+    border-color: var(--primary);
+    background: var(--primary-light);
+}
+
+.roleIcon {
+    font-size: 28px;
+    display: block;
+    margin-bottom: var(--space-xs);
+}
+
+.roleLabel {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.roleDesc {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+}
+
+/* Demo accounts box */
+.demoBox {
+    margin-top: var(--space-lg);
+    padding: var(--space-md);
+    border-radius: var(--radius-md);
+    background: var(--bg-secondary);
+    text-align: center;
+}
+
+.demoTitle {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin-bottom: var(--space-sm);
+}
+
+.demoAccounts {
+    display: flex;
+    gap: var(--space-xs);
+    justify-content: center;
+}
+
+.demoBtn {
+    padding: 6px 12px;
+    border-radius: var(--radius-full);
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-family: var(--font-sans);
+}
+
+.demoBtn:hover {
+    background: var(--primary-light);
+    border-color: var(--primary);
+}

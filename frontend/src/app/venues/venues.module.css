@@ -1,0 +1,158 @@
+/* ── Venues Page ─────────────────────────── */
+
+.page {
+    padding: var(--space-2xl) 0;
+    min-height: calc(100vh - var(--nav-height));
+}
+
+.header {
+    margin-bottom: var(--space-xl);
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    font-size: 17px;
+    margin-top: var(--space-xs);
+}
+
+/* Filters */
+.filters {
+    display: flex;
+    gap: var(--space-md);
+    margin-bottom: var(--space-xl);
+    flex-wrap: wrap;
+}
+
+.filterGroup {
+    flex: 1;
+    min-width: 200px;
+    max-width: 300px;
+}
+
+/* Grid */
+.grid,
+.loadingGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: var(--space-lg);
+}
+
+/* Venue Card */
+.venueCard {
+    background: var(--bg-elevated);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border-light);
+    overflow: hidden;
+    transition: all var(--transition-default);
+    text-decoration: none;
+    color: var(--text-primary);
+}
+
+.venueCard:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--primary);
+}
+
+.venueImage {
+    height: 180px;
+    background: linear-gradient(135deg, var(--primary-light), var(--accent-light));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.venuePlaceholder {
+    font-size: 56px;
+    opacity: 0.6;
+}
+
+.venueStatus {
+    position: absolute;
+    top: var(--space-md);
+    right: var(--space-md);
+}
+
+.venueBody {
+    padding: var(--space-lg);
+}
+
+.venueName {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: var(--space-xs);
+}
+
+.venueAddress {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-md);
+}
+
+.venueMeta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-md);
+}
+
+.venueRating {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.reviewCount {
+    font-weight: 400;
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.fieldCount {
+    font-size: 13px;
+    color: var(--text-secondary);
+    background: var(--bg-secondary);
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+}
+
+.sportTags {
+    display: flex;
+    gap: var(--space-xs);
+    flex-wrap: wrap;
+}
+
+/* Skeleton */
+.skeleton {
+    background: var(--bg-elevated);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border-light);
+    overflow: hidden;
+}
+
+.skeletonImg {
+    height: 180px;
+}
+
+.skeletonBody {
+    padding: var(--space-lg);
+}
+
+@media (max-width: 768px) {
+
+    .grid,
+    .loadingGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .filters {
+        flex-direction: column;
+    }
+
+    .filterGroup {
+        max-width: none;
+    }
+}

@@ -1,0 +1,118 @@
+.page {
+    padding: var(--space-2xl) 0;
+    min-height: calc(100vh - var(--nav-height));
+}
+
+.page h1 {
+    margin-bottom: var(--space-lg);
+}
+
+.stats {
+    display: flex;
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+}
+
+.statCard {
+    flex: 1;
+    background: var(--bg-elevated);
+    border: 2px solid var(--border-light);
+    border-radius: var(--radius-xl);
+    padding: var(--space-md);
+    text-align: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-family: var(--font-sans);
+}
+
+.statCard:hover {
+    border-color: var(--primary);
+}
+
+.statActive {
+    border-color: var(--primary);
+    background: var(--primary-light);
+}
+
+.statCard strong {
+    display: block;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.statCard span {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.searchBar {
+    margin-bottom: var(--space-lg);
+    max-width: 400px;
+}
+
+.tableWrapper {
+    overflow-x: auto;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-xl);
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th {
+    text-align: left;
+    padding: var(--space-md) var(--space-lg);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-tertiary);
+    border-bottom: 1px solid var(--border-light);
+}
+
+.table td {
+    padding: var(--space-md) var(--space-lg);
+    font-size: 14px;
+    border-bottom: 1px solid var(--divider);
+    vertical-align: middle;
+}
+
+.table tbody tr:hover {
+    background: var(--bg-secondary);
+}
+
+.table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.userCell {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.userCell strong {
+    font-size: 14px;
+}
+
+.emailCell {
+    color: var(--text-secondary);
+}
+
+.skeletonRow {
+    padding: var(--space-md) var(--space-lg);
+    border-bottom: 1px solid var(--divider);
+}
+
+@media (max-width: 768px) {
+    .stats {
+        flex-wrap: wrap;
+    }
+
+    .statCard {
+        min-width: calc(50% - 8px);
+    }
+}
