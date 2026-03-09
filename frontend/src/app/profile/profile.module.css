@@ -458,6 +458,7 @@
 .cancelButton {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
     padding: 12px 24px;
     border-radius: 12px;
@@ -469,13 +470,16 @@
 }
 
 .saveButton {
-    flex: 1;
-    background: #0066FF;
-    color: white;
+    background: #2563EB;
+    color: #000000;
 }
 
 .saveButton:hover {
-    background: #0052CC;
+    background: #1D4ED8;
+}
+
+.saveButton svg {
+    color: #000000;
 }
 
 .saveButton:disabled {
