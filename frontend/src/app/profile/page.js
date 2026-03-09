@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { usersAPI } from '@/lib/api';
+import { usersAPI, bookingsAPI } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { 
     Mail, Phone, Calendar, CheckCircle, XCircle,
@@ -23,6 +23,8 @@ export default function ProfilePage() {
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState('');
     const [activeTab, setActiveTab] = useState('overview');
+    const [recentBookings, setRecentBookings] = useState([]);
+    const [bookingsLoading, setBookingsLoading] = useState(false);
 
     useEffect(() => {
         if (!authLoading && !isAuthenticated) { router.push('/login'); return; }
@@ -32,8 +34,21 @@ export default function ProfilePage() {
                 phone: user.phone || '',
                 avatarUrl: user.avatarUrl || '',
             });
+            loadRecentBookings();
         }
     }, [user, isAuthenticated, authLoading]);
+
+    const loadRecentBookings = async () => {
+        try {
+            setBookingsLoading(true);
+            const { data } = await bookingsAPI.getMyBookings({ limit: 3 });
+            setRecentBookings(data.data?.bookings || data.data || []);
+        } catch (err) {
+            console.error('Failed to load bookings:', err);
+        } finally {
+            setBookingsLoading(false);
+        }
+    };
 
     const handleSave = async (e) => {
         e.preventDefault();
@@ -287,13 +302,80 @@ export default function ProfilePage() {
                                     <ArrowRight size={16} />
                                 </button>
                             </div>
-                            <div className={styles.emptyState}>
-                                <CalendarX className={styles.emptyIcon} size={64} color="#D1D5DB" />
-                                <div className={styles.emptyText}>Bạn chưa có lịch đặt sân nào</div>
-                                <button className={styles.emptyButton} onClick={() => router.push('/venues')}>
-                                    Tìm sân ngay
-                                </button>
-                            </div>
+
+                            {bookingsLoading ? (
+                                // Skeleton loading
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                                    {[1,2,3].map(i => (
+                                        <div key={i} style={{ height: 72, borderRadius: 12, background: 'linear-gradient(90deg,#F3F4F6 0%,#E5E7EB 50%,#F3F4F6 100%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }} />
+                                    ))}
+                                </div>
+                            ) : recentBookings.length === 0 ? (
+                                <div className={styles.emptyState}>
+                                    <CalendarX className={styles.emptyIcon} size={64} color="#D1D5DB" />
+                                    <div className={styles.emptyText}>Bạn chưa có lịch đặt sân nào</div>
+                                    <button className={styles.emptyButton} onClick={() => router.push('/venues')}>
+                                        Tìm sân ngay
+                                    </button>
+                                </div>
+                            ) : (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                                    {recentBookings.map((booking) => {
+                                        const statusMap = {
+                                            PENDING:   { label: 'Chờ xác nhận', color: '#F59E0B', bg: '#FEF3C7' },
+                                            CONFIRMED: { label: 'Đã xác nhận',  color: '#10B981', bg: '#D1FAE5' },
+                                            CANCELLED: { label: 'Đã hủy',       color: '#EF4444', bg: '#FEE2E2' },
+                                            COMPLETED: { label: 'Hoàn thành',   color: '#6B7280', bg: '#F3F4F6' },
+                                        };
+                                        const s = statusMap[booking.status] || statusMap.PENDING;
+                                        return (
+                                            <div
+                                                key={booking.id}
+                                                onClick={() => router.push('/bookings')}
+                                                style={{
+                                                    display: 'flex', alignItems: 'center', gap: 14,
+                                                    padding: '14px 16px', borderRadius: 12,
+                                                    background: '#F9FAFB', cursor: 'pointer',
+                                                    border: '1px solid #F3F4F6',
+                                                    transition: 'all 0.2s',
+                                                }}
+                                                onMouseEnter={e => e.currentTarget.style.background = '#F3F4F6'}
+                                                onMouseLeave={e => e.currentTarget.style.background = '#F9FAFB'}
+                                            >
+                                                {/* Icon */}
+                                                <div style={{
+                                                    width: 44, height: 44, borderRadius: 12,
+                                                    background: '#DBEAFE', display: 'flex',
+                                                    alignItems: 'center', justifyContent: 'center', flexShrink: 0
+                                                }}>
+                                                    <Calendar size={22} color="#3B82F6" />
+                                                </div>
+
+                                                {/* Info */}
+                                                <div style={{ flex: 1, minWidth: 0 }}>
+                                                    <div style={{ fontWeight: 600, fontSize: 14, color: '#111827', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                        {booking.field?.venue?.name || 'Sân thể thao'}
+                                                    </div>
+                                                    <div style={{ fontSize: 12, color: '#6B7280', marginTop: 2 }}>
+                                                        {booking.field?.name && `${booking.field.name} · `}
+                                                        {booking.date && new Date(booking.date).toLocaleDateString('vi-VN')}
+                                                        {booking.startTime && ` · ${booking.startTime}–${booking.endTime}`}
+                                                    </div>
+                                                </div>
+
+                                                {/* Status badge */}
+                                                <span style={{
+                                                    padding: '4px 10px', borderRadius: 20,
+                                                    fontSize: 11, fontWeight: 600, flexShrink: 0,
+                                                    background: s.bg, color: s.color
+                                                }}>
+                                                    {s.label}
+                                                </span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
                         </div>
                     </div>
 
