@@ -59,65 +59,91 @@ export function applyNearbyFilter(venues, userLocation, nearbyEnabled, sortBy, a
             if (b.distance === null) return -1;
             return a.distance - b.distance;     // gần nhất lên đầu
         }
-        if (sortBy === 'rating') return (b.avgRating ?? 0) - (a.avgRating ?? 0); // cao nhất lên đầu
+        if (sortBy === 'rating') return (b.avgRating ?? 0) - (a.avgRating ?? 0); 
         return 0; // relevant → giữ nguyên thứ tự API
     });
 }
+const SESSION_KEY = 'sportapp_user_location';
 
-// ─────────────────────────────────────────────
-// 3. Custom Hook — quản lý state định vị
-// ─────────────────────────────────────────────
+function readLocationFromSession() {
+    if (typeof window === 'undefined') return null;
+    try {
+        const raw = sessionStorage.getItem(SESSION_KEY);
+        return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+}
+
+function saveLocationToSession(loc) {
+    if (typeof window === 'undefined') return;
+    try {
+        if (loc) sessionStorage.setItem(SESSION_KEY, JSON.stringify(loc));
+        else sessionStorage.removeItem(SESSION_KEY);
+    } catch {}
+}
+
 export function useNearby() {
-    const [userLocation, setUserLocation] = useState(null);
+    // Khởi tạo từ sessionStorage nếu đã có → không bị reset khi chuyển trang
+    const [userLocation, setUserLocation] = useState(() => readLocationFromSession());
     const [nearbyEnabled, setNearbyEnabled] = useState(false);
-    const [status, setStatus] = useState('idle');
+    const [status, setStatus] = useState(() => readLocationFromSession() ? 'granted' : 'idle');
     // status:
     //  'idle'    → chưa làm gì
     //  'loading' → đang xin quyền / chờ GPS
     //  'granted' → đã có tọa độ
     //  'denied'  → bị từ chối hoặc lỗi
 
+    // Ghi vào sessionStorage mỗi khi userLocation thay đổi
+    const saveLocation = useCallback((loc) => {
+        setUserLocation(loc);
+        saveLocationToSession(loc);
+    }, []);
+
     // Xin vị trí từ trình duyệt
     const requestLocation = useCallback(() => {
         if (!navigator.geolocation) {
-            setStatus('denied'); // trình duyệt không hỗ trợ
+            setStatus('denied');
             return;
         }
         setStatus('loading');
         navigator.geolocation.getCurrentPosition(
             (pos) => {
-                // Thành công → lưu tọa độ, bật filter
-                setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+                const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                saveLocation(loc);   // lưu vào state + sessionStorage
                 setNearbyEnabled(true);
                 setStatus('granted');
             },
             () => {
-                // Thất bại (từ chối hoặc timeout)
                 setStatus('denied');
                 setNearbyEnabled(false);
             },
             { enableHighAccuracy: true, timeout: 10000 }
         );
-    }, []);
+    }, [saveLocation]);
 
     // Xử lý khi user tick/bỏ tick checkbox
     const toggle = useCallback((checked) => {
         if (!checked) {
-            setNearbyEnabled(false); // bỏ tick → tắt filter, giữ vị trí cũ
+            setNearbyEnabled(false); // bỏ tick → tắt filter, GIỮ vị trí trong session
             return;
         }
         if (userLocation) {
-            setNearbyEnabled(true);  // đã có vị trí → bật luôn, không xin lại
+            setNearbyEnabled(true);  // đã có vị trí (kể cả từ session) → bật luôn
             return;
         }
-        requestLocation(); // chưa có vị trí → đi xin
+        requestLocation();
     }, [userLocation, requestLocation]);
 
-    // Nút "Bỏ lọc"
+    // Nút "Bỏ lọc" — chỉ tắt filter, không xóa vị trí
     const reset = useCallback(() => {
         setNearbyEnabled(false);
-        setStatus('idle');
     }, []);
 
-    return { userLocation, nearbyEnabled, status, toggle, reset };
+    // Xóa hoàn toàn vị trí 
+    const clearLocation = useCallback(() => {
+        saveLocation(null);
+        setNearbyEnabled(false);
+        setStatus('idle');
+    }, [saveLocation]);
+
+    return { userLocation, nearbyEnabled, status, toggle, reset, clearLocation };
 }
