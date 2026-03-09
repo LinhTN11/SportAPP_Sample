@@ -383,6 +383,22 @@
     overflow: hidden;
 }
 
+.distanceBadge {
+    display: inline-flex !important;
+    -webkit-line-clamp: unset !important;
+    -webkit-box-orient: unset !important;
+    overflow: visible !important;
+    flex-shrink: 0;
+    padding: 2px 8px;
+    background: #FFF0F0;
+    color: #FF5A5F;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 20px;
+    white-space: nowrap;
+    margin-left: auto;
+}
+
 /* Amenities */
 .venueAmenities {
     display: flex;
@@ -533,6 +549,8 @@
 }
 
 .pageInfo {
+    display: flex;
+    justify-content: center;
     margin-left: 16px;
     font-size: 14px;
     color: #6B7280;
