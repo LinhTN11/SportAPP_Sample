@@ -25,6 +25,7 @@ export default function ProfilePage() {
     const [activeTab, setActiveTab] = useState('overview');
     const [recentBookings, setRecentBookings] = useState([]);
     const [bookingsLoading, setBookingsLoading] = useState(false);
+    const [stats, setStats] = useState({ totalBookings: 0, completedBookings: 0 });
 
     useEffect(() => {
         if (!authLoading && !isAuthenticated) { router.push('/login'); return; }
@@ -41,8 +42,14 @@ export default function ProfilePage() {
     const loadRecentBookings = async () => {
         try {
             setBookingsLoading(true);
-            const { data } = await bookingsAPI.getMyBookings({ limit: 3 });
-            setRecentBookings(data.data?.bookings || data.data || []);
+            // Lấy tất cả để tính stats, dùng limit lớn
+            const { data } = await bookingsAPI.getMyBookings({ limit: 100 });
+            const all = data.data?.bookings || data.data || [];
+            setRecentBookings(all.slice(0, 3)); // chỉ hiện 3 cái gần nhất
+            setStats({
+                totalBookings: all.length,
+                completedBookings: all.filter(b => b.status === 'COMPLETED').length,
+            });
         } catch (err) {
             console.error('Failed to load bookings:', err);
         } finally {
@@ -273,14 +280,14 @@ export default function ProfilePage() {
                                     <div className={`${styles.activityIconWrap} ${styles.purple}`}>
                                         <Building2 size={28} color="#8B5CF6" />
                                     </div>
-                                    <div className={styles.activityNumber}>0</div>
+                                    <div className={styles.activityNumber}>{stats.totalBookings}</div>
                                     <div className={styles.activityLabel}>Lượt đặt</div>
                                 </div>
                                 <div className={styles.activityBox}>
                                     <div className={`${styles.activityIconWrap} ${styles.yellow}`}>
                                         <Users size={28} color="#F59E0B" />
                                     </div>
-                                    <div className={styles.activityNumber}>0</div>
+                                    <div className={styles.activityNumber}>{stats.completedBookings}</div>
                                     <div className={styles.activityLabel}>Trận đấu</div>
                                 </div>
                                 <div className={styles.activityBox}>
