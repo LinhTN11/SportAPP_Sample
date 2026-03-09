@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { Search, MapPin, Loader2, Navigation, CheckCircle2 } from 'lucide-react';
 import styles from './MapPicker.module.css';
 
 // Default center: Ho Chi Minh City
@@ -54,9 +55,10 @@ export default function MapPicker({ value, onChange, readOnly = false, height = 
             }).addTo(map);
 
             // Custom marker icon
+            const mapPinSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FF5A5F" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 15.007 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3" fill="white"/></svg>`;
             const customIcon = L.divIcon({
                 className: styles.customMarker,
-                html: '<div class="' + styles.markerPin + '">📍</div>',
+                html: '<div class="' + styles.markerPin + '" style="display:flex;align-items:center;justify-content:center;">' + mapPinSvg + '</div>',
                 iconSize: [40, 40],
                 iconAnchor: [20, 40],
             });
@@ -229,7 +231,7 @@ export default function MapPicker({ value, onChange, readOnly = false, height = 
             {!readOnly && (
                 <div className={styles.searchBar}>
                     <div className={styles.searchInputWrapper}>
-                        <span className={styles.searchIcon}>🔍</span>
+                        <span className={styles.searchIcon}><Search size={18} /></span>
                         <input
                             type="text"
                             className={styles.searchInput}
@@ -238,7 +240,7 @@ export default function MapPicker({ value, onChange, readOnly = false, height = 
                             onChange={(e) => handleSearch(e.target.value)}
                             onFocus={() => searchQuery.length >= 2 && suggestions.length === 0 && handleSearch(searchQuery)}
                         />
-                        {searching && <span className={styles.searchSpinner}>⏳</span>}
+                        {searching && <span className={styles.searchSpinner}><Loader2 size={16} className="spinner" /></span>}
                     </div>
                     <button
                         type="button"
@@ -246,8 +248,9 @@ export default function MapPicker({ value, onChange, readOnly = false, height = 
                         onClick={handleGetCurrentLocation}
                         disabled={locating}
                         title="Sử dụng vị trí hiện tại"
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                     >
-                        {locating ? '⏳' : '📍'}
+                        {locating ? <Loader2 size={18} className="spinner" /> : <Navigation size={18} />}
                     </button>
                 </div>
             )}
@@ -261,8 +264,9 @@ export default function MapPicker({ value, onChange, readOnly = false, height = 
                             type="button"
                             className={styles.suggestionItem}
                             onClick={() => handleSelectSuggestion(s)}
+                            style={{ display: 'flex', alignItems: 'center', gap: 8 }}
                         >
-                            <span className={styles.suggestionIcon}>📍</span>
+                            <span className={styles.suggestionIcon} style={{ display: 'flex' }}><MapPin size={16} color="var(--text-tertiary)" /></span>
                             <span className={styles.suggestionText}>{s.display_name}</span>
                         </button>
                     ))}
@@ -278,16 +282,16 @@ export default function MapPicker({ value, onChange, readOnly = false, height = 
 
             {/* Selected address display */}
             {value?.fullAddress && (
-                <div className={styles.selectedAddress}>
-                    <span className={styles.selectedIcon}>✅</span>
+                <div className={styles.selectedAddress} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                    <span className={styles.selectedIcon} style={{ display: 'flex', marginTop: 2 }}><CheckCircle2 size={16} color="var(--success)" /></span>
                     <span className={styles.selectedText}>{value.fullAddress}</span>
                 </div>
             )}
 
             {/* Coordinates display */}
             {value?.latitude && value?.longitude && (
-                <div className={styles.coords}>
-                    <span>📌 {parseFloat(value.latitude).toFixed(6)}, {parseFloat(value.longitude).toFixed(6)}</span>
+                <div className={styles.coords} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <MapPin size={14} color="var(--text-tertiary)" /> {parseFloat(value.latitude).toFixed(6)}, {parseFloat(value.longitude).toFixed(6)}
                 </div>
             )}
         </div>

@@ -5,27 +5,16 @@ import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { venuesAPI, fieldsAPI, uploadAPI } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { MapPin, Clock, Settings, Pencil, Trash2, Camera, Phone, ClipboardList, Pause, DollarSign, CheckCircle2, Clock3, Map, CircleDollarSign, BarChart2, Save } from 'lucide-react';
+import { sportTypeLabels, getSportIcon, getSportLabel } from '@/components/venue/SportIcons';
+import VenueCard, { venueCardStyles } from '@/components/venue/VenueCard';
 import styles from './owner.module.css';
 
 const MapPicker = dynamic(() => import('@/components/MapPicker'), { ssr: false });
 
 const SERVER_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000').replace(/\/api\/?$/, '');
 
-const sportTypeLabels = {
-    football: '⚽ Bóng đá',
-    badminton: '🏸 Cầu lông',
-    tennis: '🎾 Tennis',
-    basketball: '🏀 Bóng rổ',
-    volleyball: '🏐 Bóng chuyền',
-    pickleball: '🏓 Pickleball',
-};
-
-const statusMap = {
-    PENDING: { label: 'Chờ duyệt', class: 'badge-warning', icon: '⏳' },
-    APPROVED: { label: 'Đang hoạt động', class: 'badge-success', icon: '✅' },
-    REJECTED: { label: 'Bị từ chối', class: 'badge-danger', icon: '❌' },
-    SUSPENDED: { label: 'Tạm ngưng', class: 'badge-neutral', icon: '⏸️' },
-};
+// statusMap removed — now handled by StatusBadge component inside VenueCard
 
 export default function OwnerVenuesPage() {
     const router = useRouter();
@@ -344,18 +333,7 @@ export default function OwnerVenuesPage() {
 
     const managedVenue = venues.find(v => v.id === showManage);
 
-    const statusCardClass = {
-        APPROVED: styles.statusApproved,
-        PENDING: styles.statusPending,
-        REJECTED: styles.statusRejected,
-        SUSPENDED: styles.statusSuspended,
-    };
-    const statusOverlayClass = {
-        APPROVED: styles.statusOverlayApproved,
-        PENDING: styles.statusOverlayPending,
-        REJECTED: styles.statusOverlayRejected,
-        SUSPENDED: styles.statusOverlaySuspended,
-    };
+    // Status card/overlay classes removed — VenueCard handles status display
 
     return (
         <div className={styles.page}>
@@ -377,147 +355,52 @@ export default function OwnerVenuesPage() {
                 {!loading && venues.length > 0 && (
                     <div className={styles.summaryBar}>
                         <div className={styles.summaryItem}>
-                            🏟️ <strong>{venues.length}</strong> khu sân
+                            <span style={{ fontSize: 16 }}>{getSportIcon('all')}</span> <strong>{venues.length}</strong> khu sân
                         </div>
                         <div className={styles.summaryItem}>
-                            ✅ <strong>{venues.filter(v => v.status === 'APPROVED').length}</strong> hoạt động
+                            <CheckCircle2 size={16} color="#10B981" /> <strong>{venues.filter(v => v.status === 'APPROVED').length}</strong> hoạt động
                         </div>
                         <div className={styles.summaryItem}>
-                            ⏳ <strong>{venues.filter(v => v.status === 'PENDING').length}</strong> chờ duyệt
+                            <Clock3 size={16} color="#F59E0B" /> <strong>{venues.filter(v => v.status === 'PENDING').length}</strong> chờ duyệt
                         </div>
                         <div className={styles.summaryItem}>
-                            ⚽ <strong>{venues.reduce((s, v) => s + (v.fields?.length || 0), 0)}</strong> sân con
+                            <span style={{ fontSize: 16 }}>{getSportIcon('football')}</span> <strong>{venues.reduce((s, v) => s + (v.fields?.length || 0), 0)}</strong> sân con
                         </div>
                     </div>
                 )}
 
                 {/* Venue list */}
                 {loading ? (
-                    <div className={styles.grid}>
-                        {[1, 2, 3, 4].map(i => (
-                            <div key={i} className={styles.venueCard}>
-                                <div className="skeleton" style={{ height: 150, borderRadius: 0 }} />
-                                <div style={{ padding: '16px' }}>
-                                    <div className="skeleton" style={{ height: 16, width: '60%', marginBottom: 8 }} />
-                                    <div className="skeleton" style={{ height: 12, width: '80%', marginBottom: 6 }} />
-                                    <div className="skeleton" style={{ height: 12, width: '50%' }} />
+                    <div className={venueCardStyles.grid}>
+                        {[1, 2, 3].map(i => (
+                            <div key={i} className={venueCardStyles.skeletonCard}>
+                                <div className={venueCardStyles.skeletonImage} />
+                                <div className={venueCardStyles.skeletonBody}>
+                                    <div className={venueCardStyles.skeletonLine} style={{ width: '70%' }} />
+                                    <div className={venueCardStyles.skeletonLine} style={{ width: '50%' }} />
+                                    <div className={venueCardStyles.skeletonLine} style={{ width: '40%' }} />
                                 </div>
                             </div>
                         ))}
                     </div>
                 ) : venues.length === 0 ? (
                     <div className="empty-state">
-                        <div className="empty-state-icon">🏟️</div>
+                        <div className="empty-state-icon" style={{ fontSize: 48, marginBottom: 16 }}>{getSportIcon('all')}</div>
                         <div className="empty-state-title">Chưa có khu sân nào</div>
                         <div className="empty-state-text">Tạo khu sân đầu tiên để bắt đầu nhận khách</div>
                         <button className="btn btn-primary" onClick={() => setShowCreate(true)}>Tạo khu sân →</button>
                     </div>
                 ) : (
-                    <div className={styles.grid}>
+                    <div className={venueCardStyles.grid}>
                         {venues.map(venue => (
-                            <div key={venue.id} className={`${styles.venueCard} ${statusCardClass[venue.status] || ''}`}>
-
-                                {/* Image */}
-                                {venue.images?.length > 0 ? (
-                                    <div className={styles.venueImages}>
-                                        <img src={`${SERVER_URL}${venue.images[0]}`} alt={venue.name} className={styles.venueThumb} />
-                                        <div className={styles.imageBadges}>
-                                            {venue.images.length > 1 && <span className={styles.imageCount}>+{venue.images.length - 1} ảnh</span>}
-                                            <span className={`${styles.statusOverlay} ${statusOverlayClass[venue.status] || ''}`}>
-                                                {statusMap[venue.status]?.icon} {statusMap[venue.status]?.label}
-                                            </span>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className={styles.venueImages}>
-                                        <div className={styles.venueImagesPlaceholder}>
-                                            <span>🏟️</span>Chưa có ảnh
-                                        </div>
-                                        <div className={styles.imageBadges}>
-                                            <span />
-                                            <span className={`${styles.statusOverlay} ${statusOverlayClass[venue.status] || ''}`}>
-                                                {statusMap[venue.status]?.icon} {statusMap[venue.status]?.label}
-                                            </span>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Body */}
-                                <div className={styles.venueBody}>
-                                    <h3 className={styles.venueName}>{venue.name}</h3>
-
-                                    <p className={styles.venueAddr}>
-                                        <span className={styles.venueAddrIcon}>📍</span>
-                                        {venue.district}, {venue.city}
-                                    </p>
-                                    {venue.phone && (
-                                        <p className={styles.venueAddr}>
-                                            <span className={styles.venueAddrIcon}>📞</span>
-                                            {venue.phone}
-                                        </p>
-                                    )}
-                                    <p className={styles.venueAddr}>
-                                        <span className={styles.venueAddrIcon}>🕐</span>
-                                        {venue.openTime} – {venue.closeTime}
-                                    </p>
-
-                                    {venue.description && <p className={styles.venueDesc}>{venue.description}</p>}
-                                </div>
-
-                                {/* Stats row */}
-                                <div className={styles.venueStats}>
-                                    <div className={styles.stat}>
-                                        <strong>{venue._count?.fields || 0}</strong>
-                                        <span>Sân con</span>
-                                    </div>
-                                    <div className={styles.stat}>
-                                        <strong>{venue._count?.reviews || 0}</strong>
-                                        <span>Đánh giá</span>
-                                    </div>
-                                    <div className={styles.stat}>
-                                        <strong>{venue.sportTypes?.length || 0}</strong>
-                                        <span>Môn</span>
-                                    </div>
-                                </div>
-
-                                {/* Field chips */}
-                                {venue.fields?.length > 0 && (
-                                    <div className={styles.fieldsPreview}>
-                                        {venue.fields.slice(0, 4).map(f => (
-                                            <span key={f.id} className={`${styles.fieldChip} ${!f.isActive ? styles.fieldInactive : ''}`}>
-                                                {f.name}
-                                            </span>
-                                        ))}
-                                        {venue.fields.length > 4 && (
-                                            <span className={styles.fieldChip} style={{ opacity: 0.6 }}>+{venue.fields.length - 4}</span>
-                                        )}
-                                    </div>
-                                )}
-
-                                {/* Actions */}
-                                <div className={styles.venueCardActions}>
-                                    <button className={`${styles.cardActionBtn} ${styles.actionManage}`}
-                                        onClick={() => setShowManage(venue.id)}>
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                            <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
-                                        </svg>
-                                        Quản lý
-                                    </button>
-                                    <button className={styles.cardActionBtn}
-                                        title="Chỉnh sửa" onClick={() => handleOpenEdit(venue)}>
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                                        </svg>
-                                        Sửa
-                                    </button>
-                                    <button className={`${styles.cardActionBtn} ${styles.actionDelete}`}
-                                        title="Xóa sân" onClick={() => handleDeleteVenue(venue.id, venue.name)}>
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
-                                        </svg>
-                                    </button>
-                                </div>
-                            </div>
+                            <VenueCard
+                                key={venue.id}
+                                venue={venue}
+                                mode="owner"
+                                onManage={(v) => setShowManage(v.id)}
+                                onEdit={(v) => handleOpenEdit(v)}
+                                onDelete={(v) => handleDeleteVenue(v.id, v.name)}
+                            />
                         ))}
                     </div>
                 )}
@@ -536,7 +419,7 @@ export default function OwnerVenuesPage() {
                             <form onSubmit={handleCreate}>
                                 {/* Images */}
                                 <div className="form-group">
-                                    <label className="form-label">📷 Ảnh khu sân</label>
+                                    <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Camera size={16} /> Ảnh khu sân</label>
                                     <div className={styles.imageUpload}>
                                         {imagePreviews.map((src, i) => (
                                             <div key={i} className={styles.imagePreviewItem}>
@@ -556,12 +439,12 @@ export default function OwnerVenuesPage() {
                                     <input type="text" className="form-input" placeholder="Sân Bóng Đá ABC" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label">📞 SĐT liên hệ</label>
+                                    <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Phone size={16} /> SĐT liên hệ</label>
                                     <input type="tel" className="form-input" placeholder="0901234567" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
                                 </div>
                                 {/* Map Picker - Address */}
                                 <div className="form-group">
-                                    <label className="form-label">📍 Chọn vị trí trên bản đồ *</label>
+                                    <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><MapPin size={16} /> Chọn vị trí trên bản đồ *</label>
                                     <MapPicker
                                         value={mapLocation}
                                         onChange={handleMapChange}
@@ -587,20 +470,20 @@ export default function OwnerVenuesPage() {
                                     </div>
                                 </div>
 
-                                {/* Sport types */}
                                 <div className="form-group">
                                     <label className="form-label">Môn thể thao *</label>
                                     <div className={styles.sportChips}>
-                                        {Object.entries(sportTypeLabels).map(([key, label]) => (
+                                        {['football', 'badminton', 'tennis', 'basketball', 'volleyball', 'pickleball', 'swimming'].map((key) => (
                                             <button key={key} type="button"
                                                 className={`${styles.sportChip} ${form.sportTypes.includes(key) ? styles.sportChipActive : ''}`}
+                                                style={{ display: 'flex', alignItems: 'center', gap: 6 }}
                                                 onClick={() => {
                                                     const types = form.sportTypes.includes(key)
                                                         ? form.sportTypes.filter(t => t !== key)
                                                         : [...form.sportTypes, key];
                                                     if (types.length > 0) setForm({ ...form, sportTypes: types });
                                                 }}>
-                                                {label}
+                                                <span style={{ fontSize: 16, display: 'flex', alignItems: 'center' }}>{getSportIcon(key)}</span> {getSportLabel(key)}
                                             </button>
                                         ))}
                                     </div>
@@ -643,7 +526,7 @@ export default function OwnerVenuesPage() {
                     <div className="modal-overlay" onClick={() => setEditVenue(null)}>
                         <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 600, maxHeight: '92vh', overflowY: 'auto' }}>
                             <div className="modal-header">
-                                <h2 className="heading-sm">✏️ Chỉnh sửa: {editVenue.name}</h2>
+                                <h2 className="heading-sm" style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Pencil size={20} /> Chỉnh sửa: {editVenue.name}</h2>
                                 <button className="modal-close" onClick={() => setEditVenue(null)}>×</button>
                             </div>
 
@@ -656,7 +539,7 @@ export default function OwnerVenuesPage() {
                             <form onSubmit={handleEditSubmit}>
                                 {/* Image management */}
                                 <div className="form-group">
-                                    <label className="form-label">📷 Ảnh khu sân</label>
+                                    <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Camera size={16} /> Ảnh khu sân</label>
 
                                     {/* Existing images */}
                                     {editExistingImages.length > 0 && (
@@ -696,13 +579,13 @@ export default function OwnerVenuesPage() {
                                 </div>
 
                                 <div className="form-group">
-                                    <label className="form-label">📞 SĐT liên hệ</label>
+                                    <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Phone size={16} /> SĐT liên hệ</label>
                                     <input type="tel" className="form-input" value={editForm.phone}
                                         onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} />
                                 </div>
 
                                 <div className="form-group">
-                                    <label className="form-label">📍 Cập nhật vị trí (tuỳ chọn)</label>
+                                    <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><MapPin size={16} /> Cập nhật vị trí (tuỳ chọn)</label>
                                     <MapPicker value={editMapLocation} onChange={handleEditMapChange} height={260} />
                                 </div>
 
@@ -729,16 +612,17 @@ export default function OwnerVenuesPage() {
                                 <div className="form-group">
                                     <label className="form-label">Môn thể thao *</label>
                                     <div className={styles.sportChips}>
-                                        {Object.entries(sportTypeLabels).map(([key, label]) => (
+                                        {['football', 'badminton', 'tennis', 'basketball', 'volleyball', 'pickleball', 'swimming'].map((key) => (
                                             <button key={key} type="button"
                                                 className={`${styles.sportChip} ${editForm.sportTypes?.includes(key) ? styles.sportChipActive : ''}`}
+                                                style={{ display: 'flex', alignItems: 'center', gap: 6 }}
                                                 onClick={() => {
                                                     const types = editForm.sportTypes?.includes(key)
                                                         ? editForm.sportTypes.filter(t => t !== key)
                                                         : [...(editForm.sportTypes || []), key];
                                                     if (types.length > 0) setEditForm({ ...editForm, sportTypes: types });
                                                 }}>
-                                                {label}
+                                                <span style={{ fontSize: 16, display: 'flex', alignItems: 'center' }}>{getSportIcon(key)}</span> {getSportLabel(key)}
                                             </button>
                                         ))}
                                     </div>
@@ -772,7 +656,7 @@ export default function OwnerVenuesPage() {
                                         Huỷ
                                     </button>
                                     <button type="submit" className="btn btn-primary" style={{ flex: 2 }} disabled={editSubmitting}>
-                                        {editSubmitting ? <span className="spinner" /> : '💾 Lưu thay đổi'}
+                                        {editSubmitting ? <span className="spinner" /> : 'Lưu thay đổi'}
                                     </button>
                                 </div>
                             </form>
@@ -785,13 +669,13 @@ export default function OwnerVenuesPage() {
                     <div className="modal-overlay" onClick={() => { setShowManage(null); setShowAddField(false); setShowAddPricing(null); setEditingField(null); setEditingPricing(null); }}>
                         <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 660, maxHeight: '90vh', overflowY: 'auto' }}>
                             <div className="modal-header">
-                                <h2 className="heading-sm">⚙️ {managedVenue.name}</h2>
+                                <h2 className="heading-sm" style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Settings size={20} /> {managedVenue.name}</h2>
                                 <button className="modal-close" onClick={() => { setShowManage(null); setShowAddField(false); setShowAddPricing(null); }}>×</button>
                             </div>
 
                             <div className={styles.manageSummary}>
-                                <span>📍 {managedVenue.address}, {managedVenue.district}</span>
-                                <span>🕐 {managedVenue.openTime} - {managedVenue.closeTime}</span>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><MapPin size={14} /> {managedVenue.address}, {managedVenue.district}</span>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Clock size={14} /> {managedVenue.openTime} - {managedVenue.closeTime}</span>
                             </div>
 
                             {/* Fields */}
@@ -840,7 +724,7 @@ export default function OwnerVenuesPage() {
 
                                             {/* Inline pricing rows */}
                                             <div style={{ marginTop: 8 }}>
-                                                <label className="form-label">💰 Bảng giá</label>
+                                                <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><DollarSign size={16} /> Bảng giá</label>
                                                 {fieldPricingRows.map((row, idx) => (
                                                     <div key={idx} className={styles.pricingInputRow}>
                                                         <input type="text" className="form-input" placeholder="Tên" value={row.label}
@@ -881,7 +765,10 @@ export default function OwnerVenuesPage() {
 
                                 {/* Existing fields */}
                                 {managedVenue.fields?.length === 0 ? (
-                                    <div className={styles.emptyFields}>📋 Chưa có sân con. Thêm sân con để bắt đầu nhận đặt.</div>
+                                    <div className={styles.emptyFields}>
+                                        <ClipboardList size={32} style={{ marginBottom: 12, opacity: 0.5 }} />
+                                        <div>Chưa có sân con. Thêm sân con để bắt đầu nhận đặt.</div>
+                                    </div>
                                 ) : (
                                     <div className={styles.fieldsList}>
                                         {managedVenue.fields?.map(field => (
@@ -891,14 +778,17 @@ export default function OwnerVenuesPage() {
                                                         <div style={{ display: 'flex', gap: 8, flex: 1 }}>
                                                             <input className="form-input" value={editFieldForm.name} style={{ flex: 1, padding: '4px 8px', fontSize: 13 }}
                                                                 onChange={(e) => setEditFieldForm({ ...editFieldForm, name: e.target.value })} />
-                                                            <button className="btn btn-primary btn-sm" onClick={() => handleSaveField(field.id)}>💾</button>
-                                                            <button className="btn btn-ghost btn-sm" onClick={() => setEditingField(null)}>✕</button>
+                                                            <button className="btn btn-primary btn-sm" onClick={() => handleSaveField(field.id)} style={{ padding: '4px 8px' }}><Save size={16} /></button>
+                                                            <button className="btn btn-ghost btn-sm" onClick={() => setEditingField(null)} style={{ padding: '4px 8px' }}>✕</button>
                                                         </div>
                                                     ) : (
                                                         <>
                                                             <div style={{ flex: 1 }}>
-                                                                <strong>{field.isActive ? '⚽' : '⏸️'} {field.name}</strong>
-                                                                <span className="caption"> • {sportTypeLabels[field.sportType]?.split(' ').slice(1).join(' ') || field.sportType} • {field.capacity || '?'}p</span>
+                                                                <strong style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                                                    <span style={{ fontSize: 16 }}>{field.isActive ? getSportIcon(field.sportType) : <Pause size={16} />}</span>
+                                                                    {field.name}
+                                                                </strong>
+                                                                <span className="caption"> • {getSportLabel(field.sportType)} • {field.capacity || '?'}p</span>
                                                             </div>
                                                             <div className={styles.fieldActions}>
                                                                 {/* Toggle */}
@@ -907,13 +797,13 @@ export default function OwnerVenuesPage() {
                                                                     title={field.isActive ? 'Tắt hoạt động' : 'Bật hoạt động'}>
                                                                     <span className={styles.toggleDot} />
                                                                 </button>
-                                                                <button className="btn btn-ghost btn-sm" onClick={() => { setEditingField(field.id); setEditFieldForm({ name: field.name, sportType: field.sportType, capacity: field.capacity }); }}>✏️</button>
-                                                                <button className="btn btn-ghost btn-sm" onClick={() => handleDeleteField(field.id)}>🗑️</button>
-                                                                <button className="btn btn-ghost btn-sm" onClick={() => setShowAddPricing(showAddPricing === field.id ? null : field.id)}>+ 💰</button>
+                                                                <button className="btn btn-ghost btn-sm" onClick={() => { setEditingField(field.id); setEditFieldForm({ name: field.name, sportType: field.sportType, capacity: field.capacity }); }}><Pencil size={16} /></button>
+                                                                <button className="btn btn-ghost btn-sm" onClick={() => handleDeleteField(field.id)}><Trash2 size={16} /></button>
+                                                                <button className="btn btn-ghost btn-sm" onClick={() => setShowAddPricing(showAddPricing === field.id ? null : field.id)} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>+ <CircleDollarSign size={16} /></button>
                                                                 <button className="btn btn-primary btn-sm"
                                                                     title="Cấu hình bảng giá nâng cao"
                                                                     onClick={() => router.push(`/owner/pricing/${field.id}?name=${encodeURIComponent(field.name)}&venue=${encodeURIComponent(managedVenue.name)}&venueId=${managedVenue.id}&sport=${field.sportType}`)}>
-                                                                    📊
+                                                                    <BarChart2 size={16} />
                                                                 </button>
                                                             </div>
                                                         </>
@@ -936,8 +826,8 @@ export default function OwnerVenuesPage() {
                                                                             onChange={(e) => setEditPricingForm({ ...editPricingForm, endTime: e.target.value })} />
                                                                         <input className="form-input" type="number" value={editPricingForm.price} style={{ width: 80, padding: '3px 6px', fontSize: 12 }}
                                                                             onChange={(e) => setEditPricingForm({ ...editPricingForm, price: e.target.value })} />
-                                                                        <button className="btn btn-primary btn-sm" onClick={() => handleSavePricing(rule.id)}>💾</button>
-                                                                        <button className="btn btn-ghost btn-sm" onClick={() => setEditingPricing(null)}>✕</button>
+                                                                        <button className="btn btn-primary btn-sm" onClick={() => handleSavePricing(rule.id)} style={{ padding: '4px 8px' }}><Save size={14} /></button>
+                                                                        <button className="btn btn-ghost btn-sm" onClick={() => setEditingPricing(null)} style={{ padding: '4px 8px' }}>✕</button>
                                                                     </div>
                                                                 ) : (
                                                                     <>
@@ -945,8 +835,8 @@ export default function OwnerVenuesPage() {
                                                                         <span className="caption">{rule.startTime} - {rule.endTime}</span>
                                                                         <strong style={{ color: 'var(--primary)' }}>{Number(rule.price).toLocaleString('vi-VN')}đ/h</strong>
                                                                         <div style={{ display: 'flex', gap: 2 }}>
-                                                                            <button className={styles.miniBtn} onClick={() => { setEditingPricing(rule.id); setEditPricingForm({ label: rule.label || '', startTime: rule.startTime, endTime: rule.endTime, price: Number(rule.price) }); }}>✏️</button>
-                                                                            <button className={styles.miniBtn} onClick={() => handleDeletePricing(rule.id)}>🗑️</button>
+                                                                            <button className={styles.miniBtn} onClick={() => { setEditingPricing(rule.id); setEditPricingForm({ label: rule.label || '', startTime: rule.startTime, endTime: rule.endTime, price: Number(rule.price) }); }}><Pencil size={14} /></button>
+                                                                            <button className={styles.miniBtn} onClick={() => handleDeletePricing(rule.id)}><Trash2 size={14} /></button>
                                                                         </div>
                                                                     </>
                                                                 )}

@@ -19,18 +19,19 @@ import {
 import { vi } from 'date-fns/locale';
 import { fieldsAPI } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { MapPin, CalendarDays, ClipboardList, Pencil, Plus, Trash2, DollarSign, Clock } from 'lucide-react';
 import styles from './pricing.module.css';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const START_HOUR = 6;
-const END_HOUR   = 23; // grid shows 06:00 – 22:00 (last row starts at 22)
+const END_HOUR = 23; // grid shows 06:00 – 22:00 (last row starts at 22)
 const HOURS = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => i + START_HOUR);
 
 // Columns: Mon(1) → Sat(6) → Sun(0)
 const COL_DAYS = [1, 2, 3, 4, 5, 6, 0];
 const DAY_SHORT = { 0: 'CN', 1: 'T2', 2: 'T3', 3: 'T4', 4: 'T5', 5: 'T6', 6: 'T7' };
-const DAY_FULL  = { 0: 'Chủ nhật', 1: 'Thứ Hai', 2: 'Thứ Ba', 3: 'Thứ Tư', 4: 'Thứ Năm', 5: 'Thứ Sáu', 6: 'Thứ Bảy' };
+const DAY_FULL = { 0: 'Chủ nhật', 1: 'Thứ Hai', 2: 'Thứ Ba', 3: 'Thứ Tư', 4: 'Thứ Năm', 5: 'Thứ Sáu', 6: 'Thứ Bảy' };
 
 // 30-min time slots from START_HOUR to END_HOUR
 const TIME_OPTIONS = Array.from({ length: (END_HOUR - START_HOUR) * 2 + 1 }, (_, i) => {
@@ -50,9 +51,9 @@ function priceTier(price) {
 }
 
 const TIER_INFO = {
-    tier1: { label: 'Rẻ',       color: '#0071E3' },
-    tier2: { label: 'Vừa',      color: '#30D158' },
-    tier3: { label: 'Cao',      color: '#FF9F0A' },
+    tier1: { label: 'Rẻ', color: '#0071E3' },
+    tier2: { label: 'Vừa', color: '#30D158' },
+    tier3: { label: 'Cao', color: '#FF9F0A' },
     tier4: { label: 'Cao điểm', color: '#FF3B30' },
 };
 
@@ -80,16 +81,16 @@ function sortDays(days) {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 function PricingEditorContent() {
-    const router       = useRouter();
-    const { fieldId }  = useParams();
+    const router = useRouter();
+    const { fieldId } = useParams();
     const searchParams = useSearchParams();
     const { isAuthenticated, isOwner, loading: authLoading } = useAuth();
 
-    const fieldName = searchParams.get('name')    || 'Sân con';
-    const venueName = searchParams.get('venue')   || '';
-    const sportType = searchParams.get('sport')   || '';
+    const fieldName = searchParams.get('name') || 'Sân con';
+    const venueName = searchParams.get('venue') || '';
+    const sportType = searchParams.get('sport') || '';
 
-    const [rules,   setRules]   = useState([]);
+    const [rules, setRules] = useState([]);
     const [loading, setLoading] = useState(true);
 
     // Week calendar navigation
@@ -102,11 +103,11 @@ function PricingEditorContent() {
     const [activeTab, setActiveTab] = useState('grid');
 
     // Rule form
-    const [showForm,     setShowForm]     = useState(false);
-    const [editingId,    setEditingId]    = useState(null);
-    const [form,         setForm]         = useState({ label: '', dayOfWeek: [], startTime: '06:00', endTime: '08:00', price: '' });
-    const [formError,    setFormError]    = useState('');
-    const [saving,       setSaving]       = useState(false);
+    const [showForm, setShowForm] = useState(false);
+    const [editingId, setEditingId] = useState(null);
+    const [form, setForm] = useState({ label: '', dayOfWeek: [], startTime: '06:00', endTime: '08:00', price: '' });
+    const [formError, setFormError] = useState('');
+    const [saving, setSaving] = useState(false);
 
     // ── Auth guard ──
     useEffect(() => {
@@ -125,7 +126,7 @@ function PricingEditorContent() {
     useEffect(() => { if (isOwner) loadRules(); }, [isOwner, loadRules]);
 
     // ─── Week dates ───────────────────────────────────────────────────────────
-    const today     = new Date();
+    const today = new Date();
     const weekStart = addDays(startOfWeek(today, { weekStartsOn: 1 }), weekOffset * 7);
     const weekDates = COL_DAYS.map((_, i) => addDays(weekStart, i));
 
@@ -141,7 +142,7 @@ function PricingEditorContent() {
             label: '',
             dayOfWeek: prefillDay !== undefined ? [prefillDay] : [],
             startTime: prefillHour !== undefined ? `${String(prefillHour).padStart(2, '0')}:00` : '06:00',
-            endTime:   prefillHour !== undefined ? `${String(Math.min(prefillHour + 2, END_HOUR)).padStart(2, '0')}:00` : '08:00',
+            endTime: prefillHour !== undefined ? `${String(Math.min(prefillHour + 2, END_HOUR)).padStart(2, '0')}:00` : '08:00',
             price: '',
         });
         setFormError('');
@@ -151,11 +152,11 @@ function PricingEditorContent() {
     const openEditRule = (rule) => {
         setEditingId(rule.id);
         setForm({
-            label:      rule.label || '',
-            dayOfWeek:  rule.dayOfWeek || [],
-            startTime:  rule.startTime,
-            endTime:    rule.endTime,
-            price:      String(Number(rule.price)),
+            label: rule.label || '',
+            dayOfWeek: rule.dayOfWeek || [],
+            startTime: rule.startTime,
+            endTime: rule.endTime,
+            price: String(Number(rule.price)),
         });
         setFormError('');
         setShowForm(true);
@@ -169,7 +170,7 @@ function PricingEditorContent() {
     const handleSave = async (e) => {
         e.preventDefault();
         if (!form.price || Number(form.price) <= 0) { setFormError('Vui lòng nhập giá hợp lệ'); return; }
-        if (form.startTime >= form.endTime)          { setFormError('Giờ kết thúc phải sau giờ bắt đầu'); return; }
+        if (form.startTime >= form.endTime) { setFormError('Giờ kết thúc phải sau giờ bắt đầu'); return; }
         setSaving(true); setFormError('');
         try {
             const payload = { ...form, price: parseFloat(form.price) };
@@ -226,7 +227,7 @@ function PricingEditorContent() {
                 HEADER
             ═══════════════════════════════════════════════════ */}
             <div className={styles.header}>
-                <div className="container">
+                <div className={styles.headerContainer}>
                     <button className={styles.backBtn} onClick={() => router.back()}>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                             <polyline points="15 18 9 12 15 6" />
@@ -257,13 +258,15 @@ function PricingEditorContent() {
                 <div className={styles.tabs}>
                     <button
                         className={`${styles.tab} ${activeTab === 'grid' ? styles.tabActive : ''}`}
-                        onClick={() => setActiveTab('grid')}>
-                        📅 Lịch tuần
+                        onClick={() => setActiveTab('grid')}
+                        style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <CalendarDays size={16} /> Lịch tuần
                     </button>
                     <button
                         className={`${styles.tab} ${activeTab === 'rules' ? styles.tabActive : ''}`}
-                        onClick={() => setActiveTab('rules')}>
-                        📋 Danh sách quy tắc
+                        onClick={() => setActiveTab('rules')}
+                        style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <ClipboardList size={16} /> Danh sách quy tắc
                         {rules.length > 0 && <span className={styles.tabBadge}>{rules.length}</span>}
                     </button>
                 </div>
@@ -364,9 +367,9 @@ function PricingEditorContent() {
                                         <div key={d} className={styles.calDayName}>{d}</div>
                                     ))}
                                     {calCells.map((date, i) => {
-                                        const inMonth  = isSameMonth(date, calMonth);
+                                        const inMonth = isSameMonth(date, calMonth);
                                         const hasPricing = inMonth && dateHasPricing(date);
-                                        const todayCell  = isToday(date);
+                                        const todayCell = isToday(date);
                                         return (
                                             <div key={i} className={`${styles.calCell} ${!inMonth ? styles.calCellOut : ''} ${todayCell ? styles.calCellToday : ''} ${hasPricing && !todayCell ? styles.calCellPriced : ''}`}>
                                                 {getDate(date)}
@@ -391,8 +394,8 @@ function PricingEditorContent() {
                             ) : (
                                 <div className={styles.formCard}>
                                     <div className={styles.formCardHead}>
-                                        <h3 className={styles.formCardTitle}>
-                                            {editingId ? '✏️ Chỉnh sửa quy tắc' : '➕ Quy tắc giá mới'}
+                                        <h3 className={styles.formCardTitle} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                            {editingId ? <><Pencil size={18} /> Chỉnh sửa quy tắc</> : <><Plus size={18} /> Quy tắc giá mới</>}
                                         </h3>
                                         <button className={styles.closeBtn} onClick={() => { setShowForm(false); setEditingId(null); }}>×</button>
                                     </div>
@@ -482,12 +485,12 @@ function PricingEditorContent() {
                                         {/* Actions */}
                                         <div className={styles.formActions}>
                                             <button type="submit" className="btn btn-primary" style={{ flex: 1 }} disabled={saving}>
-                                                {saving ? <span className="spinner" /> : (editingId ? '💾 Cập nhật' : '✓ Lưu quy tắc')}
+                                                {saving ? <span className="spinner" /> : (editingId ? 'Cập nhật' : '✓ Lưu quy tắc')}
                                             </button>
                                             {editingId && (
                                                 <button type="button" className="btn btn-danger btn-sm"
                                                     onClick={() => handleDelete(editingId)}>
-                                                    🗑️
+                                                    <Trash2 size={16} />
                                                 </button>
                                             )}
                                         </div>
@@ -519,14 +522,13 @@ function PricingEditorContent() {
                     <div className={styles.rulesTab}>
                         <div className={styles.rulesHeader}>
                             <h2 className={styles.rulesTitle}>Tất cả quy tắc ({rules.length})</h2>
-                            <button className="btn btn-primary btn-sm" onClick={() => { openNewRule(); setActiveTab('grid'); }}>
-                                + Thêm quy tắc
-                            </button>
                         </div>
 
                         {rules.length === 0 ? (
                             <div className="empty-state">
-                                <div className="empty-state-icon">💰</div>
+                                <div className="empty-state-icon" style={{ opacity: 0.5, marginBottom: 12 }}>
+                                    <DollarSign size={40} />
+                                </div>
                                 <div className="empty-state-title">Chưa có quy tắc giá nào</div>
                                 <div className="empty-state-text">Tạo quy tắc đầu tiên để khách hàng có thể đặt sân</div>
                                 <button className="btn btn-primary" onClick={() => { openNewRule(); setActiveTab('grid'); }}>
@@ -543,28 +545,30 @@ function PricingEditorContent() {
 
                                     return (
                                         <div key={rule.id} className={`${styles.ruleCard} ${styles[`ruleCard_${tier}`]}`}>
-                                            <div className={styles.ruleCardBody}>
+                                            <div className={styles.ruleCardHead}>
                                                 <div className={styles.ruleCardName}>
                                                     <span className={`${styles.tierDot} ${styles[`tierDot_${tier}`]}`} />
                                                     {rule.label || 'Khung giờ không tên'}
                                                 </div>
-                                                <div className={styles.ruleCardDetail}>
-                                                    <span>🕐 {rule.startTime} – {rule.endTime}</span>
-                                                    <span>📅 {days}</span>
-                                                </div>
-                                            </div>
-                                            <div className={styles.ruleCardSide}>
-                                                <div className={styles.ruleCardPrice}>
-                                                    {fmt(rule.price)}<small>đ/h</small>
-                                                </div>
                                                 <div className={styles.ruleCardActions}>
                                                     <button className="btn btn-ghost btn-sm"
                                                         onClick={() => { openEditRule(rule); setActiveTab('grid'); }}>
-                                                        ✏️
+                                                        <Pencil size={16} />
                                                     </button>
                                                     <button className="btn btn-ghost btn-sm" onClick={() => handleDelete(rule.id)}>
-                                                        🗑️
+                                                        <Trash2 size={16} />
                                                     </button>
+                                                </div>
+                                            </div>
+
+                                            <div className={styles.ruleCardDetail}>
+                                                <span><Clock size={14} /> {rule.startTime} – {rule.endTime}</span>
+                                                <span><CalendarDays size={14} /> {days}</span>
+                                            </div>
+
+                                            <div className={styles.ruleCardFooter}>
+                                                <div className={styles.ruleCardPrice}>
+                                                    {fmt(rule.price)}<small>đ/h</small>
                                                 </div>
                                             </div>
                                         </div>

@@ -1,12 +1,12 @@
-﻿/* ── Page ── */
-.page {
+﻿.page {
     padding: var(--space-2xl) 0 var(--space-3xl);
     min-height: calc(100vh - var(--nav-height));
+    background: #FFF5ED;
 }
 
 /* ── Welcome Banner ── */
 .welcomeBanner {
-    background: linear-gradient(135deg, var(--brand-start) 0%, var(--brand-end) 100%);
+    background: linear-gradient(135deg, #FF5A5F 0%, #E04147 100%);
     padding: var(--space-xl) 0;
     margin-bottom: var(--space-xl);
 }
@@ -77,13 +77,13 @@
 
 .actionBtnSolid {
     background: #fff;
-    color: var(--brand-end);
+    color: #FF5A5F;
     border-color: #fff;
 }
 
 .actionBtnSolid:hover {
     background: rgba(255, 255, 255, 0.9);
-    color: var(--brand-end);
+    color: #FF5A5F;
     border-color: rgba(255, 255, 255, 0.9);
 }
 
@@ -124,15 +124,28 @@
 .statCard::after {
     content: '';
     position: absolute;
-    top: 0; left: 0; right: 0;
+    top: 0;
+    left: 0;
+    right: 0;
     height: 3px;
     border-radius: var(--radius-xl) var(--radius-xl) 0 0;
 }
 
-.statCardBlue::after   { background: var(--primary); }
-.statCardGreen::after  { background: var(--success); }
-.statCardPurple::after { background: var(--accent); }
-.statCardOrange::after { background: var(--warning); }
+.statCardBlue::after {
+    background: #FF5A5F;
+}
+
+.statCardGreen::after {
+    background: var(--success);
+}
+
+.statCardPurple::after {
+    background: #FF5A5F;
+}
+
+.statCardOrange::after {
+    background: var(--warning);
+}
 
 .statIcon {
     width: 44px;
@@ -144,10 +157,25 @@
     flex-shrink: 0;
 }
 
-.statCardBlue   .statIcon { background: var(--primary-light);  color: var(--primary); }
-.statCardGreen  .statIcon { background: var(--success-bg);     color: var(--success); }
-.statCardPurple .statIcon { background: var(--accent-light);   color: var(--accent);  }
-.statCardOrange .statIcon { background: var(--warning-bg);     color: var(--warning); }
+.statCardBlue .statIcon {
+    background: rgba(255, 90, 95, 0.1);
+    color: #FF5A5F;
+}
+
+.statCardGreen .statIcon {
+    background: var(--success-bg);
+    color: var(--success);
+}
+
+.statCardPurple .statIcon {
+    background: rgba(255, 90, 95, 0.1);
+    color: #FF5A5F;
+}
+
+.statCardOrange .statIcon {
+    background: var(--warning-bg);
+    color: var(--warning);
+}
 
 .statBody {
     flex: 1;
@@ -180,7 +208,9 @@
 /* Progress bar */
 .statProgress {
     position: absolute;
-    bottom: 0; left: 0; right: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
     height: 3px;
     background: var(--bg-tertiary);
     border-radius: 0;
@@ -214,7 +244,9 @@
     box-shadow: var(--shadow-sm);
 }
 
-.statusChipIcon { font-size: 15px; }
+.statusChipIcon {
+    font-size: 15px;
+}
 
 .statusChipCount {
     font-size: 20px;
@@ -236,7 +268,9 @@
 }
 
 @media (max-width: 960px) {
-    .mainGrid { grid-template-columns: 1fr; }
+    .mainGrid {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* ── Panel ── */
@@ -272,7 +306,7 @@
 
 .panelLink {
     font-size: 13px;
-    color: var(--primary);
+    color: #FF5A5F;
     text-decoration: none;
     font-weight: 500;
     white-space: nowrap;
@@ -280,7 +314,9 @@
     transition: color var(--transition-fast);
 }
 
-.panelLink:hover { color: var(--primary-hover); }
+.panelLink:hover {
+    color: #E04147;
+}
 
 /* ── Empty State ── */
 .emptyPanel {
@@ -289,8 +325,15 @@
     color: var(--text-tertiary);
 }
 
-.emptyPanel span { font-size: 36px; display: block; margin-bottom: 10px; }
-.emptyPanel p { font-size: 14px; }
+.emptyPanel span {
+    font-size: 36px;
+    display: block;
+    margin-bottom: 10px;
+}
+
+.emptyPanel p {
+    font-size: 14px;
+}
 
 /* ── Booking List ── */
 .bookingList {
@@ -307,15 +350,20 @@
     transition: background var(--transition-fast);
 }
 
-.bookingRow:last-child { border-bottom: none; }
-.bookingRow:hover { background: var(--bg-secondary); }
+.bookingRow:last-child {
+    border-bottom: none;
+}
+
+.bookingRow:hover {
+    background: var(--bg-secondary);
+}
 
 .bookingAvatar {
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: var(--primary-light);
-    color: var(--primary);
+    background: rgba(255, 90, 95, 0.1);
+    color: #FF5A5F;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -325,7 +373,10 @@
     text-transform: uppercase;
 }
 
-.bookingInfo { flex: 1; min-width: 0; }
+.bookingInfo {
+    flex: 1;
+    min-width: 0;
+}
 
 .bookingName {
     font-size: 14px;
@@ -351,7 +402,9 @@
     font-weight: 500;
 }
 
-.bookingDot { opacity: 0.5; }
+.bookingDot {
+    opacity: 0.5;
+}
 
 .bookingRight {
     display: flex;
@@ -364,7 +417,7 @@
 .bookingPrice {
     font-size: 13px;
     font-weight: 600;
-    color: var(--primary);
+    color: #FF5A5F;
 }
 
 /* ── Venue List ── */
@@ -382,8 +435,13 @@
     transition: background var(--transition-fast);
 }
 
-.venueItem:last-child { border-bottom: none; }
-.venueItem:hover { background: var(--bg-secondary); }
+.venueItem:last-child {
+    border-bottom: none;
+}
+
+.venueItem:hover {
+    background: var(--bg-secondary);
+}
 
 .venueItemIcon {
     font-size: 20px;
@@ -392,7 +450,10 @@
     flex-shrink: 0;
 }
 
-.venueItemInfo { flex: 1; min-width: 0; }
+.venueItemInfo {
+    flex: 1;
+    min-width: 0;
+}
 
 .venueItemName {
     font-size: 14px;
@@ -447,19 +508,21 @@
 }
 
 .quickAction:hover {
-    background: var(--primary-light);
-    border-color: var(--primary);
-    color: var(--primary);
+    background: rgba(255, 90, 95, 0.08);
+    border-color: #FF5A5F;
+    color: #FF5A5F;
 }
 
-.quickActionIcon { font-size: 14px; }
+.quickActionIcon {
+    font-size: 14px;
+}
 
 /* ── Add Venue Button ── */
 .addVenueBtn {
     display: inline-block;
     margin-top: var(--space-md);
     padding: 9px 20px;
-    background: var(--primary);
+    background: #FF5A5F;
     color: #fff;
     border-radius: var(--radius-full);
     font-size: 13px;
@@ -468,18 +531,51 @@
     transition: background var(--transition-fast);
 }
 
-.addVenueBtn:hover { background: var(--primary-hover); color: #fff; }
+.addVenueBtn:hover {
+    background: #E04147;
+    color: #fff;
+}
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
-    .page { padding: var(--space-lg) 0 var(--space-2xl); }
-    .welcomeBanner { padding: var(--space-lg) 0; }
-    .statsGrid { grid-template-columns: repeat(2, 1fr); }
-    .statusRow { display: grid; grid-template-columns: 1fr 1fr; }
+    .page {
+        padding: var(--space-lg) 0 var(--space-2xl);
+    }
+
+    .welcomeBanner {
+        padding: var(--space-lg) 0;
+    }
+
+    .statsGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .statusRow {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
 }
 
 @media (max-width: 480px) {
-    .statsGrid { grid-template-columns: repeat(2, 1fr); }
-    .welcomeActions { width: 100%; }
-    .actionBtn { flex: 1; justify-content: center; }
+    .statsGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .welcomeActions {
+        width: 100%;
+    }
+
+    .actionBtn {
+        flex: 1;
+        justify-content: center;
+    }
+}
+
+/* Override global btn-primary for dashboard */
+.page :global(.btn-primary) {
+    background: #FF5A5F;
+}
+
+.page :global(.btn-primary:hover) {
+    background: #E04147;
 }

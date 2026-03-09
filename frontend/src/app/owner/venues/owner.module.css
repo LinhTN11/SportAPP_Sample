@@ -1,6 +1,7 @@
 .page {
     padding: var(--space-2xl) 0;
     min-height: calc(100vh - var(--nav-height));
+    background: #FFF5ED;
 }
 
 /* ─── Page Header ─── */
@@ -44,14 +45,14 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    background: var(--bg-elevated);
-    border: 1px solid var(--border-light);
+    background: white;
+    border: 1px solid #E5E7EB;
     border-radius: var(--radius-full);
     padding: 8px 16px;
     font-size: 13px;
     font-weight: 500;
-    color: var(--text-secondary);
-    box-shadow: var(--shadow-sm);
+    color: #6B7280;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .summaryItem strong {
@@ -68,26 +69,37 @@
 
 /* ─── Venue Card ─── */
 .venueCard {
-    background: var(--bg-elevated);
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-xl);
+    background: white;
+    border: none;
+    border-radius: 16px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    transition: box-shadow var(--transition-default), transform var(--transition-default);
-    box-shadow: var(--shadow-sm);
+    transition: all 0.3s;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
 }
 
 .venueCard:hover {
-    box-shadow: var(--shadow-lg);
-    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    transform: translateY(-4px);
 }
 
 /* Status-tinted top accent */
-.venueCard.statusApproved  { border-top: 3px solid var(--success); }
-.venueCard.statusPending   { border-top: 3px solid var(--warning); }
-.venueCard.statusRejected  { border-top: 3px solid var(--danger); }
-.venueCard.statusSuspended { border-top: 3px solid var(--text-tertiary); }
+.venueCard.statusApproved {
+    border-top: 3px solid var(--success);
+}
+
+.venueCard.statusPending {
+    border-top: 3px solid var(--warning);
+}
+
+.venueCard.statusRejected {
+    border-top: 3px solid var(--danger);
+}
+
+.venueCard.statusSuspended {
+    border-top: 3px solid var(--text-tertiary);
+}
 
 /* Image preview in venue card */
 .venueImages {
@@ -112,7 +124,9 @@
     font-weight: 500;
 }
 
-.venueImagesPlaceholder span { font-size: 28px; }
+.venueImagesPlaceholder span {
+    font-size: 28px;
+}
 
 .venueThumb {
     width: 100%;
@@ -152,10 +166,25 @@
     white-space: nowrap;
 }
 
-.statusOverlayApproved  { background: rgba(48, 209, 88, 0.85);  color: #fff; }
-.statusOverlayPending   { background: rgba(255, 159, 10, 0.85); color: #fff; }
-.statusOverlayRejected  { background: rgba(255, 59, 48, 0.85);  color: #fff; }
-.statusOverlaySuspended { background: rgba(142, 142, 147, 0.85); color: #fff; }
+.statusOverlayApproved {
+    background: rgba(48, 209, 88, 0.85);
+    color: #fff;
+}
+
+.statusOverlayPending {
+    background: rgba(255, 159, 10, 0.85);
+    color: #fff;
+}
+
+.statusOverlayRejected {
+    background: rgba(255, 59, 48, 0.85);
+    color: #fff;
+}
+
+.statusOverlaySuspended {
+    background: rgba(142, 142, 147, 0.85);
+    color: #fff;
+}
 
 /* ─── Card Body ─── */
 .venueBody {
@@ -190,7 +219,10 @@
     gap: 4px;
 }
 
-.venueAddrIcon { flex-shrink: 0; margin-top: 1px; }
+.venueAddrIcon {
+    flex-shrink: 0;
+    margin-top: 1px;
+}
 
 .venueDesc {
     font-size: 12px;
@@ -224,10 +256,12 @@
     position: relative;
 }
 
-.stat + .stat::before {
+.stat+.stat::before {
     content: '';
     position: absolute;
-    left: 0; top: 20%; bottom: 20%;
+    left: 0;
+    top: 20%;
+    bottom: 20%;
     width: 1px;
     background: var(--border-light);
 }
@@ -301,9 +335,9 @@
 }
 
 .imageAddBtn:hover {
-    border-color: var(--primary);
-    color: var(--primary);
-    background: var(--bg-hover);
+    border-color: #FF5A5F;
+    color: #FF5A5F;
+    background: rgba(255, 90, 95, 0.05);
 }
 
 /* Sport type chips for create form */
@@ -327,12 +361,12 @@
 }
 
 .sportChip:hover {
-    border-color: var(--primary);
+    border-color: #FF5A5F;
 }
 
 .sportChipActive {
-    border-color: var(--primary);
-    background: var(--primary);
+    border-color: #FF5A5F;
+    background: #FF5A5F;
     color: white;
 }
 
@@ -347,8 +381,8 @@
 
 .fieldChip {
     padding: 3px 8px;
-    background: var(--primary-light);
-    color: var(--primary);
+    background: rgba(255, 90, 95, 0.1);
+    color: #FF5A5F;
     border-radius: var(--radius-sm);
     font-size: 11px;
     font-weight: 600;
@@ -441,7 +475,7 @@
 }
 
 .toggleActive {
-    background: var(--primary);
+    background: #FF5A5F;
 }
 
 .toggleDot {
@@ -513,15 +547,21 @@
 }
 
 @media (max-width: 1200px) {
-    .grid { grid-template-columns: repeat(3, 1fr); }
+    .grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
 }
 
 @media (max-width: 900px) {
-    .grid { grid-template-columns: repeat(2, 1fr); }
+    .grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
 @media (max-width: 540px) {
-    .grid { grid-template-columns: 1fr; }
+    .grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* Venue card action bar */
@@ -561,8 +601,8 @@
 }
 
 .venueCardActions .cardActionBtn.actionManage:hover {
-    background: var(--primary-light);
-    color: var(--primary);
+    background: rgba(255, 90, 95, 0.08);
+    color: #FF5A5F;
 }
 
 .venueCardActions .cardActionBtn.actionDelete:hover {
@@ -579,10 +619,33 @@
     position: absolute;
     bottom: 4px;
     left: 4px;
-    background: var(--primary);
+    background: #FF5A5F;
     color: white;
     font-size: 10px;
     font-weight: 700;
     padding: 2px 6px;
     border-radius: 4px;
+}
+
+/* Override global btn-primary for owner pages */
+.page :global(.btn-primary) {
+    background: #FF5A5F;
+}
+
+.page :global(.btn-primary:hover) {
+    background: #E04147;
+}
+
+.page :global(.btn-outline) {
+    color: #FF5A5F;
+    border-color: #FF5A5F;
+}
+
+.page :global(.btn-outline:hover) {
+    background: rgba(255, 90, 95, 0.08);
+}
+
+.page :global(.form-input:focus) {
+    border-color: #FF5A5F;
+    box-shadow: 0 0 0 3px rgba(255, 90, 95, 0.15);
 }

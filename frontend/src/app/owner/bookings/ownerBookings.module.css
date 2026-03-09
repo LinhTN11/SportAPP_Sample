@@ -1,6 +1,7 @@
 .page {
     padding: var(--space-2xl) 0;
     min-height: calc(100vh - var(--nav-height));
+    background: #FFF5ED;
 }
 
 .page h1 {
@@ -43,7 +44,7 @@
     display: block;
     font-size: 24px;
     font-weight: 700;
-    color: var(--primary);
+    color: #FF5A5F;
     margin-bottom: 4px;
 }
 
@@ -111,7 +112,7 @@
 .priceCol {
     font-size: 15px;
     font-weight: 600;
-    color: var(--primary);
+    color: #FF5A5F;
     white-space: nowrap;
 }
 
@@ -131,4 +132,13 @@
     .stats {
         flex-direction: column;
     }
+}
+
+/* Override global btn-primary for bookings */
+.page :global(.btn-primary) {
+    background: #FF5A5F;
+}
+
+.page :global(.btn-primary:hover) {
+    background: #E04147;
 }

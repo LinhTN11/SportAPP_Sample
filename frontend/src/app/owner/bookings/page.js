@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { venuesAPI, bookingsAPI } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { ClipboardList, CalendarDays, User } from 'lucide-react';
 import styles from './ownerBookings.module.css';
 
 export default function OwnerBookingsPage() {
@@ -109,13 +110,13 @@ export default function OwnerBookingsPage() {
                     <div>{[1, 2, 3].map(i => <div key={i} className={styles.skeletonRow}><div className="skeleton" style={{ height: 16, width: '30%', marginBottom: 6 }} /><div className="skeleton" style={{ height: 14, width: '50%' }} /></div>)}</div>
                 ) : bookings.length === 0 ? (
                     <div className="empty-state">
-                        <div className="empty-state-icon">📋</div>
+                        <div className="empty-state-icon" style={{ opacity: 0.5, marginBottom: 12 }}><ClipboardList size={40} /></div>
                         <div className="empty-state-title">Chưa có đặt sân nào</div>
                     </div>
                 ) : (
                     Object.entries(groupedBookings).map(([date, items]) => (
                         <div key={date} className={styles.dateGroup}>
-                            <h3 className={styles.dateLabel}>📅 {date}</h3>
+                            <h3 className={styles.dateLabel} style={{ display: 'flex', alignItems: 'center', gap: 6 }}><CalendarDays size={18} /> {date}</h3>
                             <div className={styles.bookingList}>
                                 {items.map((booking) => (
                                     <div key={booking.id} className={styles.bookingRow}>
@@ -125,8 +126,8 @@ export default function OwnerBookingsPage() {
                                         </div>
                                         <div className={styles.infoCol}>
                                             <div className={styles.fieldName}>{booking.field?.name}</div>
-                                            <div className={styles.customerName}>
-                                                👤 {booking.customer?.fullName} • {booking.customer?.phone || booking.customer?.email}
+                                            <div className={styles.customerName} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                                <User size={14} /> {booking.customer?.fullName} • {booking.customer?.phone || booking.customer?.email}
                                             </div>
                                         </div>
                                         <div className={styles.priceCol}>
