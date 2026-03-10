@@ -1,12 +1,58 @@
 'use client';
 
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import styles from './page.module.css';
 import PageFooter from '../components/PageFooter';
 
+const sportOptions = [
+  { value: 'football', label: 'Bóng đá' },
+  { value: 'badminton', label: 'Cầu lông' },
+  { value: 'tennis', label: 'Tennis' },
+  { value: 'basketball', label: 'Bóng rổ' },
+  { value: 'volleyball', label: 'Bóng chuyền' },
+  { value: 'pickleball', label: 'Pickleball' },
+];
+
+const timeOptions = [
+  'Hôm nay, 18:00',
+  'Hôm nay, 19:00',
+  'Hôm nay, 20:00',
+  'Ngày mai, 08:00',
+  'Ngày mai, 18:00',
+  'Cuối tuần này',
+];
+
 export default function HomePage() {
   const { isAuthenticated } = useAuth();
+  const router = useRouter();
+
+  const [sportOpen, setSportOpen] = useState(false);
+  const [timeOpen, setTimeOpen] = useState(false);
+  const [selectedSport, setSelectedSport] = useState(sportOptions[0]);
+  const [selectedTime, setSelectedTime] = useState(timeOptions[0]);
+  const [locationValue, setLocationValue] = useState('');
+
+  const sportRef = useRef(null);
+  const timeRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (sportRef.current && !sportRef.current.contains(e.target)) setSportOpen(false);
+      if (timeRef.current && !timeRef.current.contains(e.target)) setTimeOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleSearch = () => {
+    const params = new URLSearchParams();
+    if (selectedSport.value) params.set('sportType', selectedSport.value);
+    if (locationValue.trim()) params.set('city', locationValue.trim());
+    router.push(`/venues${params.toString() ? '?' + params.toString() : ''}`);
+  };
 
   return (
     <div className={styles.pageWrapper}>
@@ -60,43 +106,50 @@ export default function HomePage() {
           <div className={styles.searchBar}>
 
             {/* ── Cột 1: Môn thể thao ── */}
-            <div className={styles.searchField}>
+            <div className={styles.searchField} ref={sportRef} onClick={() => { setSportOpen(!sportOpen); setTimeOpen(false); }}>
               <div className={styles.searchFieldIcon}>
-                {/* Soccer ball icon */}
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F97316" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10"/>
-                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-                  <path d="M2 12h20"/>
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                  <path d="M2 12h20" />
                 </svg>
               </div>
               <div className={styles.searchFieldBody}>
                 <span className={styles.searchLabel}>Môn thể thao</span>
                 <div className={styles.searchValueRow}>
-                  <select className={styles.searchSelect} defaultValue="Bóng đá">
-                    <option>Bóng đá</option>
-                    <option>Cầu lông</option>
-                    <option>Tennis</option>
-                    <option>Bóng rổ</option>
-                    <option>Bóng chuyền</option>
-                    <option>Bóng bàn</option>
-                  </select>
-                  {/* Chevron down */}
-                  <svg className={styles.chevron} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="6 9 12 15 18 9"/>
+                  <span className={styles.searchValue}>{selectedSport.label}</span>
+                  <svg className={`${styles.chevron} ${sportOpen ? styles.chevronOpen : ''}`} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="6 9 12 15 18 9" />
                   </svg>
                 </div>
               </div>
+              {sportOpen && (
+                <div className={styles.dropdownMenu}>
+                  {sportOptions.map((opt) => (
+                    <div
+                      key={opt.value}
+                      className={`${styles.dropdownOption} ${selectedSport.value === opt.value ? styles.dropdownOptionActive : ''}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedSport(opt);
+                        setSportOpen(false);
+                      }}
+                    >
+                      {opt.label}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className={styles.searchDivider} />
 
             {/* ── Cột 2: Địa điểm ── */}
-            <div className={styles.searchField}>
+            <div className={styles.searchField} onClick={() => { setSportOpen(false); setTimeOpen(false); }}>
               <div className={styles.searchFieldIcon}>
-                {/* Location pin icon */}
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F97316" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/>
-                  <circle cx="12" cy="10" r="3"/>
+                  <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z" />
+                  <circle cx="12" cy="10" r="3" />
                 </svg>
               </div>
               <div className={styles.searchFieldBody}>
@@ -105,6 +158,8 @@ export default function HomePage() {
                   type="text"
                   className={styles.searchInput}
                   placeholder="Quận/Huyện, TP"
+                  value={locationValue}
+                  onChange={(e) => setLocationValue(e.target.value)}
                 />
               </div>
             </div>
@@ -112,41 +167,49 @@ export default function HomePage() {
             <div className={styles.searchDivider} />
 
             {/* ── Cột 3: Thời gian ── */}
-            <div className={styles.searchField}>
+            <div className={styles.searchField} ref={timeRef} onClick={() => { setTimeOpen(!timeOpen); setSportOpen(false); }}>
               <div className={styles.searchFieldIcon}>
-                {/* Calendar icon */}
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F97316" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                  <line x1="16" y1="2" x2="16" y2="6"/>
-                  <line x1="8" y1="2" x2="8" y2="6"/>
-                  <line x1="3" y1="10" x2="21" y2="10"/>
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
                 </svg>
               </div>
               <div className={styles.searchFieldBody}>
                 <span className={styles.searchLabel}>Thời gian</span>
                 <div className={styles.searchValueRow}>
-                  <select className={styles.searchSelect} defaultValue="Hôm nay, 18:00">
-                    <option>Hôm nay, 18:00</option>
-                    <option>Hôm nay, 19:00</option>
-                    <option>Hôm nay, 20:00</option>
-                    <option>Ngày mai, 08:00</option>
-                    <option>Ngày mai, 18:00</option>
-                    <option>Cuối tuần này</option>
-                  </select>
-                  {/* Chevron down */}
-                  <svg className={styles.chevron} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="6 9 12 15 18 9"/>
+                  <span className={styles.searchValue}>{selectedTime}</span>
+                  <svg className={`${styles.chevron} ${timeOpen ? styles.chevronOpen : ''}`} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="6 9 12 15 18 9" />
                   </svg>
                 </div>
               </div>
+              {timeOpen && (
+                <div className={styles.dropdownMenu}>
+                  {timeOptions.map((opt) => (
+                    <div
+                      key={opt}
+                      className={`${styles.dropdownOption} ${selectedTime === opt ? styles.dropdownOptionActive : ''}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedTime(opt);
+                        setTimeOpen(false);
+                      }}
+                    >
+                      {opt}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* ── Cột 4: Nút tìm ── */}
             <div className={styles.searchBtnWrap}>
-              <button className={styles.searchBtn}>
+              <button className={styles.searchBtn} onClick={handleSearch}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="11" cy="11" r="8"/>
-                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
                 </svg>
                 Tìm ngay
               </button>

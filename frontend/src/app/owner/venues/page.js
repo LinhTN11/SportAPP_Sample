@@ -473,7 +473,7 @@ export default function OwnerVenuesPage() {
                                 <div className="form-group">
                                     <label className="form-label">Môn thể thao *</label>
                                     <div className={styles.sportChips}>
-                                        {['football', 'badminton', 'tennis', 'basketball', 'volleyball', 'pickleball', 'swimming'].map((key) => (
+                                        {['football', 'badminton', 'tennis', 'basketball', 'volleyball', 'pickleball'].map((key) => (
                                             <button key={key} type="button"
                                                 className={`${styles.sportChip} ${form.sportTypes.includes(key) ? styles.sportChipActive : ''}`}
                                                 style={{ display: 'flex', alignItems: 'center', gap: 6 }}
@@ -612,7 +612,7 @@ export default function OwnerVenuesPage() {
                                 <div className="form-group">
                                     <label className="form-label">Môn thể thao *</label>
                                     <div className={styles.sportChips}>
-                                        {['football', 'badminton', 'tennis', 'basketball', 'volleyball', 'pickleball', 'swimming'].map((key) => (
+                                        {['football', 'badminton', 'tennis', 'basketball', 'volleyball', 'pickleball'].map((key) => (
                                             <button key={key} type="button"
                                                 className={`${styles.sportChip} ${editForm.sportTypes?.includes(key) ? styles.sportChipActive : ''}`}
                                                 style={{ display: 'flex', alignItems: 'center', gap: 6 }}

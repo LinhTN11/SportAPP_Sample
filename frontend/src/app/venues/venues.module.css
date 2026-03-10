@@ -34,7 +34,7 @@
     display: flex;
     align-items: center;
     height: 56px;
-    overflow: hidden;
+    position: relative;
 }
 
 .searchSport {
@@ -101,6 +101,7 @@
     padding: 0 32px;
     background: #FF5A5F;
     border: none;
+    border-radius: 0 12px 12px 0;
     color: white;
     font-size: 15px;
     font-weight: 600;
@@ -149,11 +150,6 @@
     background: rgba(255, 90, 95, 0.05);
 }
 
-.sportTabActive {
-    background: #FF5A5F;
-    border-color: #FF5A5F;
-    color: white;
-}
 
 .sportTabIcon {
     font-size: 18px;
@@ -220,6 +216,138 @@
 .resultsSort select:focus {
     outline: none;
     border-color: #FF5A5F;
+}
+
+/* ── Custom Dropdown ────────────────────── */
+.customDropdown {
+    position: relative;
+    user-select: none;
+}
+
+.dropdownTrigger {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: var(--bg-primary);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-md);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+}
+
+.dropdownTrigger:hover {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.08);
+}
+
+.dropdownTriggerOpen {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15);
+}
+
+/* Sport dropdown inside search bar – borderless */
+.dropdownTriggerInline {
+    border: none;
+    padding: 0;
+    background: transparent;
+    border-radius: 0;
+}
+
+.dropdownTriggerInline:hover {
+    border: none;
+    box-shadow: none;
+    color: var(--primary);
+}
+
+.dropdownTriggerInline.dropdownTriggerOpen {
+    border: none;
+    box-shadow: none;
+    color: var(--primary);
+}
+
+.dropdownChevron {
+    display: flex;
+    align-items: center;
+    transition: transform var(--transition-fast);
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+}
+
+.dropdownChevronOpen {
+    transform: rotate(180deg);
+}
+
+.dropdownMenu {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    min-width: 100%;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    padding: 6px;
+    z-index: 100;
+    animation: dropdownFadeIn 180ms cubic-bezier(0.25, 0.1, 0.25, 1);
+    overflow: hidden;
+}
+
+.dropdownMenuRight {
+    left: auto;
+    right: 0;
+}
+
+.dropdownOption {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 450;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: background var(--transition-fast);
+    white-space: nowrap;
+}
+
+.dropdownOption:hover {
+    background: var(--bg-secondary);
+}
+
+.dropdownOptionActive {
+    background: var(--primary-light);
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.dropdownOptionActive:hover {
+    background: var(--primary-light);
+}
+
+.dropdownOptionIcon {
+    display: flex;
+    align-items: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+@keyframes dropdownFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Grid */
@@ -414,38 +542,8 @@
 .sportTags {
     display: flex;
     gap: 8px;
-}
-
-.sportTags span {
-    padding: 4px 12px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: 600;
-}
-
-.tagYellow {
-    background: #FEF3C7;
-    color: #92400E;
-}
-
-.tagBlue {
-    background: #DBEAFE;
-    color: #1E40AF;
-}
-
-.tagRed {
-    background: #FEE2E2;
-    color: #991B1B;
-}
-
-.tagCyan {
-    background: #CFFAFE;
-    color: #155E75;
-}
-
-.tagGray {
-    background: #F3F4F6;
-    color: #374151;
+    margin-top: auto;
+    overflow: hidden;
 }
 
 /* Skeleton */
@@ -481,6 +579,7 @@
     0% {
         background-position: 200% 0;
     }
+
     100% {
         background-position: -200% 0;
     }

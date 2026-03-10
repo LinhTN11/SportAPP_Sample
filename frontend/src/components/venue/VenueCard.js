@@ -2,7 +2,7 @@
 
 import { MapPin, Star, Clock, Settings, Pencil, Trash2 } from 'lucide-react';
 import StatusBadge from '../ui/StatusBadge';
-import { SportIcons, sportTypeLabels, getSportIcon, getSportLabel } from './SportIcons';
+import { SportIcons, sportTypeLabels, getSportIcon, getSportLabel, getSportColorClass } from './SportIcons';
 import styles from './VenueCard.module.css';
 
 
@@ -84,9 +84,6 @@ export default function VenueCard({
 
                 {/* Info row */}
                 <div className={styles.info}>
-                    <span className={styles.infoIcon}>{sportIcon}</span>
-                    <span>{sportLabel}</span>
-                    <span className={styles.infoDivider}>|</span>
                     <span>{fieldCount} sân khả dụng</span>
                 </div>
 
@@ -111,11 +108,19 @@ export default function VenueCard({
                 {/* Sport tags */}
                 {venue.sportTypes?.length > 0 && (
                     <div className={styles.sportTags}>
-                        {venue.sportTypes.map(st => (
-                            <span key={st} className={styles.sportTag}>
+                        {venue.sportTypes.slice(0, 2).map(st => (
+                            <span key={st} className="sport-tag">
+                                <span className={getSportColorClass(st)} style={{ display: 'flex' }}>
+                                    {getSportIcon(st)}
+                                </span>
                                 {getSportLabel(st)}
                             </span>
                         ))}
+                        {venue.sportTypes.length > 2 && (
+                            <span className="sport-tag" style={{ color: 'var(--text-secondary)' }}>
+                                +{venue.sportTypes.length - 2}
+                            </span>
+                        )}
                     </div>
                 )}
             </div>

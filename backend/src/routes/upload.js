@@ -19,8 +19,7 @@ const upload = multer({
     storage,
     limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
     fileFilter: (req, file, cb) => {
-        const allowed = /jpeg|jpg|png|webp|gif/;
-        const isValid = allowed.test(path.extname(file.originalname).toLowerCase()) && allowed.test(file.mimetype.split('/')[1]);
+        const isValid = file.mimetype.startsWith('image/');
         cb(isValid ? null : new Error('Only image files are allowed'), isValid);
     },
 });

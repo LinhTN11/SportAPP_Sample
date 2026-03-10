@@ -742,4 +742,49 @@ textarea.form-input {
   background: var(--text-tertiary);
 }
 
+/* Global Sport Colors - Minimal Text Color Only */
+.sport-color-football {
+  color: var(--primary) !important;
+}
+
+.sport-color-badminton {
+  color: var(--warning) !important;
+}
+
+.sport-color-tennis {
+  color: var(--warning) !important;
+}
+
+.sport-color-basketball {
+  color: var(--danger) !important;
+}
+
+.sport-color-volleyball {
+  color: var(--accent) !important;
+}
+
+.sport-color-pickleball {
+  color: var(--success) !important;
+}
+
+.sport-color-default {
+  color: var(--text-secondary) !important;
+}
+
+/* Global default Sport Tag wrapper */
+.sport-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+}
+
 @import "tailwindcss";
