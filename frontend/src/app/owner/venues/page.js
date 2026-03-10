@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { venuesAPI, fieldsAPI, uploadAPI } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { MapPin, Clock, Settings, Pencil, Trash2, Camera, Phone, ClipboardList, Pause, DollarSign, CheckCircle2, Clock3, Map, CircleDollarSign, BarChart2, Save } from 'lucide-react';
+import { MapPin, Clock, Settings, Pencil, Trash2, Camera, Phone, ClipboardList, Pause, DollarSign, CheckCircle2, Clock3, Map, CircleDollarSign, BarChart2, Save, ChevronDown } from 'lucide-react';
 import { sportTypeLabels, getSportIcon, getSportLabel } from '@/components/venue/SportIcons';
 import VenueCard, { venueCardStyles } from '@/components/venue/VenueCard';
 import styles from './owner.module.css';
@@ -15,6 +15,51 @@ const MapPicker = dynamic(() => import('@/components/MapPicker'), { ssr: false }
 const SERVER_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000').replace(/\/api\/?$/, '');
 
 // statusMap removed — now handled by StatusBadge component inside VenueCard
+
+const FormSelect = ({ value, onChange, options, placeholder, className = "" }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const containerRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (containerRef.current && !containerRef.current.contains(event.target)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const selectedOption = options.find(o => o.value === value);
+
+    return (
+        <div className={`${styles.customSelect} ${className}`} ref={containerRef}>
+            <div
+                className={`${styles.selectTrigger} ${isOpen ? styles.selectTriggerActive : ''}`}
+                onClick={() => setIsOpen(!isOpen)}
+            >
+                <span>{selectedOption ? selectedOption.label : placeholder}</span>
+                <ChevronDown size={16} className={`${styles.selectChevron} ${isOpen ? styles.selectChevronOpen : ''}`} />
+            </div>
+            {isOpen && (
+                <div className={styles.selectMenu}>
+                    {options.map((opt) => (
+                        <div
+                            key={opt.value}
+                            className={`${styles.selectOption} ${value === opt.value ? styles.selectOptionSelected : ''}`}
+                            onClick={() => {
+                                onChange(opt.value);
+                                setIsOpen(false);
+                            }}
+                        >
+                            {opt.label}
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
 
 export default function OwnerVenuesPage() {
     const router = useRouter();
@@ -493,15 +538,25 @@ export default function OwnerVenuesPage() {
                                 <div style={{ display: 'flex', gap: 12 }}>
                                     <div className="form-group" style={{ flex: 1 }}>
                                         <label className="form-label">Giờ mở cửa</label>
-                                        <select className="form-input" value={form.openTime} onChange={(e) => setForm({ ...form, openTime: e.target.value })}>
-                                            {Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`).map(t => <option key={t} value={t}>{t}</option>)}
-                                        </select>
+                                        <FormSelect
+                                            value={form.openTime}
+                                            onChange={(val) => setForm({ ...form, openTime: val })}
+                                            options={Array.from({ length: 24 }, (_, i) => {
+                                                const t = `${String(i).padStart(2, '0')}:00`;
+                                                return { value: t, label: t };
+                                            })}
+                                        />
                                     </div>
                                     <div className="form-group" style={{ flex: 1 }}>
                                         <label className="form-label">Giờ đóng cửa</label>
-                                        <select className="form-input" value={form.closeTime} onChange={(e) => setForm({ ...form, closeTime: e.target.value })}>
-                                            {Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`).map(t => <option key={t} value={t}>{t}</option>)}
-                                        </select>
+                                        <FormSelect
+                                            value={form.closeTime}
+                                            onChange={(val) => setForm({ ...form, closeTime: val })}
+                                            options={Array.from({ length: 24 }, (_, i) => {
+                                                const t = `${String(i).padStart(2, '0')}:00`;
+                                                return { value: t, label: t };
+                                            })}
+                                        />
                                     </div>
                                 </div>
 
@@ -541,23 +596,16 @@ export default function OwnerVenuesPage() {
                                 <div className="form-group">
                                     <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Camera size={16} /> Ảnh khu sân</label>
 
-                                    {/* Existing images */}
-                                    {editExistingImages.length > 0 && (
-                                        <div style={{ marginBottom: 8 }}>
-                                            <p className="caption" style={{ marginBottom: 6 }}>Ảnh hiện tại (bấm × để xóa)</p>
-                                            <div className={styles.imageUpload}>
-                                                {editExistingImages.map((url, i) => (
-                                                    <div key={i} className={styles.imagePreviewItem}>
-                                                        <img src={`${SERVER_URL}${url}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                                        <button type="button" className={styles.imageRemove} onClick={() => removeEditExistingImage(i)}>×</button>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* New images to upload */}
                                     <div className={styles.imageUpload}>
+                                        {/* Existing images */}
+                                        {editExistingImages.map((url, i) => (
+                                            <div key={i} className={styles.imagePreviewItem}>
+                                                <img src={`${SERVER_URL}${url}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                <button type="button" className={styles.imageRemove} onClick={() => removeEditExistingImage(i)}>×</button>
+                                            </div>
+                                        ))}
+
+                                        {/* New images to upload */}
                                         {editImagePreviews.map((src, i) => (
                                             <div key={i} className={`${styles.imagePreviewItem} ${styles.imagePreviewNew}`}>
                                                 <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -631,17 +679,25 @@ export default function OwnerVenuesPage() {
                                 <div style={{ display: 'flex', gap: 12 }}>
                                     <div className="form-group" style={{ flex: 1 }}>
                                         <label className="form-label">Giờ mở cửa</label>
-                                        <select className="form-input" value={editForm.openTime}
-                                            onChange={(e) => setEditForm({ ...editForm, openTime: e.target.value })}>
-                                            {Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`).map(t => <option key={t} value={t}>{t}</option>)}
-                                        </select>
+                                        <FormSelect
+                                            value={editForm.openTime}
+                                            onChange={(val) => setEditForm({ ...editForm, openTime: val })}
+                                            options={Array.from({ length: 24 }, (_, i) => {
+                                                const t = `${String(i).padStart(2, '0')}:00`;
+                                                return { value: t, label: t };
+                                            })}
+                                        />
                                     </div>
                                     <div className="form-group" style={{ flex: 1 }}>
                                         <label className="form-label">Giờ đóng cửa</label>
-                                        <select className="form-input" value={editForm.closeTime}
-                                            onChange={(e) => setEditForm({ ...editForm, closeTime: e.target.value })}>
-                                            {Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`).map(t => <option key={t} value={t}>{t}</option>)}
-                                        </select>
+                                        <FormSelect
+                                            value={editForm.closeTime}
+                                            onChange={(val) => setEditForm({ ...editForm, closeTime: val })}
+                                            options={Array.from({ length: 24 }, (_, i) => {
+                                                const t = `${String(i).padStart(2, '0')}:00`;
+                                                return { value: t, label: t };
+                                            })}
+                                        />
                                     </div>
                                 </div>
 
@@ -707,18 +763,22 @@ export default function OwnerVenuesPage() {
                                             <div style={{ display: 'flex', gap: 12 }}>
                                                 <div className="form-group" style={{ flex: 1 }}>
                                                     <label className="form-label">Loại sân</label>
-                                                    <select className="form-input" value={fieldForm.fieldType}
-                                                        onChange={(e) => setFieldForm({ ...fieldForm, fieldType: e.target.value })}>
-                                                        <option value="STANDARD">Sân đơn</option>
-                                                        <option value="COMBINED">Sân ghép</option>
-                                                    </select>
+                                                    <FormSelect
+                                                        value={fieldForm.fieldType}
+                                                        onChange={(val) => setFieldForm({ ...fieldForm, fieldType: val })}
+                                                        options={[
+                                                            { value: 'STANDARD', label: 'Sân đơn' },
+                                                            { value: 'COMBINED', label: 'Sân ghép' }
+                                                        ]}
+                                                    />
                                                 </div>
                                                 <div className="form-group" style={{ flex: 1 }}>
                                                     <label className="form-label">Môn thể thao</label>
-                                                    <select className="form-input" value={fieldForm.sportType}
-                                                        onChange={(e) => setFieldForm({ ...fieldForm, sportType: e.target.value })}>
-                                                        {Object.entries(sportTypeLabels).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
-                                                    </select>
+                                                    <FormSelect
+                                                        value={fieldForm.sportType}
+                                                        onChange={(val) => setFieldForm({ ...fieldForm, sportType: val })}
+                                                        options={Object.entries(sportTypeLabels).map(([k, l]) => ({ value: k, label: l }))}
+                                                    />
                                                 </div>
                                             </div>
 
@@ -730,17 +790,25 @@ export default function OwnerVenuesPage() {
                                                         <input type="text" className="form-input" placeholder="Tên" value={row.label}
                                                             onChange={(e) => { const r = [...fieldPricingRows]; r[idx].label = e.target.value; setFieldPricingRows(r); }}
                                                             style={{ flex: 1.5 }} />
-                                                        <select className="form-input" value={row.startTime}
-                                                            onChange={(e) => { const r = [...fieldPricingRows]; r[idx].startTime = e.target.value; setFieldPricingRows(r); }}
-                                                            style={{ flex: 1 }}>
-                                                            {Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`).map(t => <option key={t} value={t}>{t}</option>)}
-                                                        </select>
+                                                        <FormSelect
+                                                            className={styles.inlineDropdown}
+                                                            value={row.startTime}
+                                                            onChange={(val) => { const r = [...fieldPricingRows]; r[idx].startTime = val; setFieldPricingRows(r); }}
+                                                            options={Array.from({ length: 24 }, (_, i) => {
+                                                                const t = `${String(i).padStart(2, '0')}:00`;
+                                                                return { value: t, label: t };
+                                                            })}
+                                                        />
                                                         <span>→</span>
-                                                        <select className="form-input" value={row.endTime}
-                                                            onChange={(e) => { const r = [...fieldPricingRows]; r[idx].endTime = e.target.value; setFieldPricingRows(r); }}
-                                                            style={{ flex: 1 }}>
-                                                            {Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`).map(t => <option key={t} value={t}>{t}</option>)}
-                                                        </select>
+                                                        <FormSelect
+                                                            className={styles.inlineDropdown}
+                                                            value={row.endTime}
+                                                            onChange={(val) => { const r = [...fieldPricingRows]; r[idx].endTime = val; setFieldPricingRows(r); }}
+                                                            options={Array.from({ length: 24 }, (_, i) => {
+                                                                const t = `${String(i).padStart(2, '0')}:00`;
+                                                                return { value: t, label: t };
+                                                            })}
+                                                        />
                                                         <input type="number" className="form-input" placeholder="VNĐ/h" value={row.price}
                                                             onChange={(e) => { const r = [...fieldPricingRows]; r[idx].price = e.target.value; setFieldPricingRows(r); }}
                                                             style={{ flex: 1.2 }} />
@@ -851,15 +919,25 @@ export default function OwnerVenuesPage() {
                                                         <div className={styles.pricingInputRow}>
                                                             <input type="text" className="form-input" placeholder="Tên khung" value={pricingForm.label}
                                                                 onChange={(e) => setPricingForm({ ...pricingForm, label: e.target.value })} style={{ flex: 1.5 }} />
-                                                            <select className="form-input" value={pricingForm.startTime} style={{ flex: 1 }}
-                                                                onChange={(e) => setPricingForm({ ...pricingForm, startTime: e.target.value })}>
-                                                                {Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`).map(t => <option key={t} value={t}>{t}</option>)}
-                                                            </select>
+                                                            <FormSelect
+                                                                className={styles.inlineDropdown}
+                                                                value={pricingForm.startTime}
+                                                                onChange={(val) => setPricingForm({ ...pricingForm, startTime: val })}
+                                                                options={Array.from({ length: 24 }, (_, i) => {
+                                                                    const t = `${String(i).padStart(2, '0')}:00`;
+                                                                    return { value: t, label: t };
+                                                                })}
+                                                            />
                                                             <span>→</span>
-                                                            <select className="form-input" value={pricingForm.endTime} style={{ flex: 1 }}
-                                                                onChange={(e) => setPricingForm({ ...pricingForm, endTime: e.target.value })}>
-                                                                {Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`).map(t => <option key={t} value={t}>{t}</option>)}
-                                                            </select>
+                                                            <FormSelect
+                                                                className={styles.inlineDropdown}
+                                                                value={pricingForm.endTime}
+                                                                onChange={(val) => setPricingForm({ ...pricingForm, endTime: val })}
+                                                                options={Array.from({ length: 24 }, (_, i) => {
+                                                                    const t = `${String(i).padStart(2, '0')}:00`;
+                                                                    return { value: t, label: t };
+                                                                })}
+                                                            />
                                                             <input type="number" className="form-input" placeholder="VNĐ/h" value={pricingForm.price}
                                                                 onChange={(e) => setPricingForm({ ...pricingForm, price: e.target.value })} style={{ flex: 1.2 }} required />
                                                             <button type="submit" className="btn btn-primary btn-sm">Thêm</button>

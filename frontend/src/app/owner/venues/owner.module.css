@@ -651,3 +651,123 @@
     border-color: #FF5A5F;
     box-shadow: 0 0 0 3px rgba(255, 90, 95, 0.15);
 }
+
+/* Custom Dropdown System */
+.customSelect {
+    position: relative;
+    user-select: none;
+    width: 100%;
+}
+
+/* Allow customSelect to shrink when used as inline */
+.customSelect.inlineDropdown {
+    width: auto;
+    flex: 1;
+    min-width: 90px;
+}
+
+.selectTrigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    padding: 12px 16px;
+    background: var(--bg-primary);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-md);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.selectTrigger:hover {
+    border-color: #FF5A5F;
+    background: rgba(255, 90, 95, 0.02);
+}
+
+.selectTriggerActive {
+    border-color: #FF5A5F;
+    box-shadow: 0 0 0 3px rgba(255, 90, 95, 0.15);
+}
+
+.selectChevron {
+    color: var(--text-tertiary);
+    transition: transform var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.selectChevronOpen {
+    transform: rotate(180deg);
+}
+
+.selectMenu {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    padding: 4px;
+    z-index: 1000;
+    max-height: 240px;
+    overflow-y: auto;
+    animation: dropdownSlideIn 180ms ease-out;
+}
+
+.selectOption {
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+
+.selectOption:hover {
+    background: var(--bg-secondary);
+}
+
+.selectOptionSelected {
+    background: rgba(255, 90, 95, 0.08);
+    color: #FF5A5F;
+    font-weight: 600;
+}
+
+@keyframes dropdownSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Adjustments for mini dropdowns in pricing/field forms */
+.inlineDropdown .selectTrigger {
+    padding: 8px 12px;
+    font-size: 13px;
+    height: 38px;
+    /* Fixed height for alignment with other inputs */
+}
+
+/* Ensure pricing row items align nicely */
+.pricingInputRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    width: 100%;
+}
+
+.pricingInputRow span {
+    color: var(--text-tertiary);
+    font-weight: 500;
+}
