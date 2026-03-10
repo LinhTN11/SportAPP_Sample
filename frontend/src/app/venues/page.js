@@ -355,7 +355,7 @@ export default function VenuesPage() {
                                             </div>
                                             <div className={styles.sportTags}>
                                                 <span className={getSportTagClass(venue.sportTypes?.[0])}>
-                                                    {getSportLabel1(venue.sportTypes?.[0])}
+                                                    {getSportLabel(venue.sportTypes?.[0])}
                                                 </span>
                                             </div>
                                         </div>
