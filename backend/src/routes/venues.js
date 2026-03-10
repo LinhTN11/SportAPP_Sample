@@ -83,7 +83,10 @@ router.get('/', async (req, res, next) => {
                     owner: {
                         select: { id: true, fullName: true, phone: true },
                     },
-                    fields: { where: { isActive: true } },
+                    fields: {
+                        where: { isActive: true },
+                        include: { pricingRules: { where: { isActive: true } } },
+                    },
                     _count: { select: { reviews: true } },
                 },
                 skip,
@@ -100,10 +103,16 @@ router.get('/', async (req, res, next) => {
                     where: { venueId: venue.id },
                     _avg: { rating: true },
                 });
+                const prices = venue.fields
+                    .flatMap(f => f.pricingRules || [])
+                    .map(r => Number(r.price))
+                    .filter(p => p > 0);
+
                 return {
                     ...venue,
                     avgRating: avgRating._avg.rating || 0,
                     reviewCount: venue._count.reviews,
+                    minPrice: prices.length > 0 ? Math.min(...prices) : null,
                 };
             })
         );
