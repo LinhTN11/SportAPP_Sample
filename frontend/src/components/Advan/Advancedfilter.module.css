@@ -1,0 +1,223 @@
+.sidebar {
+    position: sticky;
+    top: 100px;
+    width: 280px;
+    flex-shrink: 0;
+}
+
+.card {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+/* ── Header ── */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 17px;
+    font-weight: 700;
+    color: #1A1A1A;
+}
+
+.clearBtn {
+    background: none;
+    border: none;
+    color: #FF5A5F;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+}
+
+.clearBtn:hover { text-decoration: underline; }
+
+/* ── Section ── */
+.section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-bottom: 18px;
+    margin-bottom: 18px;
+    border-bottom: 1px solid #F3F4F6;
+}
+
+.section:last-of-type {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.sectionTitle {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1A1A1A;
+    margin-bottom: 2px;
+}
+
+/* ── Slider ── */
+.sliderTrackWrap {
+    position: relative;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    margin: 4px 0;
+}
+
+.sliderTrack {
+    position: absolute;
+    left: 0; right: 0;
+    height: 4px;
+    background: #E5E7EB;
+    border-radius: 4px;
+}
+
+.sliderFill {
+    position: absolute;
+    height: 4px;
+    background: linear-gradient(90deg, #FF5A5F, #E04147);
+    border-radius: 4px;
+    left: var(--p1);
+    right: calc(100% - var(--p2));
+}
+
+.slider {
+    position: absolute;
+    width: 100%;
+    height: 4px;
+    background: transparent;
+    -webkit-appearance: none;
+    appearance: none;
+    outline: none;
+    pointer-events: none;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: white;
+    border: 2.5px solid #FF5A5F;
+    box-shadow: 0 2px 6px rgba(255,90,95,0.3);
+    cursor: pointer;
+    pointer-events: all;
+}
+
+.priceLabels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    font-weight: 600;
+    color: #6B7280;
+    margin-top: 2px;
+}
+
+/* ── Radio ── */
+.radioRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    padding: 2px 0;
+}
+
+.radioCircle {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid #D1D5DB;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: border-color 0.15s;
+}
+
+.radioChecked {
+    border-color: #FF5A5F;
+    background: rgba(255,90,95,0.06);
+}
+
+.radioDot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #FF5A5F;
+}
+
+.hiddenInput {
+    display: none;
+}
+
+/* ── Checkbox ── */
+.checkRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    padding: 2px 0;
+}
+
+.checkbox {
+    width: 18px;
+    height: 18px;
+    border-radius: 5px;
+    border: 2px solid #D1D5DB;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.15s;
+    background: white;
+}
+
+.checkboxChecked {
+    border-color: #FF5A5F;
+    background: #FF5A5F;
+}
+
+.rowLabel {
+    font-size: 14px;
+    color: #374151;
+    user-select: none;
+}
+
+/* ── Apply Button ── */
+.applyBtn {
+    width: 100%;
+    margin-top: 20px;
+    padding: 13px;
+    background: linear-gradient(135deg, #FF5A5F, #E04147);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 14px rgba(255,90,95,0.35);
+    letter-spacing: 0.3px;
+}
+
+.applyBtn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(255,90,95,0.45);
+}
+
+.applyBtn:active {
+    transform: translateY(0);
+}
