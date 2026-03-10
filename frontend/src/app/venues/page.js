@@ -21,8 +21,8 @@ export default function VenuesPage() {
     const [venues, setVenues] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filters, setFilters] = useState({
-        city: urlCity,
-        sportType: urlSportType,
+        address: '',
+        sportType: '',
     });
     const [activeSport, setActiveSport] = useState(urlSportType || 'football');
     const [advFilters, setAdvFilters] = useState({});
@@ -55,6 +55,16 @@ export default function VenuesPage() {
                 if (advFilters.distance === '5' && (v.distance <= 2 || v.distance > 5)) return false;
                 if (advFilters.distance === '10' && (v.distance <= 5 || v.distance > 10)) return false;
                 if (advFilters.distance === '99' && v.distance <= 10) return false;
+            }
+            // Lọc theo địa chỉ 
+            if (filters.address) {
+                const kw = filters.address.toLowerCase();
+                const match =
+                    v.address?.toLowerCase().includes(kw) ||
+                    v.district?.toLowerCase().includes(kw) ||
+                    v.city?.toLowerCase().includes(kw) ||
+                    v.name?.toLowerCase().includes(kw);
+                if (!match) return false;
             }
             return true;
         })
@@ -112,7 +122,6 @@ export default function VenuesPage() {
         try {
             setLoading(true);
             const params = {};
-            if (filters.city) params.city = filters.city;
             if (filters.sportType) params.sportType = filters.sportType;
 
             const { data } = await venuesAPI.list(params);
@@ -179,9 +188,9 @@ export default function VenuesPage() {
                         <MapPin size={20} />
                         <input
                             type="text"
-                            placeholder="Tìm theo thành phố, quận..."
-                            value={filters.city}
-                            onChange={(e) => setFilters({ ...filters, city: e.target.value })}
+                            placeholder="Tìm theo tên sân, địa chỉ, quận..."
+                            value={filters.address}
+                            onChange={(e) => setFilters({ ...filters, address: e.target.value })}
                         />
                     </div>
                     <button className={styles.searchButton}>
@@ -345,20 +354,29 @@ export default function VenuesPage() {
                                                 <UtensilsCrossed size={20} />
                                             </div>
                                             <div className={styles.sportTags}>
-                                                {venue.sportTypes?.slice(0, 2).map(st => (
-                                                    <span key={st} className="sport-tag">
-                                                        <span className={getSportColorClass(st)} style={{ display: 'flex' }}>
-                                                            {getSportIcon(st)}
-                                                        </span>
-                                                        {getSportLabel(st)}
-                                                    </span>
-                                                ))}
-                                                {venue.sportTypes?.length > 2 && (
-                                                    <span className="sport-tag" style={{ color: 'var(--text-secondary)' }}>
-                                                        +{venue.sportTypes.length - 2}
-                                                    </span>
-                                                )}
+                                                <span className={getSportTagClass(venue.sportTypes?.[0])}>
+                                                    {getSportLabel1(venue.sportTypes?.[0])}
+                                                </span>
                                             </div>
+                                        </div>
+
+                                        {/* Footer: Giá + Đặt sân */}
+                                        <div className={styles.venueFooter}>
+                                            <div className={styles.venuePrice}>
+                                                <span className={styles.priceFrom}>Từ</span>
+                                                <span className={styles.priceValue}>
+                                                    {venue.minPrice
+                                                        ? Number(venue.minPrice).toLocaleString('vi-VN') + 'đ'
+                                                        : '0đ'}
+                                                </span>
+                                                <span className={styles.priceUnit}>/giờ</span>
+                                            </div>
+                                            <button
+                                                className={styles.bookBtn}
+                                                onClick={e => { e.preventDefault(); window.location.href = `/venues/${venue.id}`; }}
+                                            >
+                                                Đặt sân
+                                            </button>
                                         </div>
                                     </Link>
                                 ))}

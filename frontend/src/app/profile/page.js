@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { usersAPI, bookingsAPI } from '@/lib/api';
+import { usersAPI, bookingsAPI ,reviewsAPI} from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { 
     Mail, Phone, Calendar, CheckCircle, XCircle,
@@ -26,6 +26,8 @@ export default function ProfilePage() {
     const [recentBookings, setRecentBookings] = useState([]);
     const [bookingsLoading, setBookingsLoading] = useState(false);
     const [stats, setStats] = useState({ totalBookings: 0, completedBookings: 0 });
+    const [reviewCount, setReviewCount] = useState(0);
+    const [reviewsLoading, setReviewsLoading] = useState(true);
 
     useEffect(() => {
         if (!authLoading && !isAuthenticated) { router.push('/login'); return; }
@@ -36,6 +38,7 @@ export default function ProfilePage() {
                 avatarUrl: user.avatarUrl || '',
             });
             loadRecentBookings();
+            loadReviews();
         }
     }, [user, isAuthenticated, authLoading]);
 
@@ -71,6 +74,23 @@ export default function ProfilePage() {
             setMessage('❌ ' + (err.response?.data?.message || 'Cập nhật thất bại'));
         } finally { setSaving(false); }
     };
+    const loadReviews = async () => {
+    try {
+        setReviewsLoading(true);
+        const { data } = await reviewsAPI.getMyReviews();
+        
+        // Backend trả về { success: true, data: { reviews: [...] } }
+        const reviews = data.data.reviews || [];
+        setReviewCount(reviews.length);
+        
+        console.log('User reviews:', reviews); // Debug
+    } catch (err) {
+        console.error('Failed to load reviews:', err);
+        setReviewCount(0);
+    } finally {
+        setReviewsLoading(false);
+    }
+};
 
     if (!user) return null;
 
@@ -200,11 +220,8 @@ export default function ProfilePage() {
                     </button>
                 </div>
             </div>
-
-            {/* Main Content */}
             <div className={styles.mainContent}>
                 <div className={styles.layout}>
-                    {/* Left Column */}
                     <div className={styles.leftColumn}>
                         {/* Hàm chỉnh sửa */}
                         {editing && (
@@ -294,10 +311,8 @@ export default function ProfilePage() {
                                     <div className={`${styles.activityIconWrap} ${styles.yellow}`}>
                                         <Star size={28} color="#F59E0B" />
                                     </div>
-                                    <div className={styles.activityLabel} style={{ fontSize: '20px', fontWeight: 600, color: '#6B7280', marginTop: '1rem' }}>
-                                        Chưa có
-                                    </div>
-                                    <div className={styles.activityLabel} style={{ color: '#9CA3AF' }}>đánh giá</div>
+                                    <div className={styles.activityNumber}>{reviewCount}</div>
+                                    <div className={styles.activityLabel}>Đánh giá</div>
                                 </div>
                             </div>
                         </div>
