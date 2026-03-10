@@ -172,6 +172,7 @@ export default function VenuesPage() {
                                             className={`${styles.dropdownOption} ${filters.sportType === st.value ? styles.dropdownOptionActive : ''}`}
                                             onClick={() => {
                                                 setFilters({ ...filters, sportType: st.value });
+                                                setActiveSport(st.value);
                                                 setSportDropdownOpen(false);
                                             }}
                                         >
@@ -353,11 +354,23 @@ export default function VenuesPage() {
                                                 <Lock size={20} />
                                                 <UtensilsCrossed size={20} />
                                             </div>
-                                            <div className={styles.sportTags}>
-                                                <span className={getSportTagClass(venue.sportTypes?.[0])}>
-                                                    {getSportLabel(venue.sportTypes?.[0])}
-                                                </span>
-                                            </div>
+                                            {venue.sportTypes?.length > 0 && (
+                                                <div className={styles.sportTags}>
+                                                    {venue.sportTypes.slice(0, 2).map(st => (
+                                                        <span key={st} className="sport-tag">
+                                                            <span className={getSportColorClass(st)} style={{ display: 'flex' }}>
+                                                                {getSportIcon(st)}
+                                                            </span>
+                                                            {getSportLabel(st)}
+                                                        </span>
+                                                    ))}
+                                                    {venue.sportTypes.length > 2 && (
+                                                        <span className="sport-tag" style={{ color: 'var(--text-secondary)' }}>
+                                                            +{venue.sportTypes.length - 2}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
 
                                         {/* Footer: Giá + Đặt sân */}
