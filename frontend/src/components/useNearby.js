@@ -48,7 +48,7 @@ export function applyNearbyFilter(venues, userLocation, nearbyEnabled, sortBy, a
         return 0;
     });
 }
-
+// lưu tọa độ
 const SESSION_KEY = 'sportapp_user_location';
 
 function readLocationFromSession() {
