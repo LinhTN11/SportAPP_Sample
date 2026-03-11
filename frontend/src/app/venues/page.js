@@ -13,6 +13,9 @@ import { getSportColorClass, getSportLabel, getSportTagClass } from '@/component
 
 const SERVER_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000').replace(/\/api\/?$/, '');
 
+// Số lượng sân tối đa hiển thị trên 1 trang
+const ITEMS_PER_PAGE = 9;
+
 export default function VenuesPage() {
     const searchParams = useSearchParams();
     const urlSportType = searchParams.get('sportType') || '';
@@ -29,6 +32,9 @@ export default function VenuesPage() {
     const [sportDropdownOpen, setSportDropdownOpen] = useState(false);
     const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
     const [sortValue, setSortValue] = useState('Phù hợp nhất');
+    
+    // State cho phân trang
+    const [currentPage, setCurrentPage] = useState(1);
 
     const sportDropdownRef = useRef(null);
     const sortDropdownRef = useRef(null);
@@ -39,6 +45,11 @@ export default function VenuesPage() {
         return prices.length > 0 ? Math.min(...prices) : Infinity;
     };
 
+    // Khi thay đổi bộ lọc, text search hoặc cách sắp xếp -> Tự động đưa về trang 1
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [filters, advFilters, sortValue]);
+
     const displayedVenues = venues
         .map(v => {
             const vLat = parseFloat(v.latitude);
@@ -46,7 +57,18 @@ export default function VenuesPage() {
             const distance = (userLocation && !isNaN(vLat) && !isNaN(vLng))
                 ? haversineDistance(userLocation.lat, userLocation.lng, vLat, vLng)
                 : null;
-            return { ...v, distance };
+            
+            // LÀM SẠCH GIÁ: Dọn sạch dấu chấm, phẩy, chữ "đ" để JS hiểu đúng là một con số
+            let finalPrice = 0;
+            if (v.minPrice !== null && v.minPrice !== undefined && v.minPrice !== '') {
+                const cleanPrice = v.minPrice.toString().replace(/[^0-9]/g, '');
+                finalPrice = Number(cleanPrice);
+            } else {
+                const calc = getMinPrice(v);
+                finalPrice = calc === Infinity ? 0 : calc;
+            }
+
+            return { ...v, distance, finalPrice };
         })
         .filter(v => {
             if (advFilters.distance && userLocation) {
@@ -56,7 +78,6 @@ export default function VenuesPage() {
                 if (advFilters.distance === '10' && (v.distance <= 5 || v.distance > 10)) return false;
                 if (advFilters.distance === '99' && v.distance <= 10) return false;
             }
-            // Lọc theo địa chỉ 
             if (filters.address) {
                 const kw = filters.address.toLowerCase();
                 const match =
@@ -69,13 +90,40 @@ export default function VenuesPage() {
             return true;
         })
         .sort((a, b) => {
-            if (sortValue === 'Giá thấp đến cao') return getMinPrice(a) - getMinPrice(b);
-            if (sortValue === 'Giá cao đến thấp') return getMinPrice(b) - getMinPrice(a);
-            if (sortValue === 'Đánh giá cao nhất') return (b.avgRating || 0) - (a.avgRating || 0);
+            const priceA = parseInt(a.finalPrice, 10) || 0;
+            const priceB = parseInt(b.finalPrice, 10) || 0;
+
+            if (sortValue === 'Giá thấp đến cao') {
+                if (priceA === 0 && priceB !== 0) return 1;
+                if (priceB === 0 && priceA !== 0) return -1;   
+                if (priceA < priceB) return -1;
+                if (priceA > priceB) return 1;
+                return 0;
+            }
+            if (sortValue === 'Giá cao đến thấp') {
+                if (priceA === 0 && priceB !== 0) return 1;
+                if (priceB === 0 && priceA !== 0) return -1;
+                if (priceA > priceB) return -1;
+                if (priceA < priceB) return 1;
+                return 0;
+            }
+            if (sortValue === 'Đánh giá cao nhất') {
+                const rateA = parseFloat(a.avgRating) || 0;
+                const rateB = parseFloat(b.avgRating) || 0;
+                if (rateA > rateB) return -1;
+                if (rateA < rateB) return 1;
+                return 0;
+            }
             return 0;
         });
-    const SportIcons =
-    {
+
+    // === LOGIC PHÂN TRANG ===
+    const totalPages = Math.ceil(displayedVenues.length / ITEMS_PER_PAGE);
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    // Cắt ra đúng 12 sân cho trang hiện tại
+    const currentVenues = displayedVenues.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+    const SportIcons = {
         all: <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /><path d="M2 12h20" /></svg>,
         football: <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 6l3 4-1 4H10l-1-4z" /><path d="M12 6V2" /><path d="M15 10l5-2" /><path d="M14 14l3 5" /><path d="M10 14l-3 5" /><path d="M9 10L4 8" /></svg>,
         badminton: <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 18v4" /><path d="M10 22h4" /><path d="M12 14c-4 0-6-4-6-8h12c0 4-2 8-6 8z" /><path d="M9 6v2" /><path d="M12 6v2" /><path d="M15 6v2" /></svg>,
@@ -84,6 +132,7 @@ export default function VenuesPage() {
         volleyball: <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 2C6.5 2 2 6.5 2 12" /><path d="M12 2c3 3 4 8 1 13" /><path d="M2 12c3-1 8-2 13 1" /></svg>,
         pickleball: <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><circle cx="9" cy="10" r="1" /><circle cx="15" cy="10" r="1" /><circle cx="12" cy="15" r="1" /></svg>,
     };
+    
     const sportTypes = [
         { value: '', label: 'Tất cả môn', icon: SportIcons.all },
         { value: 'football', label: 'Bóng đá', icon: SportIcons.football },
@@ -105,7 +154,6 @@ export default function VenuesPage() {
         loadVenues();
     }, [filters]);
 
-    // Click outside to close dropdowns
     useEffect(() => {
         const handleClickOutside = (e) => {
             if (sportDropdownRef.current && !sportDropdownRef.current.contains(e.target)) {
@@ -118,6 +166,7 @@ export default function VenuesPage() {
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
+    
     const loadVenues = async () => {
         try {
             setLoading(true);
@@ -138,17 +187,13 @@ export default function VenuesPage() {
         return sport?.icon || SportIcons.all;
     };
 
-
-
     return (
         <div className={styles.page}>
-            {/* Hero Section */}
             <div className={styles.hero}>
                 <h1 className={styles.heroTitle}>Tìm sân thể thao gần bạn</h1>
                 <p className={styles.heroSubtitle}>
                     Khám phá và đặt sân dễ dàng từ hơn 1000+ địa điểm trên toàn quốc
                 </p>
-                {/* Search Bar */}
                 <div className={styles.searchBar}>
                     <div className={styles.searchSport} ref={sportDropdownRef}>
                         <div className={styles.customDropdown}>
@@ -201,7 +246,6 @@ export default function VenuesPage() {
             </div>
 
             <div className={styles.container}>
-                {/* Sport Filter Tabs */}
                 <div className={styles.sportFilters}>
                     {sportTypes.slice(1).map((st) => (
                         <button
@@ -217,17 +261,7 @@ export default function VenuesPage() {
                         </button>
                     ))}
                 </div>
-
-                {/* Quick Filters */}
-                <div className={styles.quickFilters}>
-                    {quickFilters.map((filter, idx) => (
-                        <label key={idx} className={styles.quickFilter}>
-                            <input type="checkbox" defaultChecked={filter.checked} />
-                            <span>{filter.label}</span>
-                        </label>
-                    ))}
-                </div>
-                {/* Layout: Sidebar bộ lọc + nội dung */}
+                
                 <div style={{ display: 'flex', gap: 28, alignItems: 'flex-start' }}>
                     <AdvancedFilter
                         onApply={(f) => {
@@ -239,8 +273,6 @@ export default function VenuesPage() {
                         onClear={() => { setAdvFilters({}); }}
                     />
                     <div style={{ flex: 1, minWidth: 0 }}>
-
-                        {/* Results Bar */}
                         <div className={styles.resultsBar}>
                             <div className={styles.resultsCount}>
                                 Tìm thấy <strong>{displayedVenues.length}</strong> sân phù hợp
@@ -277,7 +309,6 @@ export default function VenuesPage() {
                             </div>
                         </div>
 
-                        {/* Venue Grid */}
                         {loading ? (
                             <div className={styles.grid}>
                                 {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -299,9 +330,9 @@ export default function VenuesPage() {
                             </div>
                         ) : (
                             <div className={styles.grid}>
-                                {displayedVenues.map((venue) => (
+                                {/* SỬ DỤNG currentVenues thay vì displayedVenues ở đây */}
+                                {currentVenues.map((venue) => (
                                     <Link key={venue.id} href={`/venues/${venue.id}`} className={styles.venueCard}>
-                                        {/* Image */}
                                         <div className={styles.venueImage}>
                                             {venue.images?.length > 0 ? (
                                                 <img src={`${SERVER_URL}${venue.images[0]}`} alt={venue.name} />
@@ -315,11 +346,9 @@ export default function VenuesPage() {
                                             </button>
                                         </div>
 
-                                        {/* Body */}
                                         <div className={styles.venueBody}>
                                             <h3 className={styles.venueName}>{venue.name}</h3>
 
-                                            {/* Rating */}
                                             <div className={styles.venueRating}>
                                                 {[1, 2, 3, 4, 5].map((star) => (
                                                     <Star key={star} size={16} fill="#FFC107" color="#FFC107" />
@@ -336,7 +365,6 @@ export default function VenuesPage() {
                                                 <span>{venue.fields?.length || 0} sân khả dụng</span>
                                             </div>
 
-                                            {/* Location */}
                                             <div className={styles.venueLocation}>
                                                 <MapPin size={14} />
                                                 <span>{venue.address}, {venue.district}, {venue.city}</span>
@@ -373,13 +401,12 @@ export default function VenuesPage() {
                                             )}
                                         </div>
 
-                                        {/* Footer: Giá + Đặt sân */}
                                         <div className={styles.venueFooter}>
                                             <div className={styles.venuePrice}>
                                                 <span className={styles.priceFrom}>Từ</span>
                                                 <span className={styles.priceValue}>
-                                                    {venue.minPrice
-                                                        ? Number(venue.minPrice).toLocaleString('vi-VN') + 'đ'
+                                                    {venue.finalPrice > 0
+                                                        ? venue.finalPrice.toLocaleString('vi-VN') + 'đ'
                                                         : '0đ'}
                                                 </span>
                                                 <span className={styles.priceUnit}>/giờ</span>
@@ -395,19 +422,55 @@ export default function VenuesPage() {
                                 ))}
                             </div>
                         )}
+                        
+                        {/* HIỂN THỊ CÁC NÚT BẤM SỐ TRANG ĐỘNG */}
                         {!loading && displayedVenues.length > 0 && (
-                            <div className={styles.pagination}>
-                                <button className={styles.pageArrow}><ChevronLeft size={20} /></button>
-                                <button className={styles.pageNum}>1</button>
-                                <button className={`${styles.pageNum} ${styles.pageActive}`}>2</button>
-                                <button className={styles.pageNum}>3</button>
-                                <button className={styles.pageNum}>4</button>
-                                <button className={styles.pageArrow}><ChevronRight size={20} /></button>
-                            </div>
+                            <>
+                                {totalPages > 1 && (
+                                    <div className={styles.pagination}>
+                                        <button 
+                                            className={styles.pageArrow} 
+                                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                            style={{ opacity: currentPage === 1 ? 0.4 : 1, cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+                                            disabled={currentPage === 1}
+                                        >
+                                            <ChevronLeft size={20} />
+                                        </button>
+                                        
+                                        {[...Array(totalPages)].map((_, i) => {
+                                            const pageNum = i + 1;
+                                            return (
+                                                <button 
+                                                    key={pageNum} 
+                                                    className={`${styles.pageNum} ${currentPage === pageNum ? styles.pageActive : ''}`}
+                                                    onClick={() => {
+                                                        setCurrentPage(pageNum);
+                                                        window.scrollTo({ top: 0, behavior: 'smooth' }); // Tự động cuộn lên đầu khi sang trang
+                                                    }}
+                                                >
+                                                    {pageNum}
+                                                </button>
+                                            );
+                                        })}
 
+                                        <button 
+                                            className={styles.pageArrow} 
+                                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                            style={{ opacity: currentPage === totalPages ? 0.4 : 1, cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
+                                            disabled={currentPage === totalPages}
+                                        >
+                                            <ChevronRight size={20} />
+                                        </button>
+                                    </div>
+                                )}
+                                <div className={styles.pageInfo}>
+                                    Hiển thị {startIndex + 1}-{Math.min(startIndex + ITEMS_PER_PAGE, displayedVenues.length)} của {displayedVenues.length} sân
+                                </div>
+                            </>
                         )}
-                        <div className={styles.pageInfo}>Hiển thị 1-9 của {displayedVenues.length} sân</div>
-                    </div></div>
+                    </div>
+                </div>
+                
                 <div className={styles.promoBanner}>
                     <div className={styles.promoIcon}>{SportIcons.football}</div>
                     <div className={styles.promoContent}>
