@@ -146,10 +146,16 @@
 }
 
 .sportTab:hover {
-    border-color: #FF5A5F;
-    background: rgba(255, 90, 95, 0.05);
+    border-color: #E04147;
+    background: linear-gradient(135deg, rgba(224, 65, 71, 0.05), rgba(224, 65, 71, 0.08));
+    color: #E04147;
 }
 
+.sportTabActive {
+    background: linear-gradient(135deg, #FF6E40, #E04147);
+    border-color: #E04147;
+    color: white;
+}
 
 .sportTabIcon {
     font-size: 18px;
@@ -170,12 +176,18 @@
     font-size: 14px;
     color: #374151;
     cursor: pointer;
+    transition: color 0.15s;
+}
+
+.quickFilter:hover {
+    color: #E04147;
 }
 
 .quickFilter input[type="checkbox"] {
     width: 18px;
     height: 18px;
     cursor: pointer;
+    accent-color: #E04147;
 }
 
 /* Results Bar */
@@ -215,7 +227,7 @@
 
 .resultsSort select:focus {
     outline: none;
-    border-color: #FF5A5F;
+    border-color: #E04147;
 }
 
 /* ── Custom Dropdown ────────────────────── */
@@ -229,26 +241,35 @@
     align-items: center;
     gap: 8px;
     padding: 10px 16px;
-    background: var(--bg-primary);
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius-md);
+    background: var(--bg-primary, #ffffff);
+    border: 1.5px solid var(--border, #E5E7EB);
+    border-radius: var(--radius-md, 8px);
     font-family: var(--font-sans);
     font-size: 14px;
     font-weight: 500;
-    color: var(--text-primary);
+    color: var(--text-primary, #111827);
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: all var(--transition-fast, 0.2s);
     white-space: nowrap;
 }
 
+/* Màu cam đậm hơn khi hover */
 .dropdownTrigger:hover {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.08);
+    border-color: #E04147;
+    box-shadow: 0 0 0 3px rgba(224, 65, 71, 0.08);
+    color: #E04147;
 }
 
+/* Đổi màu viền và chữ khi click mở dropdown */
 .dropdownTriggerOpen {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15);
+    border-color: #E04147;
+    box-shadow: 0 0 0 3px rgba(224, 65, 71, 0.15);
+    color: #E04147;
+}
+
+/* Đổi màu icon mũi tên khi dropdown đang mở */
+.dropdownTriggerOpen .dropdownChevron {
+    color: #E04147;
 }
 
 /* Sport dropdown inside search bar – borderless */
@@ -262,20 +283,20 @@
 .dropdownTriggerInline:hover {
     border: none;
     box-shadow: none;
-    color: var(--primary);
+    color: #E04147;
 }
 
 .dropdownTriggerInline.dropdownTriggerOpen {
     border: none;
     box-shadow: none;
-    color: var(--primary);
+    color: #E04147;
 }
 
 .dropdownChevron {
     display: flex;
     align-items: center;
-    transition: transform var(--transition-fast);
-    color: var(--text-tertiary);
+    transition: transform var(--transition-fast, 0.2s);
+    color: var(--text-tertiary, #9CA3AF);
     flex-shrink: 0;
 }
 
@@ -288,10 +309,10 @@
     top: calc(100% + 6px);
     left: 0;
     min-width: 100%;
-    background: var(--bg-elevated);
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-lg);
+    background: var(--bg-elevated, #ffffff);
+    border: 1px solid var(--border-light, #E5E7EB);
+    border-radius: var(--radius-md, 8px);
+    box-shadow: var(--shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.1));
     padding: 6px;
     z-index: 100;
     animation: dropdownFadeIn 180ms cubic-bezier(0.25, 0.1, 0.25, 1);
@@ -308,27 +329,27 @@
     align-items: center;
     gap: 10px;
     padding: 10px 14px;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-sm, 6px);
     font-size: 14px;
     font-weight: 450;
-    color: var(--text-primary);
+    color: var(--text-primary, #111827);
     cursor: pointer;
-    transition: background var(--transition-fast);
+    transition: background var(--transition-fast, 0.2s);
     white-space: nowrap;
 }
 
 .dropdownOption:hover {
-    background: var(--bg-secondary);
+    background: rgba(224, 65, 71, 0.05);
 }
 
 .dropdownOptionActive {
-    background: var(--primary-light);
-    color: var(--primary);
+    background: rgba(224, 65, 71, 0.1);
+    color: #E04147;
     font-weight: 600;
 }
 
 .dropdownOptionActive:hover {
-    background: var(--primary-light);
+    background: rgba(224, 65, 71, 0.15);
 }
 
 .dropdownOptionIcon {
@@ -433,7 +454,7 @@
 
 .heartButton:hover {
     background: white;
-    color: #EF4444;
+    color: #E04147;
     transform: scale(1.1);
 }
 
@@ -501,7 +522,7 @@
 }
 
 .venueLocation svg {
-    color: #FF5A5F;
+    color: #E04147;
     flex-shrink: 0;
 }
 
@@ -522,7 +543,7 @@
     flex-shrink: 0;
     padding: 2px 7px;
     background: #FFF0F0;
-    color: #FF5A5F;
+    color: #E04147;
     font-size: 11px;
     font-weight: 700;
     border-radius: 20px;
@@ -588,7 +609,7 @@
 .bookBtn {
     width: 120px;
     height: 40px;
-    background: linear-gradient(135deg, #FF6E40 0%, #FF5A5F 100%);
+    background: linear-gradient(135deg, #FF6E40 0%, #E04147 100%);
     border: none;
     border-radius: 10px;
     color: white;
@@ -596,7 +617,7 @@
     font-weight: 700;
     cursor: pointer;
     letter-spacing: 0.2px;
-    box-shadow: 0 4px 14px rgba(255, 90, 95, 0.38);
+    box-shadow: 0 4px 14px rgba(224, 65, 71, 0.38);
     transition: transform 0.18s ease, box-shadow 0.18s ease;
     position: relative;
     overflow: hidden;
@@ -613,7 +634,7 @@
 
 .bookBtn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(255, 90, 95, 0.48);
+    box-shadow: 0 8px 20px rgba(224, 65, 71, 0.48);
 }
 
 .bookBtn:hover::after {
@@ -622,7 +643,7 @@
 
 .bookBtn:active {
     transform: translateY(0);
-    box-shadow: 0 3px 10px rgba(255, 90, 95, 0.32);
+    box-shadow: 0 3px 10px rgba(224, 65, 71, 0.32);
 }
 
 .tagYellow {
@@ -741,13 +762,13 @@
 
 .pageArrow:hover,
 .pageNum:hover {
-    border-color: #FF5A5F;
-    background: rgba(255, 90, 95, 0.05);
+    border-color: #E04147;
+    background: rgba(224, 65, 71, 0.05);
 }
 
 .pageActive {
-    background: #FF5A5F;
-    border-color: #FF5A5F;
+    background: #E04147;
+    border-color: #E04147;
     color: white;
 }
 
@@ -803,7 +824,7 @@
     background: white;
     border: none;
     border-radius: 8px;
-    color: #FF5A5F;
+    color: #E04147;
     font-size: 15px;
     font-weight: 700;
     cursor: pointer;
