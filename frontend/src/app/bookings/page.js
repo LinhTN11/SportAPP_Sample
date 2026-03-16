@@ -193,7 +193,7 @@ export default function BookingsPage() {
                                                         ⭐ Đánh giá
                                                     </button>
                                                 )}
-                                                {['PENDING_DEPOSIT', 'CONFIRMED'].includes(booking.status) && (
+                                                {booking.status === 'PENDING_DEPOSIT' && (
                                                     <button className={styles.btnCancel} onClick={() => handleCancel(booking.id)}>
                                                         Hủy đặt sân
                                                     </button>

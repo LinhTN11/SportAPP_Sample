@@ -62,8 +62,12 @@ async function calculateTotalPrice(fieldId, bookingDate, startTime, endTime) {
     }
 
     let totalPrice = 0;
-    const bookStart = timeToMinutes(startTime);
-    const bookEnd = timeToMinutes(endTime);
+    let bookStart = timeToMinutes(startTime);
+    let bookEnd = timeToMinutes(endTime);
+
+    if (bookEnd <= bookStart) {
+        bookEnd += 24 * 60;
+    }
 
     // For each pricing rule, calculate overlap with booking time
     for (const rule of rules) {
@@ -72,16 +76,28 @@ async function calculateTotalPrice(fieldId, bookingDate, startTime, endTime) {
             continue;
         }
 
-        const ruleStart = timeToMinutes(rule.startTime);
-        const ruleEnd = timeToMinutes(rule.endTime);
+        let ruleStart = timeToMinutes(rule.startTime);
+        let ruleEnd = timeToMinutes(rule.endTime);
 
-        // Calculate overlap
-        const overlapStart = Math.max(bookStart, ruleStart);
-        const overlapEnd = Math.min(bookEnd, ruleEnd);
+        if (ruleEnd <= ruleStart) {
+            ruleEnd += 24 * 60;
+        }
 
-        if (overlapStart < overlapEnd) {
-            const overlapHours = (overlapEnd - overlapStart) / 60;
-            totalPrice += overlapHours * Number(rule.price);
+        // We perfectly handle midnight crossing by testing 3 shifts of the rule interval
+        const ruleIntervals = [
+            { start: ruleStart - 24 * 60, end: ruleEnd - 24 * 60 },
+            { start: ruleStart, end: ruleEnd },
+            { start: ruleStart + 24 * 60, end: ruleEnd + 24 * 60 }
+        ];
+
+        for (const interval of ruleIntervals) {
+            const overlapStart = Math.max(bookStart, interval.start);
+            const overlapEnd = Math.min(bookEnd, interval.end);
+
+            if (overlapStart < overlapEnd) {
+                const overlapHours = (overlapEnd - overlapStart) / 60;
+                totalPrice += overlapHours * Number(rule.price);
+            }
         }
     }
 

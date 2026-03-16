@@ -16,6 +16,97 @@
     align-items: center;
 }
 
+/* Custom Dropdown UI for Owner Bookings */
+.customDropdown {
+    position: relative;
+    user-select: none;
+    width: 300px;
+}
+
+.dropdownTrigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.dropdownTrigger:hover {
+    border-color: #FF5A5F;
+}
+
+.dropdownTriggerOpen {
+    border-color: #FF5A5F;
+    box-shadow: 0 0 0 3px rgba(255, 90, 95, 0.1);
+}
+
+.dropdownChevron {
+    color: var(--text-tertiary);
+    transition: transform var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.dropdownChevronOpen {
+    transform: rotate(180deg);
+}
+
+.dropdownMenu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    width: 100%;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    padding: 6px;
+    z-index: 1000;
+    max-height: 240px;
+    overflow-y: auto;
+    animation: dropdownSlideIn 180ms ease-out;
+}
+
+.dropdownOption {
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+
+.dropdownOption:hover {
+    background: var(--bg-secondary);
+}
+
+.dropdownOptionActive {
+    background: rgba(255, 90, 95, 0.08); /* Light Orange Theme */
+    color: #FF6E40;
+    font-weight: 600;
+}
+
+@keyframes dropdownSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 .filterTabs {
     display: flex;
     gap: 4px;

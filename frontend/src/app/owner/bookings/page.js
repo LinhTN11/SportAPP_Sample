@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { venuesAPI, bookingsAPI } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { ClipboardList, CalendarDays, User } from 'lucide-react';
+import { ClipboardList, CalendarDays, User, ChevronDown } from 'lucide-react';
 import styles from './ownerBookings.module.css';
 
 export default function OwnerBookingsPage() {
@@ -15,6 +15,21 @@ export default function OwnerBookingsPage() {
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('');
+    
+    // Custom Dropdown State
+    const [venueDropdownOpen, setVenueDropdownOpen] = useState(false);
+    const venueDropdownRef = useRef(null);
+
+    // Handle outside click
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (venueDropdownRef.current && !venueDropdownRef.current.contains(e.target)) {
+                setVenueDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     useEffect(() => {
         if (!authLoading && (!isAuthenticated || !isOwner)) { router.push('/login'); return; }
@@ -69,14 +84,34 @@ export default function OwnerBookingsPage() {
 
                 {/* Venue selector */}
                 <div className={styles.controls}>
-                    <select
-                        className="form-input form-select"
-                        value={selectedVenue}
-                        onChange={(e) => setSelectedVenue(e.target.value)}
-                        style={{ maxWidth: 300 }}
-                    >
-                        {venues.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
-                    </select>
+                    <div className={styles.customDropdown} ref={venueDropdownRef}>
+                        <div 
+                            className={`${styles.dropdownTrigger} ${venueDropdownOpen ? styles.dropdownTriggerOpen : ''}`}
+                            onClick={() => setVenueDropdownOpen(!venueDropdownOpen)}
+                        >
+                            <span>{venues.find(v => v.id === selectedVenue)?.name || 'Vui lòng chọn sân...'}</span>
+                            <span className={`${styles.dropdownChevron} ${venueDropdownOpen ? styles.dropdownChevronOpen : ''}`}>
+                                <ChevronDown size={16} />
+                            </span>
+                        </div>
+                        
+                        {venueDropdownOpen && (
+                            <div className={styles.dropdownMenu}>
+                                {venues.map(v => (
+                                    <div 
+                                        key={v.id} 
+                                        className={`${styles.dropdownOption} ${selectedVenue === v.id ? styles.dropdownOptionActive : ''}`}
+                                        onClick={() => {
+                                            setSelectedVenue(v.id);
+                                            setVenueDropdownOpen(false);
+                                        }}
+                                    >
+                                        {v.name}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
 
                     <div className={styles.filterTabs}>
                         {['', 'PENDING_DEPOSIT', 'CONFIRMED', 'COMPLETED', 'CANCELLED'].map(s => (
@@ -110,8 +145,11 @@ export default function OwnerBookingsPage() {
                     <div>{[1, 2, 3].map(i => <div key={i} className={styles.skeletonRow}><div className="skeleton" style={{ height: 16, width: '30%', marginBottom: 6 }} /><div className="skeleton" style={{ height: 14, width: '50%' }} /></div>)}</div>
                 ) : bookings.length === 0 ? (
                     <div className="empty-state">
-                        <div className="empty-state-icon" style={{ opacity: 0.5, marginBottom: 12 }}><ClipboardList size={40} /></div>
+                        <div className="empty-state-icon">
+                            <ClipboardList size={48} strokeWidth={1.5} color="var(--text-tertiary)" />
+                        </div>
                         <div className="empty-state-title">Chưa có đặt sân nào</div>
+                        <div className="empty-state-text">Khi có khách đặt sân, thông tin sẽ hiển thị tại đây.</div>
                     </div>
                 ) : (
                     Object.entries(groupedBookings).map(([date, items]) => (

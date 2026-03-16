@@ -631,11 +631,18 @@ textarea.form-input {
 .empty-state {
   text-align: center;
   padding: var(--space-3xl) var(--space-xl);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .empty-state-icon {
   font-size: 48px;
   margin-bottom: var(--space-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .empty-state-title {
