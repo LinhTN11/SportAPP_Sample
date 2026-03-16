@@ -4,7 +4,10 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { bookingsAPI, reviewsAPI } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { CalendarDays, Clock, Wallet } from 'lucide-react';
 import styles from './bookings.module.css';
+import PaymentQRModal from './PaymentQR/PaymentQRModal';
+import CountdownTimer from './PaymentQR/CountdownTimer';
 
 export default function BookingsPage() {
     const router = useRouter();
@@ -12,6 +15,7 @@ export default function BookingsPage() {
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('');
+    const [paymentBooking, setPaymentBooking] = useState(null);
 
     // Review state
     const [showReviewModal, setShowReviewModal] = useState(null); // bookingId
@@ -70,6 +74,10 @@ export default function BookingsPage() {
             setReviewSubmitting(false);
         }
     };
+    const handlePaymentConfirm = async (bookingId) => {
+    await bookingsAPI.confirm(bookingId);
+    loadBookings();
+    };
 
     const statusMap = {
         PENDING_DEPOSIT: { label: 'Chờ cọc', class: 'badge-warning' },
@@ -100,9 +108,12 @@ export default function BookingsPage() {
                     <div className={styles.list}>
                         {[1, 2, 3].map(i => (
                             <div key={i} className={styles.skeletonCard}>
-                                <div className="skeleton" style={{ height: 20, width: '40%', marginBottom: 8 }} />
-                                <div className="skeleton" style={{ height: 16, width: '60%', marginBottom: 8 }} />
-                                <div className="skeleton" style={{ height: 16, width: '30%' }} />
+                                <div className={styles.skeletonImg} />
+                                <div className={styles.skeletonBody}>
+                                    <div className="skeleton" style={{ height: 20, width: '45%' }} />
+                                    <div className="skeleton" style={{ height: 14, width: '30%' }} />
+                                    <div className="skeleton" style={{ height: 14, width: '60%' }} />
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -117,56 +128,89 @@ export default function BookingsPage() {
                     </div>
                 ) : (
                     <div className={styles.list}>
-                        {bookings.map((booking) => (
-                            <div key={booking.id} className={styles.bookingCard}>
-                                <div className={styles.bookingHeader}>
-                                    <div>
-                                        <h3 className={styles.venueName}>{booking.field?.venue?.name}</h3>
-                                        <p className={styles.fieldName}>{booking.field?.name}</p>
-                                    </div>
-                                    <span className={`badge ${statusMap[booking.status]?.class}`}>
-                                        {statusMap[booking.status]?.label}
-                                    </span>
-                                </div>
+                        {bookings.map((booking) => {
+                            const isCancelled = booking.status === 'CANCELLED' || booking.status === 'EXPIRED';
+                            const venueImages = booking.field?.venue?.images;
+                            const SERVER_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000').replace(/\/api\/?$/, '');
+                            const imgSrc = venueImages?.length > 0 ? `${SERVER_URL}${venueImages[0]}` : null;
+                            return (
+                                <div key={booking.id} className={styles.bookingCard}>
+                                    {/* Venue Image */}
+                                    {imgSrc ? (
+                                        <div className={styles.cardImage}>
+                                            <img src={imgSrc} alt={booking.field?.venue?.name} />
+                                        </div>
+                                    ) : (
+                                        <div className={styles.imagePlaceholder}>⚽</div>
+                                    )}
 
-                                <div className={styles.bookingDetails}>
-                                    <div className={styles.detailItem}>
-                                        <span>📅</span>
-                                        <span>{new Date(booking.bookingDate).toLocaleDateString('vi-VN')}</span>
-                                    </div>
-                                    <div className={styles.detailItem}>
-                                        <span>🕐</span>
-                                        <span>{booking.startTime} - {booking.endTime}</span>
-                                    </div>
-                                    <div className={styles.detailItem}>
-                                        <span>💰</span>
-                                        <span>{Number(booking.totalPrice).toLocaleString('vi-VN')}đ</span>
+                                    {/* Card Body */}
+                                    <div className={styles.cardBody}>
+                                        <div className={styles.bookingHeader}>
+                                            <div>
+                                                <h3 className={styles.venueName}>{booking.field?.venue?.name}</h3>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 3 }}>
+                                                    <p className={styles.fieldName} style={{ margin: 0 }}>{booking.field?.name}</p>
+                                                    {booking.status === 'PENDING_DEPOSIT' && booking.holdExpiresAt && (
+                                                        <CountdownTimer
+                                                            expiresAt={booking.holdExpiresAt}
+                                                            onExpired={() => {
+                                                                alert('Đặt chỗ đã hết hạn! Vui lòng đặt lại.');
+                                                                loadBookings();
+                                                            }}/>)}</div>
+                                            </div>
+                                            <span className={`badge ${statusMap[booking.status]?.class}`}>
+                                                {statusMap[booking.status]?.label}
+                                            </span>
+                                        </div>
+
+                                        <div className={styles.bookingDetails}>
+                                            <div className={styles.detailItem}>
+                                                <CalendarDays size={15} color="#FF6E40" />
+                                                <span>{new Date(booking.bookingDate).toLocaleDateString('vi-VN')}</span>
+                                            </div>
+                                            <div className={styles.detailItem}>
+                                                <Clock size={15} color="#FF6E40" />
+                                                <span>{booking.startTime} - {booking.endTime}</span>
+                                            </div>
+                                            <div className={styles.detailItem}>
+                                                <Wallet size={15} color={isCancelled ? '#9CA3AF' : '#FF6E40'} />
+                                                <span className={isCancelled ? styles.detailPriceCancelled : styles.detailPrice}>
+                                                    {Number(booking.totalPrice).toLocaleString('vi-VN')}đ
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        {['PENDING_DEPOSIT', 'CONFIRMED', 'COMPLETED'].includes(booking.status) && (
+                                            <div className={styles.bookingActions}>
+                                                {booking.status === 'PENDING_DEPOSIT' && (
+                                                    <button className={styles.btnPay} onClick={() => setPaymentBooking(booking)}>
+                                                        Thanh toán →
+                                                    </button>
+                                                )}
+                                                {['CONFIRMED', 'COMPLETED'].includes(booking.status) && !booking.review && (
+                                                    <button className={styles.btnReview} onClick={() => setShowReviewModal(booking.id)}>
+                                                        ⭐ Đánh giá
+                                                    </button>
+                                                )}
+                                                {['PENDING_DEPOSIT', 'CONFIRMED'].includes(booking.status) && (
+                                                    <button className={styles.btnCancel} onClick={() => handleCancel(booking.id)}>
+                                                        Hủy đặt sân
+                                                    </button>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
-
-                                {['PENDING_DEPOSIT', 'CONFIRMED', 'COMPLETED'].includes(booking.status) && (
-                                    <div className={styles.bookingActions}>
-                                        {booking.status === 'PENDING_DEPOSIT' && (
-                                            <button className="btn btn-primary btn-sm" onClick={() => router.push(`/venues/${booking.field?.venue?.id}`)}>
-                                                Thanh toán →
-                                            </button>
-                                        )}
-                                        {['CONFIRMED', 'COMPLETED'].includes(booking.status) && !booking.review && (
-                                            <button className="btn btn-primary btn-sm" onClick={() => setShowReviewModal(booking.id)}>
-                                                ⭐ Đánh giá
-                                            </button>
-                                        )}
-                                        {['PENDING_DEPOSIT', 'CONFIRMED'].includes(booking.status) && (
-                                            <button className="btn btn-ghost btn-sm" onClick={() => handleCancel(booking.id)}>
-                                                Hủy đặt sân
-                                            </button>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
+                {paymentBooking && (
+                    <PaymentQRModal
+                        booking={paymentBooking}
+                        onClose={() => setPaymentBooking(null)}
+                        onConfirm={handlePaymentConfirm}/>)}
 
                 {/* Review Modal */}
                 {showReviewModal && (
