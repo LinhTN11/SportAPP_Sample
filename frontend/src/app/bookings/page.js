@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/auth';
 import { CalendarDays, Clock, Wallet } from 'lucide-react';
 import styles from './bookings.module.css';
 import PaymentQRModal from './PaymentQR/PaymentQRModal';
+import CountdownTimer from './PaymentQR/CountdownTimer';
 
 export default function BookingsPage() {
     const router = useRouter();
@@ -148,7 +149,15 @@ export default function BookingsPage() {
                                         <div className={styles.bookingHeader}>
                                             <div>
                                                 <h3 className={styles.venueName}>{booking.field?.venue?.name}</h3>
-                                                <p className={styles.fieldName}>{booking.field?.name}</p>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 3 }}>
+                                                    <p className={styles.fieldName} style={{ margin: 0 }}>{booking.field?.name}</p>
+                                                    {booking.status === 'PENDING_DEPOSIT' && booking.holdExpiresAt && (
+                                                        <CountdownTimer
+                                                            expiresAt={booking.holdExpiresAt}
+                                                            onExpired={() => {
+                                                                alert('Đặt chỗ đã hết hạn! Vui lòng đặt lại.');
+                                                                loadBookings();
+                                                            }}/>)}</div>
                                             </div>
                                             <span className={`badge ${statusMap[booking.status]?.class}`}>
                                                 {statusMap[booking.status]?.label}
