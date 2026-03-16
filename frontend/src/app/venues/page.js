@@ -58,7 +58,6 @@ export default function VenuesPage() {
                 ? haversineDistance(userLocation.lat, userLocation.lng, vLat, vLng)
                 : null;
             
-            // LÀM SẠCH GIÁ: Dọn sạch dấu chấm, phẩy, chữ "đ" để JS hiểu đúng là một con số
             let finalPrice = 0;
             if (v.minPrice !== null && v.minPrice !== undefined && v.minPrice !== '') {
                 const cleanPrice = v.minPrice.toString().replace(/[^0-9]/g, '');
