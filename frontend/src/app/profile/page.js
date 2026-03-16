@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { usersAPI, bookingsAPI ,reviewsAPI} from '@/lib/api';
+import { usersAPI, bookingsAPI, reviewsAPI, uploadAPI } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { 
     Mail, Phone, Calendar, CheckCircle, XCircle,
-    Edit2, Save, X,
+    Edit2, Save, X, Camera,
     Building2, Users, Star, Trophy,
     MessageCircle, Bell, ClipboardList, CheckSquare,
     CalendarX, ArrowRight
@@ -28,6 +28,9 @@ export default function ProfilePage() {
     const [stats, setStats] = useState({ totalBookings: 0, completedBookings: 0 });
     const [reviewCount, setReviewCount] = useState(0);
     const [reviewsLoading, setReviewsLoading] = useState(true);
+    const [coverUploading, setCoverUploading] = useState(false);
+
+    const SERVER_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000').replace(/\/api\/?$/, '');
 
     useEffect(() => {
         if (!authLoading && !isAuthenticated) { router.push('/login'); return; }
@@ -95,19 +98,57 @@ export default function ProfilePage() {
     if (!user) return null;
 
     const roleLabels = {
-        ADMIN: { label: 'Quản trị viên', icon: '👑', color: '#FF9F0A' },
-        OWNER: { label: 'Chủ sân', icon: '🏠', color: '#30D158' },
-        CUSTOMER: { label: 'Khách hàng', icon: '👤', color: '#0066FF' },
+        ADMIN: { label: 'Quản trị viên', color: '#FF9F0A' },
+        OWNER: { label: 'Chủ sân', color: '#30D158' },
+        CUSTOMER: { label: 'Khách hàng', color: '#0066FF' },
     };
     const role = roleLabels[user.role] || roleLabels.CUSTOMER;
+
+    const handleCoverUpload = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        try {
+            setCoverUploading(true);
+            const { data: uploadData } = await uploadAPI.single(file);
+            const coverUrl = `${SERVER_URL}${uploadData.data.url}`;
+            await usersAPI.updateProfile({ coverImageUrl: coverUrl });
+            updateUser({ ...user, coverImageUrl: coverUrl });
+        } catch (err) {
+            console.error('Cover upload failed:', err);
+        } finally {
+            setCoverUploading(false);
+        }
+    };
 
     return (
         <div className={styles.page}>
             {/* Hero Profile Section */}
-            <div className={styles.heroSection}>
+            <div
+                className={styles.heroSection}
+                style={user.coverImageUrl ? {
+                    backgroundImage: `linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,245,237,0.5) 60%, rgba(255,245,237,0.92) 100%), url('${user.coverImageUrl}')`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                } : undefined}
+            >
                 <div className={styles.heroContainer}>
                     {!editing && (
                         <div className={styles.editButtonWrapper}>
+                            <label className={styles.coverUploadBtn} title="Đổi ảnh bìa">
+                                {coverUploading ? (
+                                    <span className="spinner" style={{ width: 16, height: 16 }} />
+                                ) : (
+                                    <Camera size={16} />
+                                )}
+                                Ảnh bìa
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    style={{ display: 'none' }}
+                                    onChange={handleCoverUpload}
+                                    disabled={coverUploading}
+                                />
+                            </label>
                             <button className={styles.editButton} onClick={() => setEditing(true)}>
                                 <Edit2 size={16} />
                                 Chỉnh sửa hồ sơ
@@ -125,7 +166,7 @@ export default function ProfilePage() {
                         </div>
                         <h1 className={styles.userName}>{user.fullName}</h1>
                         <div className={styles.roleBadge} style={{ background: role.color + '33', color: role.color }}>
-                            {role.icon} {role.label}
+                            {role.label}
                         </div>
                     </div>
 
@@ -169,7 +210,7 @@ export default function ProfilePage() {
                                     <Calendar size={16} color="#FF6E40" />
                                     Tham gia
                                 </span>
-                                <span className={styles.statValue}>{new Date(user.createdAt).toLocaleDateString('vi-VN')}</span>
+                                <span className={styles.statValue}>{user.createdAt ? new Date(user.createdAt).toLocaleDateString('vi-VN') : '—'}</span>
                             </div>
                         </div>
                     </div>

@@ -351,10 +351,10 @@ export default function VenuesPage() {
 
                                             <div className={styles.venueRating}>
                                                 {[1, 2, 3, 4, 5].map((star) => (
-                                                    <Star key={star} size={16} fill="#FFC107" color="#FFC107" />
+                                                    <Star key={star} size={16} fill={star <= Math.round(venue.avgRating || 0) ? '#FFC107' : 'none'} color="#FFC107" />
                                                 ))}
                                                 <span className={styles.ratingValue}>
-                                                    {venue.avgRating?.toFixed(1) || '5'}
+                                                    {(venue.avgRating || 0).toFixed(1)}
                                                 </span>
                                                 <span className={styles.reviewCount}>
                                                     ({venue.reviewCount || 0})

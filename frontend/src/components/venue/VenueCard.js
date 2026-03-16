@@ -72,7 +72,10 @@ export default function VenueCard({
                 {/* Rating */}
                 <div className={styles.rating}>
                     {[1, 2, 3, 4, 5].map(s => (
-                        <Star key={s} size={14} fill="#FFC107" color="#FFC107" />
+                        <Star key={s} size={14}
+                            fill={s <= Math.round(venue.avgRating || 0) ? '#FFC107' : 'none'}
+                            color="#FFC107"
+                        />
                     ))}
                     <span className={styles.ratingValue}>
                         {venue.avgRating?.toFixed(1) || '0.0'}

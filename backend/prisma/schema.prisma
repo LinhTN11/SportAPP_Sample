@@ -127,6 +127,7 @@ model User {
   fullName          String   @map("full_name")
   phone             String?
   avatarUrl         String?  @map("avatar_url")
+  coverImageUrl     String?  @map("cover_image_url")
   role              UserRole @default(CUSTOMER)
   isVerified        Boolean  @default(false) @map("is_verified")
   preferredLanguage Language @default(vi) @map("preferred_language")
@@ -371,7 +372,7 @@ model Review {
 
   // Relations
   user    User    @relation(fields: [userId], references: [id])
-  venue   Venue   @relation(fields: [venueId], references: [id])
+  venue   Venue   @relation(fields: [venueId], references: [id], onDelete: Cascade)
   booking Booking @relation(fields: [bookingId], references: [id])
 
   @@map("reviews")

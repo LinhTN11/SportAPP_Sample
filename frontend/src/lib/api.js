@@ -57,6 +57,7 @@ export const venuesAPI = {
     getPending: () => api.get('/venues/admin/pending'),
     approve: (id) => api.post(`/venues/${id}/approve`),
     reject: (id, reason) => api.post(`/venues/${id}/reject`, { reason }),
+    delete: (id) => api.delete(`/venues/${id}`),
 };
 
 // Fields API
@@ -120,6 +121,7 @@ export const chatAPI = {
 export const reviewsAPI = {
     create: (data) => api.post('/reviews', data),
     getByVenue: (venueId, params) => api.get(`/reviews/venue/${venueId}`, { params }),
+    getMyReviews: () => api.get('/reviews/my'),
 };
 
 // Notifications API

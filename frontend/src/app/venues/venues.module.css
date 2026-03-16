@@ -712,26 +712,45 @@
 
 /* Empty State */
 .emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     text-align: center;
     padding: 80px 20px;
+    max-width: 400px;
+    margin: 0 auto;
 }
 
 .emptyIcon {
-    font-size: 80px;
-    margin-bottom: 20px;
-    opacity: 0.5;
+    width: 96px;
+    height: 96px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #FFF0ED;
+    border-radius: 50%;
+    margin-bottom: 24px;
+    color: #E04147;
+    opacity: 0.7;
+}
+
+.emptyIcon svg {
+    width: 48px;
+    height: 48px;
 }
 
 .emptyTitle {
-    font-size: 24px;
+    font-size: 22px;
     font-weight: 700;
     color: #1A1A1A;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 }
 
 .emptyText {
-    font-size: 16px;
-    color: #6B7280;
+    font-size: 15px;
+    color: #9CA3AF;
+    line-height: 1.5;
 }
 
 /* Pagination */

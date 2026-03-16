@@ -14,6 +14,7 @@ router.get('/profile', authenticate, async (req, res, next) => {
                 fullName: true,
                 phone: true,
                 avatarUrl: true,
+                coverImageUrl: true,
                 role: true,
                 isVerified: true,
                 preferredLanguage: true,
@@ -30,7 +31,7 @@ router.get('/profile', authenticate, async (req, res, next) => {
 // PUT /api/users/profile
 router.put('/profile', authenticate, async (req, res, next) => {
     try {
-        const { fullName, phone, avatarUrl, preferredLanguage } = req.body;
+        const { fullName, phone, avatarUrl, coverImageUrl, preferredLanguage } = req.body;
 
         const user = await prisma.user.update({
             where: { id: req.user.id },
@@ -38,6 +39,7 @@ router.put('/profile', authenticate, async (req, res, next) => {
                 ...(fullName && { fullName }),
                 ...(phone && { phone }),
                 ...(avatarUrl !== undefined && { avatarUrl }),
+                ...(coverImageUrl !== undefined && { coverImageUrl }),
                 ...(preferredLanguage && { preferredLanguage }),
             },
             select: {
@@ -46,6 +48,7 @@ router.put('/profile', authenticate, async (req, res, next) => {
                 fullName: true,
                 phone: true,
                 avatarUrl: true,
+                coverImageUrl: true,
                 role: true,
                 isVerified: true,
                 preferredLanguage: true,

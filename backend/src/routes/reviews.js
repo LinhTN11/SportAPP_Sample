@@ -95,4 +95,24 @@ router.get('/venue/:venueId', async (req, res, next) => {
     }
 });
 
+// GET /api/reviews/my - Get current user's reviews
+router.get('/my', authenticate, async (req, res, next) => {
+    try {
+        const reviews = await prisma.review.findMany({
+            where: { userId: req.user.id },
+            include: {
+                venue: { select: { id: true, name: true } },
+            },
+            orderBy: { createdAt: 'desc' },
+        });
+
+        res.json({
+            success: true,
+            data: { reviews },
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
 module.exports = router;

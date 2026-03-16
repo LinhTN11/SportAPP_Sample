@@ -81,7 +81,7 @@ router.get('/', async (req, res, next) => {
                 where,
                 include: {
                     owner: {
-                        select: { id: true, fullName: true, phone: true },
+                        select: { id: true, fullName: true, phone: true, avatarUrl: true },
                     },
                     fields: {
                         where: { isActive: true },
@@ -250,7 +250,66 @@ router.get('/owner/my-venues', authenticate, authorize('OWNER'), async (req, res
             orderBy: { createdAt: 'desc' },
         });
 
-        res.json({ success: true, data: { venues } });
+        // Calculate average rating for each venue
+        const venuesWithRating = await Promise.all(
+            venues.map(async (venue) => {
+                const avgRating = await prisma.review.aggregate({
+                    where: { venueId: venue.id },
+                    _avg: { rating: true },
+                });
+                return {
+                    ...venue,
+                    avgRating: avgRating._avg.rating || 0,
+                    reviewCount: venue._count?.reviews || 0,
+                };
+            })
+        );
+
+        res.json({ success: true, data: { venues: venuesWithRating } });
+    } catch (error) {
+        next(error);
+    }
+});
+
+// DELETE /api/venues/:id - Owner deletes venue
+router.delete('/:id', authenticate, authorize('OWNER'), async (req, res, next) => {
+    try {
+        const venue = await prisma.venue.findUnique({ where: { id: req.params.id } });
+        if (!venue) {
+            return res.status(404).json({ success: false, message: 'Venue not found' });
+        }
+        if (venue.ownerId !== req.user.id) {
+            return res.status(403).json({ success: false, message: 'Access denied' });
+        }
+
+        // Delete in transaction: reviews, bookings/payments, fields (cascade handles pricing/composites), then venue
+        await prisma.$transaction(async (tx) => {
+            // Delete reviews for this venue
+            await tx.review.deleteMany({ where: { venueId: venue.id } });
+
+            // Get all fields for this venue
+            const fields = await tx.field.findMany({ where: { venueId: venue.id }, select: { id: true } });
+            const fieldIds = fields.map(f => f.id);
+
+            if (fieldIds.length > 0) {
+                // Delete payments linked to bookings on these fields
+                await tx.payment.deleteMany({
+                    where: { booking: { fieldId: { in: fieldIds } } },
+                });
+                // Delete bookings on these fields
+                await tx.booking.deleteMany({ where: { fieldId: { in: fieldIds } } });
+                // Delete matchmaking posts linked to these fields
+                await tx.matchmakingPost.updateMany({
+                    where: { fieldId: { in: fieldIds } },
+                    data: { fieldId: null },
+                });
+            }
+
+            // Delete the venue (fields cascade via onDelete: Cascade)
+            await tx.venue.delete({ where: { id: venue.id } });
+        });
+
+        res.json({ success: true, message: 'Venue deleted successfully' });
     } catch (error) {
         next(error);
     }
@@ -350,7 +409,7 @@ router.get('/admin/pending', authenticate, authorize('ADMIN'), async (req, res, 
             where: { status: 'PENDING' },
             include: {
                 owner: {
-                    select: { id: true, fullName: true, email: true, phone: true },
+                    select: { id: true, fullName: true, email: true, phone: true, avatarUrl: true },
                 },
             },
             orderBy: { createdAt: 'asc' },
