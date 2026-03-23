@@ -1,6 +1,6 @@
-import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs';
-import { generateToken, verifyToken } from '../utils/jwt.js';
+const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 const prisma = new PrismaClient();
 
@@ -15,7 +15,7 @@ const validatePassword = (password) => {
 };
 
 // Register
-export const register = async (req, res, next) => {
+const register = async (req, res, next) => {
   try {
     const { email, password, fullName } = req.body;
 
@@ -79,7 +79,7 @@ export const register = async (req, res, next) => {
 };
 
 // Login
-export const login = async (req, res, next) => {
+const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
@@ -110,7 +110,11 @@ export const login = async (req, res, next) => {
     }
 
     // Generate token
-    const token = generateToken({ id: user.id, role: user.role, email: user.email });
+    const token = jwt.sign(
+      { userId: user.id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+    );
     
     res.json({ 
       status: 'success',
@@ -121,7 +125,7 @@ export const login = async (req, res, next) => {
           id: user.id,
           email: user.email,
           fullName: user.fullName,
-          avatar: user.avatar,
+          avatarUrl: user.avatarUrl,
           role: user.role
         }
       }
@@ -132,33 +136,19 @@ export const login = async (req, res, next) => {
 };
 
 // Get current user
-export const getCurrentUser = async (req, res, next) => {
+const me = async (req, res) => {
   try {
-    const user = await prisma.user.findUnique({
-      where: { id: req.user.id },
-      select: {
-        id: true,
-        email: true,
-        fullName: true,
-        avatar: true,
-        role: true,
-        createdAt: true,
-        updatedAt: true
-      }
-    });
-
-    if (!user) {
-      return res.status(404).json({ 
-        status: 'error',
-        message: "Người dùng không tồn tại" 
-      });
-    }
-
-    res.json({ 
-      status: 'success',
-      data: user
+    res.json({
+      success: true,
+      data: { user: req.user },
     });
   } catch (error) {
-    next(error);
+    res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
+};
+
+module.exports = {
+  register,
+  login,
+  me,
 };

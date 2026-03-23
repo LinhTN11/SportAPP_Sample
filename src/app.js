@@ -1,9 +1,18 @@
-import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
-import authRoutes from './routes/auth.routes.js';
-import userRoutes from './routes/user.routes.js';
-import venueRoutes from './routes/venue.routes.js';
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+
+const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/users');
+const venueRoutes = require('./routes/venues');
+const fieldRoutes = require('./routes/fields');
+const bookingRoutes = require('./routes/bookings');
+const paymentRoutes = require('./routes/payments');
+const reviewRoutes = require('./routes/reviews');
+const chatRoutes = require('./routes/chat');
+const matchmakingRoutes = require('./routes/matchmaking');
+const notificationRoutes = require('./routes/notifications');
+const uploadRoutes = require('./routes/upload');
 
 const app = express();
 
@@ -20,6 +29,14 @@ app.use('/uploads', express.static('uploads'));
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/venues', venueRoutes);
+app.use('/api/fields', fieldRoutes);
+app.use('/api/bookings', bookingRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/reviews', reviewRoutes);
+app.use('/api/chat', chatRoutes);
+app.use('/api/matchmaking', matchmakingRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -43,4 +60,4 @@ app.use((err, req, res, next) => {
   });
 });
 
-export default app;
+module.exports = app;

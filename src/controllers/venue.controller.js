@@ -1,55 +1,17 @@
-import { PrismaClient, Prisma } from '@prisma/client';
+const { PrismaClient } = require('@prisma/client');
+const { v4: uuidv4 } = require('uuid');
+const QRCode = require('qrcode');
 
 const prisma = new PrismaClient();
 
-const isValidLatitude = (lat) => {
-  if (lat === null || lat === undefined) return true;
-  const n = Number(lat);
-  return Number.isFinite(n) && n >= -90 && n <= 90;
+const parseNumber = (v) => {
+  if (v === undefined || v === null || v === '') return undefined;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : undefined;
 };
 
-const isValidLongitude = (lng) => {
-  if (lng === null || lng === undefined) return true;
-  const n = Number(lng);
-  return Number.isFinite(n) && n >= -180 && n <= 180;
-};
-
-const parseSportTypes = (sportTypes) => {
-  if (sportTypes === undefined || sportTypes === null) return undefined;
-  if (Array.isArray(sportTypes)) return sportTypes;
-
-  if (typeof sportTypes === 'string') {
-    const trimmed = sportTypes.trim();
-    if (!trimmed) return [];
-    try {
-      const parsed = JSON.parse(trimmed);
-      if (Array.isArray(parsed)) return parsed;
-    } catch {
-      return trimmed
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean);
-    }
-  }
-
-  return undefined;
-};
-
-const isOwnerOrAdmin = (reqUser, ownerId) => {
-  if (!reqUser) return false;
-  if (reqUser.role === 'ADMIN') return true;
-  return reqUser.role === 'OWNER' && reqUser.id === ownerId;
-};
-
-export const createVenue = async (req, res, next) => {
+const createVenue = async (req, res, next) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ message: 'Bạn cần đăng nhập' });
-    }
-    if (!['OWNER', 'ADMIN'].includes(req.user.role)) {
-      return res.status(403).json({ message: 'Bạn không có quyền truy cập' });
-    }
-
     const {
       name,
       phone,
@@ -60,238 +22,365 @@ export const createVenue = async (req, res, next) => {
       longitude,
       sportTypes,
       description,
+      images,
       openTime,
-      closeTime
+      closeTime,
+      holdDurationMinutes,
     } = req.body;
-
-    if (!name || !address || !city || !district) {
-      return res.status(400).json({
-        status: 'error',
-        message: 'name, address, city, district là bắt buộc'
-      });
-    }
-
-    if (!isValidLatitude(latitude)) {
-      return res.status(400).json({ status: 'error', message: 'latitude không hợp lệ' });
-    }
-    if (!isValidLongitude(longitude)) {
-      return res.status(400).json({ status: 'error', message: 'longitude không hợp lệ' });
-    }
-
-    const parsedSportTypes = parseSportTypes(sportTypes);
-
-    const images = (req.files || []).map((f) => f.path);
 
     const venue = await prisma.venue.create({
       data: {
         ownerId: req.user.id,
         name,
-        phone: phone || null,
+        phone,
         address,
         city,
         district,
-        latitude: latitude === undefined || latitude === null || latitude === '' ? null : new Prisma.Decimal(String(latitude)),
-        longitude:
-          longitude === undefined || longitude === null || longitude === '' ? null : new Prisma.Decimal(String(longitude)),
-        sportTypes: parsedSportTypes ?? [],
-        description: description || null,
-        images,
-        status: 'PENDING',
-        openTime: openTime || null,
-        closeTime: closeTime || null
-      }
+        latitude: parseNumber(latitude),
+        longitude: parseNumber(longitude),
+        sportTypes: sportTypes || [],
+        description,
+        images: images || [],
+        openTime,
+        closeTime,
+        holdDurationMinutes: holdDurationMinutes || parseInt(process.env.DEFAULT_HOLD_DURATION_MINUTES, 10) || 10,
+      },
     });
+
+    const admins = await prisma.user.findMany({ where: { role: 'ADMIN' } });
+    for (const admin of admins) {
+      await prisma.notification.create({
+        data: {
+          userId: admin.id,
+          type: 'VENUE_APPROVED',
+          title: 'New venue pending approval',
+          body: `${req.user.fullName} submitted "${name}" for approval`,
+          data: { venueId: venue.id },
+        },
+      });
+    }
 
     res.status(201).json({
-      status: 'success',
-      data: venue
+      success: true,
+      message: 'Venue created and pending admin approval',
+      data: { venue },
     });
   } catch (error) {
     next(error);
   }
 };
 
-export const listVenues = async (req, res, next) => {
+const listVenues = async (req, res, next) => {
   try {
-    const { city, sport, isApproved, status } = req.query;
+    const { city, district, sportType, status, page = 1, limit = 20 } = req.query;
+    const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
 
-    const page = Math.max(parseInt(req.query.page || '1', 10) || 1, 1);
-    const limit = Math.min(Math.max(parseInt(req.query.limit || '10', 10) || 10, 1), 100);
-    const skip = (page - 1) * limit;
+    const where = {
+      status: status || 'APPROVED',
+      ...(city && { city: { contains: city, mode: 'insensitive' } }),
+      ...(district && { district: { contains: district, mode: 'insensitive' } }),
+    };
 
-    const where = {};
-
-    if (city) where.city = String(city);
-
-    if (status) {
-      where.status = String(status);
-    } else if (isApproved !== undefined) {
-      const v = String(isApproved).toLowerCase();
-      if (v === 'true' || v === '1') where.status = 'APPROVED';
-      else if (v === 'false' || v === '0') where.status = { not: 'APPROVED' };
-    } else {
-      where.status = 'APPROVED';
+    if (sportType) {
+      where.sportTypes = { array_contains: [sportType] };
     }
 
-    const venues = await prisma.venue.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-      skip,
-      take: limit
-    });
+    const [venues, total] = await Promise.all([
+      prisma.venue.findMany({
+        where,
+        include: {
+          owner: { select: { id: true, fullName: true, phone: true, avatarUrl: true } },
+          fields: {
+            where: { isActive: true },
+            include: { pricingRules: { where: { isActive: true } } },
+          },
+          _count: { select: { reviews: true } },
+        },
+        skip,
+        take: parseInt(limit, 10),
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.venue.count({ where }),
+    ]);
 
-    const filteredBySport = sport
-      ? venues.filter((v) => {
-          const arr = Array.isArray(v.sportTypes) ? v.sportTypes : [];
-          return arr.map(String).includes(String(sport));
-        })
-      : venues;
+    const venuesWithRating = await Promise.all(
+      venues.map(async (venue) => {
+        const avgRating = await prisma.review.aggregate({
+          where: { venueId: venue.id },
+          _avg: { rating: true },
+        });
+        const prices = venue.fields
+          .flatMap((f) => f.pricingRules || [])
+          .map((r) => Number(r.price))
+          .filter((p) => p > 0);
+
+        return {
+          ...venue,
+          avgRating: avgRating._avg.rating || 0,
+          reviewCount: venue._count.reviews,
+          minPrice: prices.length > 0 ? Math.min(...prices) : null,
+        };
+      })
+    );
 
     res.json({
-      status: 'success',
+      success: true,
       data: {
-        items: filteredBySport,
-        page,
-        limit,
-        count: filteredBySport.length
-      }
+        venues: venuesWithRating,
+        pagination: {
+          page: parseInt(page, 10),
+          limit: parseInt(limit, 10),
+          total,
+          totalPages: Math.ceil(total / parseInt(limit, 10)),
+        },
+      },
     });
   } catch (error) {
     next(error);
   }
 };
 
-export const getVenueById = async (req, res, next) => {
+const getVenueById = async (req, res, next) => {
   try {
-    const { id } = req.params;
-
     const venue = await prisma.venue.findUnique({
-      where: { id },
+      where: { id: req.params.id },
       include: {
-        fields: true,
-        reviews: true
-      }
+        owner: { select: { id: true, fullName: true, phone: true, avatarUrl: true } },
+        fields: {
+          where: { isActive: true },
+          include: {
+            pricingRules: { where: { isActive: true } },
+            parentComposites: { include: { childField: true } },
+            childComposites: { include: { parentField: true } },
+          },
+        },
+        reviews: {
+          include: { user: { select: { id: true, fullName: true, avatarUrl: true } } },
+          orderBy: { createdAt: 'desc' },
+          take: 10,
+        },
+      },
     });
 
-    if (!venue || venue.status === 'SUSPENDED') {
-      return res.status(404).json({ status: 'error', message: 'Venue không tồn tại' });
+    if (!venue) {
+      return res.status(404).json({ success: false, message: 'Venue not found' });
     }
 
-    res.json({ status: 'success', data: venue });
+    const avgRating = await prisma.review.aggregate({
+      where: { venueId: venue.id },
+      _avg: { rating: true },
+      _count: true,
+    });
+
+    res.json({
+      success: true,
+      data: {
+        venue: {
+          ...venue,
+          avgRating: avgRating._avg.rating || 0,
+          reviewCount: avgRating._count,
+        },
+      },
+    });
   } catch (error) {
     next(error);
   }
 };
 
-export const updateVenue = async (req, res, next) => {
+const updateVenue = async (req, res, next) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ message: 'Bạn cần đăng nhập' });
+    const venue = await prisma.venue.findUnique({ where: { id: req.params.id } });
+    if (!venue) {
+      return res.status(404).json({ success: false, message: 'Venue not found' });
     }
-    if (!['OWNER', 'ADMIN'].includes(req.user.role)) {
-      return res.status(403).json({ message: 'Bạn không có quyền truy cập' });
-    }
-
-    const { id } = req.params;
-
-    const existing = await prisma.venue.findUnique({ where: { id } });
-    if (!existing || existing.status === 'SUSPENDED') {
-      return res.status(404).json({ status: 'error', message: 'Venue không tồn tại' });
-    }
-
-    if (!isOwnerOrAdmin(req.user, existing.ownerId)) {
-      return res.status(403).json({ status: 'error', message: 'Bạn không có quyền sửa venue này' });
+    if (venue.ownerId !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Access denied' });
     }
 
     const {
-      name,
-      phone,
-      address,
-      city,
-      district,
-      latitude,
-      longitude,
-      sportTypes,
-      description,
-      openTime,
-      closeTime,
-      status
+      name, phone, address, city, district,
+      latitude, longitude, sportTypes,
+      description, images, openTime, closeTime,
+      holdDurationMinutes,
     } = req.body;
 
-    if (latitude !== undefined && !isValidLatitude(latitude)) {
-      return res.status(400).json({ status: 'error', message: 'latitude không hợp lệ' });
-    }
-    if (longitude !== undefined && !isValidLongitude(longitude)) {
-      return res.status(400).json({ status: 'error', message: 'longitude không hợp lệ' });
-    }
-
-    const parsedSportTypes = parseSportTypes(sportTypes);
-
-    const updateData = {};
-    if (name !== undefined) updateData.name = name;
-    if (phone !== undefined) updateData.phone = phone;
-    if (address !== undefined) updateData.address = address;
-    if (city !== undefined) updateData.city = city;
-    if (district !== undefined) updateData.district = district;
-    if (latitude !== undefined) {
-      updateData.latitude = latitude === null || latitude === '' ? null : new Prisma.Decimal(String(latitude));
-    }
-    if (longitude !== undefined) {
-      updateData.longitude = longitude === null || longitude === '' ? null : new Prisma.Decimal(String(longitude));
-    }
-    if (parsedSportTypes !== undefined) updateData.sportTypes = parsedSportTypes;
-    if (description !== undefined) updateData.description = description;
-    if (openTime !== undefined) updateData.openTime = openTime;
-    if (closeTime !== undefined) updateData.closeTime = closeTime;
-
-    if (status !== undefined && req.user.role === 'ADMIN') {
-      updateData.status = status;
-    }
-
-    if (req.files && req.files.length) {
-      const newImages = req.files.map((f) => f.path);
-      const existingImages = Array.isArray(existing.images) ? existing.images : [];
-      updateData.images = [...existingImages, ...newImages];
-    }
-
     const updated = await prisma.venue.update({
-      where: { id },
-      data: updateData
+      where: { id: req.params.id },
+      data: {
+        ...(name && { name }),
+        ...(phone !== undefined && { phone }),
+        ...(address && { address }),
+        ...(city && { city }),
+        ...(district && { district }),
+        ...(latitude !== undefined && { latitude: parseNumber(latitude) }),
+        ...(longitude !== undefined && { longitude: parseNumber(longitude) }),
+        ...(sportTypes && { sportTypes }),
+        ...(description !== undefined && { description }),
+        ...(images && { images }),
+        ...(openTime && { openTime }),
+        ...(closeTime && { closeTime }),
+        ...(holdDurationMinutes && { holdDurationMinutes }),
+      },
     });
 
-    res.json({ status: 'success', data: updated });
+    res.json({ success: true, message: 'Venue updated', data: { venue: updated } });
   } catch (error) {
     next(error);
   }
 };
 
-export const softDeleteVenue = async (req, res, next) => {
+const ownerMyVenues = async (req, res, next) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ message: 'Bạn cần đăng nhập' });
-    }
-    if (!['OWNER', 'ADMIN'].includes(req.user.role)) {
-      return res.status(403).json({ message: 'Bạn không có quyền truy cập' });
-    }
-
-    const { id } = req.params;
-
-    const existing = await prisma.venue.findUnique({ where: { id } });
-    if (!existing || existing.status === 'SUSPENDED') {
-      return res.status(404).json({ status: 'error', message: 'Venue không tồn tại' });
-    }
-
-    if (!isOwnerOrAdmin(req.user, existing.ownerId)) {
-      return res.status(403).json({ status: 'error', message: 'Bạn không có quyền xóa venue này' });
-    }
-
-    const updated = await prisma.venue.update({
-      where: { id },
-      data: { status: 'SUSPENDED' }
+    const venues = await prisma.venue.findMany({
+      where: { ownerId: req.user.id },
+      include: {
+        fields: { include: { pricingRules: { where: { isActive: true } } } },
+        _count: { select: { reviews: true, fields: true } },
+      },
+      orderBy: { createdAt: 'desc' },
     });
 
-    res.json({ status: 'success', data: updated });
+    const venuesWithRating = await Promise.all(
+      venues.map(async (venue) => {
+        const avgRating = await prisma.review.aggregate({
+          where: { venueId: venue.id },
+          _avg: { rating: true },
+        });
+        return {
+          ...venue,
+          avgRating: avgRating._avg.rating || 0,
+          reviewCount: venue._count?.reviews || 0,
+        };
+      })
+    );
+
+    res.json({ success: true, data: { venues: venuesWithRating } });
   } catch (error) {
     next(error);
   }
+};
+
+const deleteVenue = async (req, res, next) => {
+  try {
+    const venue = await prisma.venue.findUnique({ where: { id: req.params.id } });
+    if (!venue) {
+      return res.status(404).json({ success: false, message: 'Venue not found' });
+    }
+    if (venue.ownerId !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.review.deleteMany({ where: { venueId: venue.id } });
+
+      const fields = await tx.field.findMany({ where: { venueId: venue.id }, select: { id: true } });
+      const fieldIds = fields.map((f) => f.id);
+
+      if (fieldIds.length > 0) {
+        await tx.payment.deleteMany({ where: { booking: { fieldId: { in: fieldIds } } } });
+        await tx.booking.deleteMany({ where: { fieldId: { in: fieldIds } } });
+        await tx.matchmakingPost.updateMany({ where: { fieldId: { in: fieldIds } }, data: { fieldId: null } });
+      }
+
+      await tx.venue.delete({ where: { id: venue.id } });
+    });
+
+    res.json({ success: true, message: 'Venue deleted successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const adminApproveVenue = async (req, res, next) => {
+  try {
+    const venue = await prisma.venue.findUnique({ where: { id: req.params.id } });
+    if (!venue) {
+      return res.status(404).json({ success: false, message: 'Venue not found' });
+    }
+    if (venue.status !== 'PENDING') {
+      return res.status(400).json({ success: false, message: 'Venue is not pending approval' });
+    }
+
+    const bookingSlug = `${venue.name.toLowerCase().replace(/\s+/g, '-')}-${uuidv4().slice(0, 8)}`;
+    const bookingUrl = `${process.env.CLIENT_URL || 'http://localhost:3000'}/book/${bookingSlug}`;
+    const qrCodeUrl = await QRCode.toDataURL(bookingUrl, {
+      width: 400,
+      margin: 2,
+      color: { dark: '#000000', light: '#FFFFFF' },
+    });
+
+    const updated = await prisma.venue.update({
+      where: { id: req.params.id },
+      data: { status: 'APPROVED', bookingUrl, qrCodeUrl },
+    });
+
+    await prisma.notification.create({
+      data: {
+        userId: venue.ownerId,
+        type: 'VENUE_APPROVED',
+        title: 'Venue approved! 🎉',
+        body: `Your venue "${venue.name}" has been approved. You can now add fields and pricing.`,
+        data: { venueId: venue.id },
+      },
+    });
+
+    res.json({ success: true, message: 'Venue approved', data: { venue: updated } });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const adminRejectVenue = async (req, res, next) => {
+  try {
+    const { reason } = req.body;
+    const venue = await prisma.venue.findUnique({ where: { id: req.params.id } });
+    if (!venue) {
+      return res.status(404).json({ success: false, message: 'Venue not found' });
+    }
+
+    const updated = await prisma.venue.update({
+      where: { id: req.params.id },
+      data: { status: 'REJECTED' },
+    });
+
+    await prisma.notification.create({
+      data: {
+        userId: venue.ownerId,
+        type: 'VENUE_REJECTED',
+        title: 'Venue rejected',
+        body: `Your venue "${venue.name}" has been rejected. Reason: ${reason || 'Not specified'}`,
+        data: { venueId: venue.id },
+      },
+    });
+
+    res.json({ success: true, message: 'Venue rejected', data: { venue: updated } });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const adminListPendingVenues = async (req, res, next) => {
+  try {
+    const venues = await prisma.venue.findMany({
+      where: { status: 'PENDING' },
+      include: { owner: { select: { id: true, fullName: true, email: true, phone: true, avatarUrl: true } } },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    res.json({ success: true, data: { venues } });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = {
+  createVenue,
+  listVenues,
+  getVenueById,
+  updateVenue,
+  ownerMyVenues,
+  deleteVenue,
+  adminApproveVenue,
+  adminRejectVenue,
+  adminListPendingVenues,
 };
