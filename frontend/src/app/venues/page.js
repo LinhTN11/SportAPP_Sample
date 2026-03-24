@@ -13,7 +13,6 @@ import { getSportColorClass, getSportLabel, getSportTagClass } from '@/component
 
 const SERVER_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000').replace(/\/api\/?$/, '');
 
-// Số lượng sân tối đa hiển thị trên 1 trang
 const ITEMS_PER_PAGE = 9;
 
 export default function VenuesPage() {
