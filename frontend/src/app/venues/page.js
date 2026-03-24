@@ -13,7 +13,6 @@ import { getSportColorClass, getSportLabel, getSportTagClass } from '@/component
 
 const SERVER_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000').replace(/\/api\/?$/, '');
 
-// Số lượng sân tối đa hiển thị trên 1 trang
 const ITEMS_PER_PAGE = 6;
 
 export default function VenuesPage() {
@@ -45,7 +44,6 @@ export default function VenuesPage() {
         return prices.length > 0 ? Math.min(...prices) : Infinity;
     };
 
-    // Khi thay đổi bộ lọc, text search hoặc cách sắp xếp -> Tự động đưa về trang 1
     useEffect(() => {
         setCurrentPage(1);
     }, [filters, advFilters, sortValue]);
