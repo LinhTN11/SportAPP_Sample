@@ -13,7 +13,7 @@ export default function CountdownTimer({ expiresAt, onExpired }) {
     const [secondsLeft, setSecondsLeft] = useState(0);
 
     useEffect(() => {
-        // Tính số giây còn lại lần đầu
+        
         const calc = () => {
             const diff = Math.floor((new Date(expiresAt) - Date.now()) / 1000);
             return diff > 0 ? diff : 0;
