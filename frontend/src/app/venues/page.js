@@ -13,7 +13,8 @@ import { getSportColorClass, getSportLabel, getSportTagClass } from '@/component
 
 const SERVER_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000').replace(/\/api\/?$/, '');
 
-const ITEMS_PER_PAGE = 9;
+// Số lượng sân tối đa hiển thị trên 1 trang
+const ITEMS_PER_PAGE = 6;
 
 export default function VenuesPage() {
     const searchParams = useSearchParams();
@@ -44,7 +45,7 @@ export default function VenuesPage() {
         return prices.length > 0 ? Math.min(...prices) : Infinity;
     };
 
-    
+    // Khi thay đổi bộ lọc, text search hoặc cách sắp xếp -> Tự động đưa về trang 1
     useEffect(() => {
         setCurrentPage(1);
     }, [filters, advFilters, sortValue]);
@@ -85,6 +86,12 @@ export default function VenuesPage() {
                     v.name?.toLowerCase().includes(kw);
                 if (!match) return false;
             }
+
+            if (advFilters.priceMin !== undefined || advFilters.priceMax !== undefined) {
+                const min = advFilters.priceMin ?? 0;
+                const max = advFilters.priceMax ?? 1000000;
+                if (v.finalPrice > 0 && (v.finalPrice < min || v.finalPrice > max)) return false;
+}
             return true;
         })
         .sort((a, b) => {
@@ -115,10 +122,10 @@ export default function VenuesPage() {
             return 0;
         });
 
-    // === LOGIC PHÂN TRANG ===
+  
     const totalPages = Math.ceil(displayedVenues.length / ITEMS_PER_PAGE);
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    // Cắt ra đúng 12 sân cho trang hiện tại
+   
     const currentVenues = displayedVenues.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
     const SportIcons = {
@@ -349,10 +356,10 @@ export default function VenuesPage() {
 
                                             <div className={styles.venueRating}>
                                                 {[1, 2, 3, 4, 5].map((star) => (
-                                                    <Star key={star} size={16} fill={star <= Math.round(venue.avgRating || 0) ? '#FFC107' : 'none'} color="#FFC107" />
+                                                    <Star key={star} size={16} fill="#FFC107" color="#FFC107" />
                                                 ))}
                                                 <span className={styles.ratingValue}>
-                                                    {(venue.avgRating || 0).toFixed(1)}
+                                                    {venue.avgRating?.toFixed(1) || '5'}
                                                 </span>
                                                 <span className={styles.reviewCount}>
                                                     ({venue.reviewCount || 0})
