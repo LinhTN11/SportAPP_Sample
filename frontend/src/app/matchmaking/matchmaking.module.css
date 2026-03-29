@@ -335,3 +335,111 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* ── Custom Dropdown (Giống 100% trang Venues) ── */
+.customDropdown {
+    position: relative;
+    user-select: none;
+    min-width: 200px;
+}
+
+.dropdownTrigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 16px;
+    background: #ffffff;
+    border: 1.5px solid #E5E7EB;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #111827;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    width: 100%;
+}
+
+.dropdownTrigger:hover {
+    border-color: #E04147;
+    box-shadow: 0 0 0 3px rgba(224, 65, 71, 0.08);
+    color: #E04147;
+}
+
+.dropdownTriggerOpen {
+    border-color: #E04147;
+    box-shadow: 0 0 0 3px rgba(224, 65, 71, 0.15);
+    color: #E04147;
+}
+
+.dropdownChevron {
+    display: flex;
+    align-items: center;
+    transition: transform 0.2s;
+    color: #9CA3AF;
+    flex-shrink: 0;
+}
+
+.dropdownTriggerOpen .dropdownChevron {
+    color: #E04147;
+}
+
+.dropdownChevronOpen {
+    transform: rotate(180deg);
+}
+
+.dropdownMenu {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    min-width: 100%;
+    background: #ffffff;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    padding: 6px;
+    z-index: 100;
+    animation: dropdownFadeIn 180ms cubic-bezier(0.25, 0.1, 0.25, 1);
+    overflow: hidden;
+}
+
+.dropdownOption {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 450;
+    color: #111827;
+    cursor: pointer;
+    transition: background 0.2s;
+    white-space: nowrap;
+}
+
+.dropdownOption:hover {
+    background: rgba(224, 65, 71, 0.05);
+}
+
+.dropdownOptionActive {
+    background: rgba(224, 65, 71, 0.1);
+    color: #E04147;
+    font-weight: 600;
+}
+
+.dropdownOptionActive:hover {
+    background: rgba(224, 65, 71, 0.15);
+}
+
+.dropdownOptionIcon {
+    display: flex;
+    align-items: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+@keyframes dropdownFadeIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
