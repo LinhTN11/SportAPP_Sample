@@ -1,6 +1,7 @@
 .datePickerContainer {
     position: relative;
     width: 100%;
+    z-index: 9999; /* Đã thêm z-index để luôn nổi lên trên cùng */
 }
 
 .trigger {
@@ -42,7 +43,7 @@
     border-radius: 16px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
     border: 1px solid var(--border-light);
-    z-index: 1000;
+    z-index: 9999; /* Đã sửa từ 1000 thành 9999 */
     padding: 20px;
     animation: slideUp 0.2s ease-out;
 }
