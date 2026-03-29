@@ -1,12 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { matchmakingAPI } from '@/lib/api';
 import Avatar from '@/components/Avatar';
 import { useAuth } from '@/lib/auth';
-import { CalendarDays, Clock, MapPin, Building2 } from 'lucide-react';
+import { CalendarDays, Clock, MapPin, Building2, ChevronDown } from 'lucide-react';
 import styles from './matchmaking.module.css';
+import DatePicker from '@/components/ui/DatePicker';
+
+// Import MapPicker động (giống trang Owner)
+const MapPicker = dynamic(() => import('@/components/MapPicker'), { ssr: false });
 
 export default function MatchmakingPage() {
     const router = useRouter();
@@ -16,15 +21,46 @@ export default function MatchmakingPage() {
     const [myPosts, setMyPosts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filters, setFilters] = useState({ sportType: '', city: '' });
+    
+    // State và Ref cho Custom Dropdown
+    const [isSportDropdownOpen, setIsSportDropdownOpen] = useState(false);
+    const sportDropdownRef = useRef(null);
 
-    // Create post form
+    // form tạo bài đăng (đã thêm trường address, latitude, longitude)
     const [form, setForm] = useState({
         bookingDate: '', startTime: '', endTime: '',
-        sportType: 'football', city: '', district: '',
+        sportType: 'football', address: '', city: '', district: '', latitude: '', longitude: '',
         description: '', autoMatchEnabled: false,
     });
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
+
+    // State quản lý bản đồ
+    const [mapLocation, setMapLocation] = useState({});
+
+    // Hàm xử lý khi chọn địa điểm trên bản đồ
+    const handleMapChange = (loc) => {
+        setMapLocation(loc);
+        setForm(prev => ({
+            ...prev,
+            address: loc.address || prev.address,
+            city: loc.city || prev.city,
+            district: loc.district || prev.district,
+            latitude: loc.latitude || prev.latitude,
+            longitude: loc.longitude || prev.longitude,
+        }));
+    };
+
+    // Đóng dropdown khi click ra ngoài
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (sportDropdownRef.current && !sportDropdownRef.current.contains(e.target)) {
+                setIsSportDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     useEffect(() => {
         loadPosts();
@@ -76,7 +112,8 @@ export default function MatchmakingPage() {
             alert(err.response?.data?.message || 'Gửi thất bại');
         }
     };
-
+    
+    // chấp nhận lời mơid
     const handleAccept = async (requestId) => {
         try {
             const { data } = await matchmakingAPI.acceptRequest(requestId);
@@ -84,7 +121,8 @@ export default function MatchmakingPage() {
             loadMyPosts();
         } catch (err) { alert(err.response?.data?.message || 'Thất bại'); }
     };
-
+    
+    // từ chối
     const handleReject = async (requestId) => {
         try {
             await matchmakingAPI.rejectRequest(requestId);
@@ -92,13 +130,24 @@ export default function MatchmakingPage() {
         } catch (err) { alert('Thất bại'); }
     };
 
+    const SportIcons = {
+        all: <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>,
+        football: <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6l3 4-1 4H10l-1-4z"/><path d="M12 6V2"/><path d="M15 10l5-2"/><path d="M14 14l3 5"/><path d="M10 14l-3 5"/><path d="M9 10L4 8"/></svg>,
+        badminton: <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 18v4"/><path d="M10 22h4"/><path d="M12 14c-4 0-6-4-6-8h12c0 4-2 8-6 8z"/><path d="M9 6v2"/><path d="M12 6v2"/><path d="M15 6v2"/></svg>,
+        tennis: <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M6 5.3a9 9 0 0 1 0 13.4"/><path d="M18 5.3a9 9 0 0 0 0 13.4"/></svg>,
+        basketball: <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2v20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>,
+        volleyball: <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2C6.5 2 2 6.5 2 12"/><path d="M12 2c3 3 4 8 1 13"/><path d="M2 12c3-1 8-2 13 1"/></svg>,
+        pickleball: <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="9" cy="10" r="1"/><circle cx="15" cy="10" r="1"/><circle cx="12" cy="15" r="1"/></svg>,
+    };
+
     const sportTypes = [
-        { value: 'football', label: 'Bóng đá' },
-        { value: 'badminton', label: 'Cầu lông' },
-        { value: 'tennis', label: 'Tennis' },
-        { value: 'basketball', label: 'Bóng rổ' },
-        { value: 'volleyball', label: 'Bóng chuyền' },
-        { value: 'pickleball', label: 'Pickleball' },
+        { value: '', label: 'Tất cả môn', icon: SportIcons.all },
+        { value: 'football', label: 'Bóng đá', icon: SportIcons.football },
+        { value: 'badminton', label: 'Cầu lông', icon: SportIcons.badminton },
+        { value: 'tennis', label: 'Tennis', icon: SportIcons.tennis },
+        { value: 'basketball', label: 'Bóng rổ', icon: SportIcons.basketball },
+        { value: 'volleyball', label: 'Bóng chuyền', icon: SportIcons.volleyball },
+        { value: 'pickleball', label: 'Pickleball', icon: SportIcons.pickleball },
     ];
 
     return (
@@ -126,10 +175,46 @@ export default function MatchmakingPage() {
                 {activeTab === 'browse' && (
                     <>
                         <div className={styles.filters}>
-                            <select value={filters.sportType} onChange={(e) => setFilters({ ...filters, sportType: e.target.value })}>
-                                <option value="">Tất cả môn</option>
-                                {sportTypes.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-                            </select>
+                            {/* Custom Dropdown */}
+                            <div className={styles.customDropdown} ref={sportDropdownRef}>
+                                <div 
+                                    className={`${styles.dropdownTrigger} ${isSportDropdownOpen ? styles.dropdownTriggerOpen : ''}`}
+                                    onClick={() => setIsSportDropdownOpen(!isSportDropdownOpen)}
+                                >
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <span className={styles.dropdownOptionIcon}>
+                                            {sportTypes.find(s => s.value === filters.sportType)?.icon || SportIcons.all}
+                                        </span>
+                                        <span>
+                                            {filters.sportType === '' 
+                                                ? 'Tất cả môn' 
+                                                : sportTypes.find(s => s.value === filters.sportType)?.label}
+                                        </span>
+                                    </div>
+                                    <span className={`${styles.dropdownChevron} ${isSportDropdownOpen ? styles.dropdownChevronOpen : ''}`}>
+                                        <ChevronDown size={16} />
+                                    </span>
+                                </div>
+
+                                {isSportDropdownOpen && (
+                                    <div className={styles.dropdownMenu}>
+                                        {sportTypes.map(s => (
+                                            <div 
+                                                key={s.value}
+                                                className={`${styles.dropdownOption} ${filters.sportType === s.value ? styles.dropdownOptionActive : ''}`}
+                                                onClick={() => { 
+                                                    setFilters({ ...filters, sportType: s.value }); 
+                                                    setIsSportDropdownOpen(false); 
+                                                }}
+                                            >
+                                                <span className={styles.dropdownOptionIcon}>{s.icon}</span>
+                                                {s.label}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
                             <input type="text" placeholder="Tìm theo thành phố..." value={filters.city} onChange={(e) => setFilters({ ...filters, city: e.target.value })} />
                         </div>
 
@@ -145,16 +230,7 @@ export default function MatchmakingPage() {
                         ) : (
                             <div className={styles.grid}>
                                 {posts.map((post) => {
-                                    const sportIconMap = {
-                                        all: <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>,
-                                        football: <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6l3 4-1 4H10l-1-4z"/><path d="M12 6V2"/><path d="M15 10l5-2"/><path d="M14 14l3 5"/><path d="M10 14l-3 5"/><path d="M9 10L4 8"/></svg>,
-                                        badminton: <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 18v4"/><path d="M10 22h4"/><path d="M12 14c-4 0-6-4-6-8h12c0 4-2 8-6 8z"/><path d="M9 6v2"/><path d="M12 6v2"/><path d="M15 6v2"/></svg>,
-                                        tennis: <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M6 5.3a9 9 0 0 1 0 13.4"/><path d="M18 5.3a9 9 0 0 0 0 13.4"/></svg>,
-                                        basketball: <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2v20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>,
-                                        volleyball: <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2C6.5 2 2 6.5 2 12"/><path d="M12 2c3 3 4 8 1 13"/><path d="M2 12c3-1 8-2 13 1"/></svg>,
-                                        pickleball: <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="9" cy="10" r="1"/><circle cx="15" cy="10" r="1"/><circle cx="12" cy="15" r="1"/></svg>,
-                                    };
-                                    const sportIcon = sportIconMap[post.sportType] || sportIconMap.all;
+                                    const sportIcon = SportIcons[post.sportType] || SportIcons.all;
                                     return (
                                     <div key={post.id} className={styles.postCard}>
                                         {/* Header */}
@@ -195,6 +271,7 @@ export default function MatchmakingPage() {
                                                     <MapPin size={20} color="#FF5733" />
                                                     {post.city}{post.district ? `, ${post.district}` : ''}
                                                 </div>
+                                                {/* chỉ hiện khi liên kết với sân con */}
                                                 {post.field && (
                                                     <div className={`${styles.postDetail} ${styles.postDetailFull}`}>
                                                         <Building2 size={20} color="#FF5733" />
@@ -205,7 +282,7 @@ export default function MatchmakingPage() {
                                             {post.description && <p className={styles.postDesc}>{post.description}</p>}
                                         </div>
 
-                                        {/* Divider + nút */}
+                                        {/* Divider + nút : chỉ hiện khi ko phải bài mình*/}
                                         {user?.id !== post.userId && (
                                             <>
                                                 <div className={styles.divider} />
@@ -232,16 +309,7 @@ export default function MatchmakingPage() {
                                 <button className="btn btn-primary" onClick={() => setActiveTab('create')}>Tạo ngay →</button>
                             </div>
                         ) : myPosts.map((post) => {
-                            const sportIconMap = {
-                                all: <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>,
-                                football: <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6l3 4-1 4H10l-1-4z"/><path d="M12 6V2"/><path d="M15 10l5-2"/><path d="M14 14l3 5"/><path d="M10 14l-3 5"/><path d="M9 10L4 8"/></svg>,
-                                badminton: <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 18v4"/><path d="M10 22h4"/><path d="M12 14c-4 0-6-4-6-8h12c0 4-2 8-6 8z"/><path d="M9 6v2"/><path d="M12 6v2"/><path d="M15 6v2"/></svg>,
-                                tennis: <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M6 5.3a9 9 0 0 1 0 13.4"/><path d="M18 5.3a9 9 0 0 0 0 13.4"/></svg>,
-                                basketball: <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2v20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>,
-                                volleyball: <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2C6.5 2 2 6.5 2 12"/><path d="M12 2c3 3 4 8 1 13"/><path d="M2 12c3-1 8-2 13 1"/></svg>,
-                                pickleball: <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="9" cy="10" r="1"/><circle cx="15" cy="10" r="1"/><circle cx="12" cy="15" r="1"/></svg>,
-                            };
-                            const sportIcon = sportIconMap[post.sportType] || sportIconMap.all;
+                            const sportIcon = SportIcons[post.sportType] || SportIcons.all;
                             return (
                             <div key={post.id} className={styles.postCard}>
                                 {/* Header: Avatar + tên + badge trạng thái */}
@@ -326,14 +394,18 @@ export default function MatchmakingPage() {
                                 <div className="form-group">
                                     <label className="form-label">Môn thể thao</label>
                                     <select className="form-input form-select" value={form.sportType} onChange={(e) => setForm({ ...form, sportType: e.target.value })} required>
-                                        {sportTypes.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+                                        {sportTypes.filter(s => s.value !== '').map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
                                     </select>
                                 </div>
 
                                 <div style={{ display: 'flex', gap: 16 }}>
                                     <div className="form-group" style={{ flex: 1 }}>
                                         <label className="form-label">Ngày chơi</label>
-                                        <input type="date" className="form-input" value={form.bookingDate} min={new Date().toISOString().split('T')[0]} onChange={(e) => setForm({ ...form, bookingDate: e.target.value })} required />
+                                        <DatePicker 
+                                           value={form.bookingDate} 
+                                           onChange={(val) => setForm({ ...form, bookingDate: val })} 
+                                           minDate={new Date().toISOString().split('T')[0]} 
+                                        />
                                     </div>
                                 </div>
 
@@ -348,16 +420,35 @@ export default function MatchmakingPage() {
                                     </div>
                                 </div>
 
-                                <div style={{ display: 'flex', gap: 16 }}>
-                                    <div className="form-group" style={{ flex: 1 }}>
-                                        <label className="form-label">Thành phố</label>
-                                        <input type="text" className="form-input" placeholder="Hồ Chí Minh" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} required />
-                                    </div>
-                                    <div className="form-group" style={{ flex: 1 }}>
-                                        <label className="form-label">Quận/Huyện</label>
-                                        <input type="text" className="form-input" placeholder="Quận 1" value={form.district} onChange={(e) => setForm({ ...form, district: e.target.value })} />
+                                {/* ===== Giao diện chọn địa chỉ mới ===== */}
+                                <div className="form-group">
+                                    <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                        <MapPin size={16} /> Chọn vị trí trên bản đồ *
+                                    </label>
+                                    <MapPicker
+                                        value={mapLocation}
+                                        onChange={handleMapChange}
+                                        height={300}
+                                    />
+                                </div>
+
+                                <div style={{ display: 'flex', gap: 12 }}>
+                                    <div className="form-group" style={{ flex: 2 }}>
+                                        <label className="form-label">Địa chỉ *</label>
+                                        <input type="text" className="form-input" placeholder="Tự động điền từ bản đồ" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} required />
                                     </div>
                                 </div>
+                                <div style={{ display: 'flex', gap: 12 }}>
+                                    <div className="form-group" style={{ flex: 1 }}>
+                                        <label className="form-label">Thành phố *</label>
+                                        <input type="text" className="form-input" placeholder="Tự động điền" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} required />
+                                    </div>
+                                    <div className="form-group" style={{ flex: 1 }}>
+                                        <label className="form-label">Quận/Huyện *</label>
+                                        <input type="text" className="form-input" placeholder="Tự động điền" value={form.district} onChange={(e) => setForm({ ...form, district: e.target.value })} required />
+                                    </div>
+                                </div>
+                                {/* ====================================== */}
 
                                 <div className="form-group">
                                     <label className="form-label">Ghi chú</label>
