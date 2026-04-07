@@ -1,6 +1,7 @@
 import './globals.css';
 import { AuthProvider } from '@/lib/auth';
 import Navbar from '@/components/Navbar';
+import ChatbotWidget from '@/components/ChatbotWidget';
 
 export const metadata = {
   title: 'SportApp - Đặt sân thể thao trực tuyến',
@@ -15,8 +16,10 @@ export default function RootLayout({ children }) {
         <AuthProvider>
           <Navbar />
           <main>{children}</main>
+          <ChatbotWidget />
         </AuthProvider>
       </body>
     </html>
   );
 }
+

@@ -54,9 +54,14 @@ export default function OwnerBookingsPage() {
         try {
             setLoading(true);
             const params = {};
-            if (filter) params.status = filter;
+            // "Đã xác nhận" tab shows both CONFIRMED and COMPLETED
+            if (filter && filter !== 'CONFIRMED') params.status = filter;
             const { data } = await bookingsAPI.getVenueBookings(selectedVenue, params);
-            setBookings(data.data.bookings);
+            let result = data.data.bookings;
+            if (filter === 'CONFIRMED') {
+                result = result.filter(b => b.status === 'CONFIRMED' || b.status === 'COMPLETED');
+            }
+            setBookings(result);
         } catch (err) { console.error(err); }
         finally { setLoading(false); }
     };
@@ -114,7 +119,7 @@ export default function OwnerBookingsPage() {
                     </div>
 
                     <div className={styles.filterTabs}>
-                        {['', 'PENDING_DEPOSIT', 'CONFIRMED', 'COMPLETED', 'CANCELLED'].map(s => (
+                        {['', 'PENDING_DEPOSIT', 'CONFIRMED', 'CANCELLED'].map(s => (
                             <button key={s} className={`tab ${filter === s ? 'active' : ''}`} onClick={() => setFilter(s)}>
                                 {s === '' ? 'Tất cả' : statusMap[s]?.label}
                             </button>

@@ -20,6 +20,7 @@ const reviewRoutes = require('./routes/reviews');
 const notificationRoutes = require('./routes/notifications');
 const paymentRoutes = require('./routes/payments');
 const uploadRoutes = require('./routes/upload');
+const chatbotRoutes = require('./routes/chatbot');
 
 // Import socket handler
 const { setupSocket } = require('./socket/chatSocket');
@@ -69,6 +70,7 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/chatbot', chatbotRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

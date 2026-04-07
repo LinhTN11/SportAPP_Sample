@@ -122,7 +122,8 @@
     transition: all var(--transition-fast);
 }
 
-.dropdownTrigger:hover, .dropdownTriggerOpen {
+.dropdownTrigger:hover,
+.dropdownTriggerOpen {
     border-color: #FF5A5F;
     background: var(--bg-primary);
 }
@@ -157,6 +158,7 @@
 .dropdownMenu::-webkit-scrollbar {
     width: 4px;
 }
+
 .dropdownMenu::-webkit-scrollbar-thumb {
     background: var(--border-light);
     border-radius: 4px;
@@ -178,8 +180,9 @@
 }
 
 .dropdownOptionActive {
-    background: rgba(255, 90, 95, 0.08); /* Light Orange Theme */
-    color: #FF5A5F;
+    background: rgba(255, 110, 64, 0.08);
+    /* Light Orange Theme */
+    color: #FF6E40;
     font-weight: 600;
 }
 
@@ -188,6 +191,7 @@
         opacity: 0;
         transform: translateY(-4px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -209,7 +213,8 @@
 }
 
 .weekDayWeekend {
-    color: #FF5A5F; /* Reddish for weekends */
+    color: #FF6E40;
+    /* Reddish for weekends */
 }
 
 /* Days Grid */
@@ -239,6 +244,35 @@
     background: var(--bg-secondary);
 }
 
+.premiumInput,
+.premiumSelect {
+    width: 100%;
+    height: 48px;
+    padding: 0 16px;
+    border: 2px solid #f1f5f9;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+    background: #ffffff;
+    outline: none;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.premiumInput:hover,
+.premiumSelect:hover {
+    border-color: #FF6E40;
+    background: #fffafa;
+}
+
+.premiumInput:focus,
+.premiumSelect:focus {
+    border-color: #FF6E40;
+    background: white;
+    box-shadow: 0 0 0 4px rgba(255, 110, 64, 0.1);
+}
+
 .dateNumber {
     position: relative;
     z-index: 2;
@@ -251,13 +285,15 @@
 }
 
 .selected {
-    background: #FFB300; /* Traveloka Yellow/Orange */
+    background: #FFB300;
+    /* Traveloka Yellow/Orange */
     color: white;
     font-weight: 700;
 }
 
 .today {
-    color: #0064D2; /* Traveloka Blue */
+    color: #0064D2;
+    /* Traveloka Blue */
     font-weight: 700;
 }
 
@@ -283,6 +319,7 @@
         opacity: 0;
         transform: translateY(10px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -301,7 +338,7 @@
         border-radius: 20px 20px 0 0;
         overflow-y: auto;
         animation: slideUpMobile 0.3s ease-out;
-        box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
+        box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.1);
         padding-bottom: inset(bottom);
     }
 
@@ -309,6 +346,7 @@
         from {
             transform: translateY(100%);
         }
+
         to {
             transform: translateY(0);
         }

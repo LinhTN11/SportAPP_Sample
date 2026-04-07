@@ -137,4 +137,11 @@ export const paymentsAPI = {
     getByBooking: (bookingId) => api.get(`/payments/booking/${bookingId}`),
 };
 
+// Chatbot API
+export const chatbotAPI = {
+    sendMessage: (message, history, location, venueId) => api.post('/chatbot/message', { message, history, location, venueId }),
+    getWeather: (city) => api.get('/chatbot/weather', { params: { city } }),
+    getExportUrl: (filename) => `${API_BASE}/chatbot/export/${filename}`,
+};
+
 export default api;

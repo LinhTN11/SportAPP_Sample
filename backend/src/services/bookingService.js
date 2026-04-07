@@ -1,11 +1,11 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('./chatbot/utils/prisma');
 
 /**
  * Get set of field IDs that are unavailable (booked) for a given date/time range
  */
 async function getUnavailableFieldIds(bookingDate, startTime, endTime) {
     const date = new Date(bookingDate);
+    if (isNaN(date.getTime())) return new Set();
 
     const bookings = await prisma.booking.findMany({
         where: {
@@ -47,6 +47,9 @@ async function getUnavailableFieldIds(bookingDate, startTime, endTime) {
  */
 async function calculateTotalPrice(fieldId, bookingDate, startTime, endTime) {
     const date = new Date(bookingDate);
+    if (isNaN(date.getTime())) {
+        throw new Error('Ngày đặt sân không hợp lệ. Vui lòng sử dụng định dạng YYYY-MM-DD.');
+    }
     const dayOfWeek = date.getDay(); // 0=Sun, 1=Mon...
 
     const rules = await prisma.fieldPricingRule.findMany({

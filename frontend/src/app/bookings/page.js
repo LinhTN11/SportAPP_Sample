@@ -35,9 +35,14 @@ export default function BookingsPage() {
         try {
             setLoading(true);
             const params = {};
-            if (filter) params.status = filter;
+            // "Đã xác nhận" tab shows both CONFIRMED and COMPLETED
+            if (filter && filter !== 'CONFIRMED') params.status = filter;
             const { data } = await bookingsAPI.getMyBookings(params);
-            setBookings(data.data.bookings);
+            let result = data.data.bookings;
+            if (filter === 'CONFIRMED') {
+                result = result.filter(b => b.status === 'CONFIRMED' || b.status === 'COMPLETED');
+            }
+            setBookings(result);
         } catch (err) {
             console.error(err);
         } finally {
@@ -93,7 +98,7 @@ export default function BookingsPage() {
                 <h1 className="heading-lg">Đặt sân của tôi</h1>
 
                 <div className={styles.filters}>
-                    {['', 'PENDING_DEPOSIT', 'CONFIRMED', 'COMPLETED', 'CANCELLED'].map((s) => (
+                    {['', 'PENDING_DEPOSIT', 'CONFIRMED', 'CANCELLED'].map((s) => (
                         <button
                             key={s}
                             className={`tab ${filter === s ? 'active' : ''}`}

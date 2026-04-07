@@ -143,25 +143,56 @@ function startCronJobs(prisma) {
         }
     });
 
-    // Job 4: Mark completed bookings (daily at midnight)
-    cron.schedule('0 0 * * *', async () => {
+    // Job 4: Auto-complete confirmed bookings whose rental time has passed (every minute)
+    cron.schedule('* * * * *', async () => {
         try {
-            const yesterday = new Date();
-            yesterday.setDate(yesterday.getDate() - 1);
+            const now = new Date();
 
-            const completed = await prisma.booking.updateMany({
+            // Find all CONFIRMED bookings where bookingDate + endTime <= now
+            const confirmedBookings = await prisma.booking.findMany({
                 where: {
                     status: 'CONFIRMED',
-                    bookingDate: { lt: yesterday },
+                    bookingDate: { lte: now },
                 },
-                data: { status: 'COMPLETED' },
+                select: {
+                    id: true,
+                    bookingDate: true,
+                    endTime: true,
+                    field: { select: { name: true, venue: { select: { name: true } } } },
+                    customerId: true,
+                },
             });
 
-            if (completed.count > 0) {
-                console.log(`✅ Completed ${completed.count} past bookings`);
+            const toComplete = confirmedBookings.filter(b => {
+                const [h, m] = b.endTime.split(':').map(Number);
+                const endDateTime = new Date(b.bookingDate);
+                endDateTime.setHours(h, m, 0, 0);
+                return endDateTime <= now;
+            });
+
+            if (toComplete.length > 0) {
+                await prisma.booking.updateMany({
+                    where: { id: { in: toComplete.map(b => b.id) } },
+                    data: { status: 'COMPLETED' },
+                });
+
+                // Notify customers
+                for (const b of toComplete) {
+                    await prisma.notification.create({
+                        data: {
+                            userId: b.customerId,
+                            type: 'BOOKING_COMPLETED',
+                            title: 'Hoàn thành đặt sân ✅',
+                            body: `Lịch đặt sân ${b.field.name} tại ${b.field.venue.name} đã hoàn thành. Cảm ơn bạn đã sử dụng dịch vụ!`,
+                            data: { bookingId: b.id },
+                        },
+                    });
+                }
+
+                console.log(`✅ Auto-completed ${toComplete.length} booking(s) past rental time`);
             }
         } catch (err) {
-            console.error('Complete bookings job error:', err);
+            console.error('Auto-complete bookings job error:', err);
         }
     });
 }

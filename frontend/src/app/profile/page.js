@@ -385,12 +385,18 @@ export default function ProfilePage() {
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                                     {recentBookings.map((booking) => {
                                         const statusMap = {
-                                            PENDING:   { label: 'Chờ xác nhận', color: '#F59E0B', bg: '#FEF3C7' },
-                                            CONFIRMED: { label: 'Đã xác nhận',  color: '#10B981', bg: '#D1FAE5' },
-                                            CANCELLED: { label: 'Đã hủy',       color: '#EF4444', bg: '#FEE2E2' },
-                                            COMPLETED: { label: 'Hoàn thành',   color: '#6B7280', bg: '#F3F4F6' },
+                                            PENDING_DEPOSIT: { label: 'Chờ cọc',     color: '#F59E0B', bg: '#FEF3C7' },
+                                            CONFIRMED:       { label: 'Đã xác nhận', color: '#10B981', bg: '#D1FAE5' },
+                                            CANCELLED:       { label: 'Đã hủy',      color: '#EF4444', bg: '#FEE2E2' },
+                                            COMPLETED:       { label: 'Hoàn thành',  color: '#6B7280', bg: '#F3F4F6' },
+                                            EXPIRED:         { label: 'Hết hạn',     color: '#9CA3AF', bg: '#F3F4F6' },
                                         };
-                                        const s = statusMap[booking.status] || statusMap.PENDING;
+                                        // Client-side: nếu đang chờ cọc nhưng đã hết thời gian giữ chỗ → hiển thị Hết hạn
+                                        const isExpiredOnClient = booking.status === 'PENDING_DEPOSIT'
+                                            && booking.holdExpiresAt
+                                            && new Date(booking.holdExpiresAt) < new Date();
+                                        const displayStatus = isExpiredOnClient ? 'EXPIRED' : booking.status;
+                                        const s = statusMap[displayStatus] || statusMap.PENDING_DEPOSIT;
                                         return (
                                             <div
                                                 key={booking.id}

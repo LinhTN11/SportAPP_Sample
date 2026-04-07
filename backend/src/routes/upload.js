@@ -2,6 +2,7 @@ const router = require('express').Router();
 const multer = require('multer');
 const path = require('path');
 const { authenticate } = require('../middleware/auth');
+const { uploadSingle, uploadMultiple } = require('../controllers/uploadController');
 
 // Configure multer storage
 const storage = multer.diskStorage({
@@ -17,29 +18,14 @@ const storage = multer.diskStorage({
 
 const upload = multer({
     storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+    limits: { fileSize: 5 * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
         const isValid = file.mimetype.startsWith('image/');
         cb(isValid ? null : new Error('Only image files are allowed'), isValid);
     },
 });
 
-// POST /api/upload - Upload single image
-router.post('/', authenticate, upload.single('image'), (req, res) => {
-    if (!req.file) {
-        return res.status(400).json({ success: false, message: 'No file uploaded' });
-    }
-    const url = `/uploads/${req.file.filename}`;
-    res.json({ success: true, data: { url } });
-});
-
-// POST /api/upload/multiple - Upload multiple images (max 10)
-router.post('/multiple', authenticate, upload.array('images', 10), (req, res) => {
-    if (!req.files || req.files.length === 0) {
-        return res.status(400).json({ success: false, message: 'No files uploaded' });
-    }
-    const urls = req.files.map(f => `/uploads/${f.filename}`);
-    res.json({ success: true, data: { urls } });
-});
+router.post('/', authenticate, upload.single('image'), uploadSingle);
+router.post('/multiple', authenticate, upload.array('images', 10), uploadMultiple);
 
 module.exports = router;

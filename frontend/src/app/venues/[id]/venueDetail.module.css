@@ -676,7 +676,7 @@
 }
 
 .timeBlock {
-    padding: 10px 4px;
+    padding: 8px 4px;
     border: 1px solid var(--border-light);
     border-radius: 8px;
     background: var(--bg-primary);
@@ -687,6 +687,26 @@
     color: var(--text-primary);
     text-align: center;
     white-space: nowrap;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.timeLabel {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.timePrice {
+    font-size: 10px;
+    font-weight: 500;
+    color: #FF6E40;
+    opacity: 0.85;
+}
+
+.timeSelected .timePrice {
+    color: rgba(255, 255, 255, 0.85);
 }
 
 .timeBlock:hover:not(:disabled) {
@@ -707,6 +727,10 @@
     text-decoration: line-through;
     border-color: transparent;
     opacity: 0.6;
+}
+
+.timeBooked .timePrice {
+    display: none;
 }
 
 /* Custom Dropdown UI for Booking Widget */
@@ -1005,4 +1029,26 @@
 .pageNumActive {
     background: #FF6E40 !important;
     color: white !important;
+}
+
+.idBadge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: var(--bg-secondary);
+    padding: 3px 8px;
+    border-radius: 6px;
+    margin-left: 12px;
+    vertical-align: middle;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid var(--border-light);
+}
+
+.idBadge:hover {
+    color: #FF6E40;
+    background: #FFF0EB;
+    border-color: #FF6E40;
 }
