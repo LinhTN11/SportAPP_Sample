@@ -22,11 +22,21 @@ export default function MatchmakingPage() {
     const [loading, setLoading] = useState(true);
     const [filters, setFilters] = useState({ sportType: '', city: '' });
     
-    // State và Ref cho Custom Dropdown
+    // State và Ref cho Custom Dropdown (Tìm đối)
     const [isSportDropdownOpen, setIsSportDropdownOpen] = useState(false);
     const sportDropdownRef = useRef(null);
 
-    // form tạo bài đăng (đã thêm trường address, latitude, longitude)
+    // State và Ref cho Custom Dropdown (Tạo bài - Môn thể thao)
+    const [isCreateSportDropdownOpen, setIsCreateSportDropdownOpen] = useState(false);
+    const createSportDropdownRef = useRef(null);
+
+    // State và Ref cho Custom Dropdown (Tạo bài - Giờ bắt đầu & Kết thúc)
+    const [isStartTimeOpen, setIsStartTimeOpen] = useState(false);
+    const startTimeDropdownRef = useRef(null);
+    const [isEndTimeOpen, setIsEndTimeOpen] = useState(false);
+    const endTimeDropdownRef = useRef(null);
+
+    // form tạo bài đăng
     const [form, setForm] = useState({
         bookingDate: '', startTime: '', endTime: '',
         sportType: 'football', address: '', city: '', district: '', latitude: '', longitude: '',
@@ -37,6 +47,18 @@ export default function MatchmakingPage() {
 
     // State quản lý bản đồ
     const [mapLocation, setMapLocation] = useState({});
+
+    // danh sách giờ (Mỗi 30 phút từ 05:00 đến 23:30)
+    const generateTimeOptions = () => {
+        const times = [];
+        for (let h = 5; h <= 23; h++) {
+            const hour = h.toString().padStart(2, '0');
+            times.push(`${hour}:00`);
+            times.push(`${hour}:30`);
+        }
+        return times;
+    };
+    const timeOptions = generateTimeOptions();
 
     // Hàm xử lý khi chọn địa điểm trên bản đồ
     const handleMapChange = (loc) => {
@@ -56,6 +78,15 @@ export default function MatchmakingPage() {
         const handleClickOutside = (e) => {
             if (sportDropdownRef.current && !sportDropdownRef.current.contains(e.target)) {
                 setIsSportDropdownOpen(false);
+            }
+            if (createSportDropdownRef.current && !createSportDropdownRef.current.contains(e.target)) {
+                setIsCreateSportDropdownOpen(false);
+            }
+            if (startTimeDropdownRef.current && !startTimeDropdownRef.current.contains(e.target)) {
+                setIsStartTimeOpen(false);
+            }
+            if (endTimeDropdownRef.current && !endTimeDropdownRef.current.contains(e.target)) {
+                setIsEndTimeOpen(false);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
@@ -90,6 +121,10 @@ export default function MatchmakingPage() {
     const handleCreatePost = async (e) => {
         e.preventDefault();
         if (!isAuthenticated) { router.push('/login'); return; }
+        if (!form.startTime || !form.endTime || !form.bookingDate) {
+            setError('Vui lòng chọn đầy đủ ngày và giờ');
+            return;
+        }
         setSubmitting(true);
         setError('');
         try {
@@ -175,7 +210,7 @@ export default function MatchmakingPage() {
                 {activeTab === 'browse' && (
                     <>
                         <div className={styles.filters}>
-                            {/* Custom Dropdown */}
+                            {/* Custom Dropdown Tìm Đối */}
                             <div className={styles.customDropdown} ref={sportDropdownRef}>
                                 <div 
                                     className={`${styles.dropdownTrigger} ${isSportDropdownOpen ? styles.dropdownTriggerOpen : ''}`}
@@ -253,28 +288,28 @@ export default function MatchmakingPage() {
                                         <div className={styles.postBody}>
                                             {/* Môn thể thao */}
                                             <div className={styles.postTag}>
-                                                <span style={{ fontSize: 20, color: '#FF5733', display: 'flex', alignItems: 'center' }}>{sportIcon}</span>
+                                                <span style={{ fontSize: 18, color: '#FF5733', display: 'flex', alignItems: 'center' }}>{sportIcon}</span>
                                                 {sportTypes.find(s => s.value === post.sportType)?.label || post.sportType}
                                             </div>
 
                                             {/* Detail grid 2 cột */}
                                             <div className={styles.detailGrid}>
                                                 <div className={styles.postDetail}>
-                                                    <CalendarDays size={20} color="#FF5733" />
+                                                    <CalendarDays size={14} color="#FF5733" />
                                                     {new Date(post.bookingDate).toLocaleDateString('vi-VN')}
                                                 </div>
                                                 <div className={styles.postDetail}>
-                                                    <Clock size={20} color="#FF5733" />
+                                                    <Clock size={14} color="#FF5733" />
                                                     {post.startTime} – {post.endTime}
                                                 </div>
                                                 <div className={`${styles.postDetail} ${styles.postDetailFull}`}>
-                                                    <MapPin size={20} color="#FF5733" />
+                                                    <MapPin size={14} color="#FF5733" />
                                                     {post.city}{post.district ? `, ${post.district}` : ''}
                                                 </div>
                                                 {/* chỉ hiện khi liên kết với sân con */}
                                                 {post.field && (
                                                     <div className={`${styles.postDetail} ${styles.postDetailFull}`}>
-                                                        <Building2 size={20} color="#FF5733" />
+                                                        <Building2 size={14} color="#FF5733" />
                                                         {post.field.venue?.name}
                                                     </div>
                                                 )}
@@ -337,16 +372,16 @@ export default function MatchmakingPage() {
                                 {/* Body */}
                                 <div className={styles.postBody}>
                                     <div className={styles.postTag}>
-                                        <span style={{ fontSize: 20, color: '#FF5733', display: 'flex', alignItems: 'center' }}>{sportIcon}</span>
+                                        <span style={{ fontSize: 18, color: '#FF5733', display: 'flex', alignItems: 'center' }}>{sportIcon}</span>
                                         {sportTypes.find(s => s.value === post.sportType)?.label || post.sportType}
                                     </div>
                                     <div className={styles.detailGrid}>
                                         <div className={styles.postDetail}>
-                                            <CalendarDays size={20} color="#FF5733" />
+                                            <CalendarDays size={14} color="#FF5733" />
                                             {new Date(post.bookingDate).toLocaleDateString('vi-VN')}
                                         </div>
                                         <div className={styles.postDetail}>
-                                            <Clock size={20} color="#FF5733" />
+                                            <Clock size={14} color="#FF5733" />
                                             {post.startTime} – {post.endTime}
                                         </div>
                                     </div>
@@ -393,9 +428,42 @@ export default function MatchmakingPage() {
                             <form onSubmit={handleCreatePost}>
                                 <div className="form-group">
                                     <label className="form-label">Môn thể thao</label>
-                                    <select className="form-input form-select" value={form.sportType} onChange={(e) => setForm({ ...form, sportType: e.target.value })} required>
-                                        {sportTypes.filter(s => s.value !== '').map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-                                    </select>
+                                    <div className={styles.customDropdown} ref={createSportDropdownRef}>
+                                        <div 
+                                            className={`${styles.dropdownTrigger} ${isCreateSportDropdownOpen ? styles.dropdownTriggerOpen : ''}`}
+                                            onClick={() => setIsCreateSportDropdownOpen(!isCreateSportDropdownOpen)}
+                                        >
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <span className={styles.dropdownOptionIcon}>
+                                                    {sportTypes.find(s => s.value === form.sportType)?.icon || SportIcons.football}
+                                                </span>
+                                                <span>
+                                                    {sportTypes.find(s => s.value === form.sportType)?.label || 'Bóng đá'}
+                                                </span>
+                                            </div>
+                                            <span className={`${styles.dropdownChevron} ${isCreateSportDropdownOpen ? styles.dropdownChevronOpen : ''}`}>
+                                                <ChevronDown size={16} />
+                                            </span>
+                                        </div>
+
+                                        {isCreateSportDropdownOpen && (
+                                            <div className={styles.dropdownMenu}>
+                                                {sportTypes.filter(s => s.value !== '').map(s => (
+                                                    <div 
+                                                        key={s.value}
+                                                        className={`${styles.dropdownOption} ${form.sportType === s.value ? styles.dropdownOptionActive : ''}`}
+                                                        onClick={() => { 
+                                                            setForm({ ...form, sportType: s.value }); 
+                                                            setIsCreateSportDropdownOpen(false); 
+                                                        }}
+                                                    >
+                                                        <span className={styles.dropdownOptionIcon}>{s.icon}</span>
+                                                        {s.label}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
 
                                 <div style={{ display: 'flex', gap: 16 }}>
@@ -409,18 +477,80 @@ export default function MatchmakingPage() {
                                     </div>
                                 </div>
 
-                                <div style={{ display: 'flex', gap: 16 }}>
+                                {/* ==== CỤM CHỌN GIỜ ĐÃ NÂNG CẤP ==== */}
+                                <div style={{ display: 'flex', gap: 16  , position: 'relative', zIndex: 9000 }}>
+                                    {/* Từ giờ */}
                                     <div className="form-group" style={{ flex: 1 }}>
                                         <label className="form-label">Từ</label>
-                                        <input type="time" className="form-input" value={form.startTime} onChange={(e) => setForm({ ...form, startTime: e.target.value })} required />
+                                        <div className={styles.customDropdown} ref={startTimeDropdownRef}>
+                                            <div 
+                                                className={`${styles.dropdownTrigger} ${isStartTimeOpen ? styles.dropdownTriggerOpen : ''}`}
+                                                onClick={() => setIsStartTimeOpen(!isStartTimeOpen)}
+                                            >
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <span className={styles.dropdownOptionIcon} style={{ color: '#6B7280' }}><Clock size={16} /></span>
+                                                    <span>{form.startTime || 'Chọn giờ'}</span>
+                                                </div>
+                                                <span className={`${styles.dropdownChevron} ${isStartTimeOpen ? styles.dropdownChevronOpen : ''}`}>
+                                                    <ChevronDown size={16} />
+                                                </span>
+                                            </div>
+
+                                            {isStartTimeOpen && (
+                                                <div className={styles.dropdownMenu} style={{ maxHeight: '240px', overflowY: 'auto' }}>
+                                                    {timeOptions.map(time => (
+                                                        <div 
+                                                            key={`start-${time}`}
+                                                            className={`${styles.dropdownOption} ${form.startTime === time ? styles.dropdownOptionActive : ''}`}
+                                                            onClick={() => { 
+                                                                setForm({ ...form, startTime: time }); 
+                                                                setIsStartTimeOpen(false); 
+                                                            }}
+                                                        >
+                                                            {time}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
+
+                                    {/* Đến giờ */}
                                     <div className="form-group" style={{ flex: 1 }}>
                                         <label className="form-label">Đến</label>
-                                        <input type="time" className="form-input" value={form.endTime} onChange={(e) => setForm({ ...form, endTime: e.target.value })} required />
+                                        <div className={styles.customDropdown} ref={endTimeDropdownRef}>
+                                            <div 
+                                                className={`${styles.dropdownTrigger} ${isEndTimeOpen ? styles.dropdownTriggerOpen : ''}`}
+                                                onClick={() => setIsEndTimeOpen(!isEndTimeOpen)}
+                                            >
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <span className={styles.dropdownOptionIcon} style={{ color: '#6B7280' }}><Clock size={16} /></span>
+                                                    <span>{form.endTime || 'Chọn giờ'}</span>
+                                                </div>
+                                                <span className={`${styles.dropdownChevron} ${isEndTimeOpen ? styles.dropdownChevronOpen : ''}`}>
+                                                    <ChevronDown size={16} />
+                                                </span>
+                                            </div>
+
+                                            {isEndTimeOpen && (
+                                                <div className={styles.dropdownMenu} style={{ maxHeight: '240px', overflowY: 'auto' }}>
+                                                    {timeOptions.map(time => (
+                                                        <div 
+                                                            key={`end-${time}`}
+                                                            className={`${styles.dropdownOption} ${form.endTime === time ? styles.dropdownOptionActive : ''}`}
+                                                            onClick={() => { 
+                                                                setForm({ ...form, endTime: time }); 
+                                                                setIsEndTimeOpen(false); 
+                                                            }}
+                                                        >
+                                                            {time}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
-
-                                {/* ===== Giao diện chọn địa chỉ mới ===== */}
                                 <div className="form-group">
                                     <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                                         <MapPin size={16} /> Chọn vị trí trên bản đồ *
@@ -448,8 +578,6 @@ export default function MatchmakingPage() {
                                         <input type="text" className="form-input" placeholder="Tự động điền" value={form.district} onChange={(e) => setForm({ ...form, district: e.target.value })} required />
                                     </div>
                                 </div>
-                                {/* ====================================== */}
-
                                 <div className="form-group">
                                     <label className="form-label">Ghi chú</label>
                                     <textarea className="form-input" placeholder="Mô tả thêm..." value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} />
