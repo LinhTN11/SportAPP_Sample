@@ -4,10 +4,10 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { bookingsAPI, reviewsAPI } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { CalendarDays, Clock, Wallet } from 'lucide-react';
+import { CalendarDays, Clock, Wallet, X, Star, Send, MessageSquare, Sparkles } from 'lucide-react';
 import styles from './bookings.module.css';
-import PaymentQRModal from './PaymentQR/PaymentQRModal';
-import CountdownTimer from './PaymentQR/CountdownTimer';
+import PaymentQRModal from '@/components/PaymentQR/PaymentQRModal';
+import CountdownTimer from '@/components/PaymentQR/CountdownTimer';
 
 export default function BookingsPage() {
     const router = useRouter();
@@ -19,9 +19,20 @@ export default function BookingsPage() {
 
     // Review state
     const [showReviewModal, setShowReviewModal] = useState(null); // bookingId
-    const [rating, setRating] = useState(5);
+    const [rating, setRating] = useState(0);
+    const [hoveredStar, setHoveredStar] = useState(0);
     const [comment, setComment] = useState('');
     const [reviewSubmitting, setReviewSubmitting] = useState(false);
+    const [reviewDone, setReviewDone] = useState(false);
+
+    const RATING_LABELS = {
+        1: 'Rất tệ 😞',
+        2: 'Tệ 😕',
+        3: 'Bình thường 😐',
+        4: 'Tốt 😊',
+        5: 'Tuyệt vời 🤩',
+    };
+    const activeRating = hoveredStar || rating;
 
     useEffect(() => {
         if (!authLoading && !isAuthenticated) {
@@ -35,9 +46,14 @@ export default function BookingsPage() {
         try {
             setLoading(true);
             const params = {};
-            if (filter) params.status = filter;
+            // "Đã xác nhận" tab shows both CONFIRMED and COMPLETED
+            if (filter && filter !== 'CONFIRMED') params.status = filter;
             const { data } = await bookingsAPI.getMyBookings(params);
-            setBookings(data.data.bookings);
+            let result = data.data.bookings;
+            if (filter === 'CONFIRMED') {
+                result = result.filter(b => b.status === 'CONFIRMED' || b.status === 'COMPLETED');
+            }
+            setBookings(result);
         } catch (err) {
             console.error(err);
         } finally {
@@ -57,6 +73,7 @@ export default function BookingsPage() {
 
     const handleReviewSubmit = async (e) => {
         e.preventDefault();
+        if (rating === 0) return;
         setReviewSubmitting(true);
         try {
             await reviewsAPI.create({
@@ -64,19 +81,32 @@ export default function BookingsPage() {
                 rating,
                 comment,
             });
-            setShowReviewModal(null);
-            setRating(5);
-            setComment('');
-            loadBookings();
+            setReviewDone(true);
+            setTimeout(() => {
+                setShowReviewModal(null);
+                setRating(5);
+                setHoveredStar(5);
+                setComment('');
+                setReviewDone(false);
+                loadBookings();
+            }, 2000);
         } catch (err) {
             alert(err.response?.data?.message || 'Đánh giá thất bại');
         } finally {
             setReviewSubmitting(false);
         }
     };
+
+    const closeReviewModal = () => {
+        setShowReviewModal(null);
+        setRating(0);
+        setHoveredStar(0);
+        setComment('');
+        setReviewDone(false);
+    };
     const handlePaymentConfirm = async (bookingId) => {
-    await bookingsAPI.confirm(bookingId);
-    loadBookings();
+        await bookingsAPI.confirm(bookingId);
+        loadBookings();
     };
 
     const statusMap = {
@@ -93,7 +123,7 @@ export default function BookingsPage() {
                 <h1 className="heading-lg">Đặt sân của tôi</h1>
 
                 <div className={styles.filters}>
-                    {['', 'PENDING_DEPOSIT', 'CONFIRMED', 'COMPLETED', 'CANCELLED'].map((s) => (
+                    {['', 'PENDING_DEPOSIT', 'CONFIRMED', 'CANCELLED'].map((s) => (
                         <button
                             key={s}
                             className={`tab ${filter === s ? 'active' : ''}`}
@@ -157,7 +187,7 @@ export default function BookingsPage() {
                                                             onExpired={() => {
                                                                 alert('Đặt chỗ đã hết hạn! Vui lòng đặt lại.');
                                                                 loadBookings();
-                                                            }}/>)}</div>
+                                                            }} />)}</div>
                                             </div>
                                             <span className={`badge ${statusMap[booking.status]?.class}`}>
                                                 {statusMap[booking.status]?.label}
@@ -193,7 +223,7 @@ export default function BookingsPage() {
                                                         ⭐ Đánh giá
                                                     </button>
                                                 )}
-                                                {['PENDING_DEPOSIT', 'CONFIRMED'].includes(booking.status) && (
+                                                {booking.status === 'PENDING_DEPOSIT' && (
                                                     <button className={styles.btnCancel} onClick={() => handleCancel(booking.id)}>
                                                         Hủy đặt sân
                                                     </button>
@@ -210,52 +240,119 @@ export default function BookingsPage() {
                     <PaymentQRModal
                         booking={paymentBooking}
                         onClose={() => setPaymentBooking(null)}
-                        onConfirm={handlePaymentConfirm}/>)}
+                        onConfirm={handlePaymentConfirm}
+                        paymentType={paymentBooking.paymentMethod === 'ONLINE' ? 'full' : 'deposit'} />)}
 
                 {/* Review Modal */}
                 {showReviewModal && (
-                    <div className="modal-overlay" onClick={() => setShowReviewModal(null)}>
-                        <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 400 }}>
-                            <div className="modal-header">
-                                <h2 className="heading-sm">Đánh giá sân</h2>
-                                <button className="modal-close" onClick={() => setShowReviewModal(null)}>×</button>
-                            </div>
-                            <form onSubmit={handleReviewSubmit}>
-                                <div className="form-group" style={{ textAlign: 'center', margin: '24px 0' }}>
-                                    {[1, 2, 3, 4, 5].map(star => (
-                                        <button
-                                            key={star}
-                                            type="button"
-                                            onClick={() => setRating(star)}
-                                            style={{
-                                                fontSize: 32,
-                                                background: 'none',
-                                                border: 'none',
-                                                cursor: 'pointer',
-                                                color: star <= rating ? 'gold' : 'var(--border)',
-                                                transition: '0.2s',
-                                            }}
-                                        >
-                                            ★
-                                        </button>
-                                    ))}
-                                    <div style={{ marginTop: 8, fontSize: 14, color: 'var(--text-secondary)' }}>
-                                        {rating} sao
+                    <div className={styles.reviewOverlay} onClick={closeReviewModal}>
+                        <div className={styles.reviewModal} onClick={(e) => e.stopPropagation()}>
+                            {/* Decorative gradient */}
+                            <div className={styles.reviewGradientTop} />
+
+                            {reviewDone ? (
+                                /* ── Success ── */
+                                <div className={styles.reviewSuccess}>
+                                    <div className={styles.reviewSuccessRing}>
+                                        <Sparkles size={36} color="#F59E0B" strokeWidth={1.8} />
+                                    </div>
+                                    <p className={styles.reviewSuccessTitle}>Cảm ơn bạn!</p>
+                                    <p className={styles.reviewSuccessSub}>Đánh giá của bạn đã được gửi thành công</p>
+                                    <div className={styles.reviewSuccessStars}>
+                                        {[1, 2, 3, 4, 5].map(s => (
+                                            <Star key={s} size={22} fill={s <= rating ? '#F59E0B' : 'none'} color={s <= rating ? '#F59E0B' : '#E2E8F0'} strokeWidth={1.5} />
+                                        ))}
                                     </div>
                                 </div>
-                                <div className="form-group">
-                                    <textarea
-                                        className="form-input"
-                                        placeholder="Chia sẻ trải nghiệm của bạn (không bắt buộc)..."
-                                        rows={4}
-                                        value={comment}
-                                        onChange={(e) => setComment(e.target.value)}
-                                    />
-                                </div>
-                                <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={reviewSubmitting}>
-                                    {reviewSubmitting ? <span className="spinner" /> : 'Gửi đánh giá'}
-                                </button>
-                            </form>
+                            ) : (
+                                /* ── Form ── */
+                                <>
+                                    <div className={styles.reviewHeader}>
+                                        <div className={styles.reviewHeaderLeft}>
+                                            <div className={styles.reviewHeaderIcon}>
+                                                <Star size={18} fill="#F59E0B" color="#F59E0B" />
+                                            </div>
+                                            <div>
+                                                <h2 className={styles.reviewHeaderTitle}>Đánh giá trải nghiệm</h2>
+                                                <p className={styles.reviewHeaderSub}>Chia sẻ cảm nhận của bạn</p>
+                                            </div>
+                                        </div>
+                                        <button className={styles.reviewCloseBtn} onClick={closeReviewModal}>
+                                            <X size={16} strokeWidth={2.5} />
+                                        </button>
+                                    </div>
+
+                                    <form onSubmit={handleReviewSubmit} className={styles.reviewBody}>
+                                        {/* Stars */}
+                                        <div className={styles.reviewRatingSection}>
+                                            <p className={styles.reviewRatingPrompt}>Bạn cảm thấy thế nào?</p>
+                                            <div className={styles.reviewStarsRow}>
+                                                {[1, 2, 3, 4, 5].map(star => (
+                                                    <button
+                                                        key={star}
+                                                        type="button"
+                                                        className={`${styles.reviewStarBtn} ${star <= activeRating ? styles.reviewStarActive : ''}`}
+                                                        onClick={() => setRating(star)}
+                                                        onMouseEnter={() => setHoveredStar(star)}
+                                                        onMouseLeave={() => setHoveredStar(0)}
+                                                    >
+                                                        <Star
+                                                            size={38}
+                                                            fill={star <= activeRating ? '#F59E0B' : 'none'}
+                                                            color={star <= activeRating ? '#F59E0B' : '#CBD5E1'}
+                                                            strokeWidth={1.5}
+                                                        />
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            <div className={`${styles.reviewRatingLabel} ${activeRating > 0 ? styles.reviewRatingLabelVisible : ''}`}>
+                                                <span className={styles.reviewRatingBadge}>
+                                                    {RATING_LABELS[activeRating] || 'Chọn số sao'}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div className={styles.reviewDivider} />
+
+                                        {/* Comment */}
+                                        <div className={styles.reviewCommentSection}>
+                                            <label className={styles.reviewCommentLabel}>
+                                                <MessageSquare size={14} />
+                                                <span>Chia sẻ chi tiết hơn</span>
+                                                <span className={styles.reviewOptional}>(tùy chọn)</span>
+                                            </label>
+                                            <div className={styles.reviewTextareaWrap}>
+                                                <textarea
+                                                    className={styles.reviewTextarea}
+                                                    placeholder="Sân rộng, sạch sẽ, nhân viên thân thiện..."
+                                                    rows={4}
+                                                    value={comment}
+                                                    onChange={(e) => setComment(e.target.value)}
+                                                    maxLength={500}
+                                                />
+                                                <span className={styles.reviewCharCount}>{comment.length}/500</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Submit */}
+                                        <button
+                                            type="submit"
+                                            className={styles.reviewSubmitBtn}
+                                            disabled={reviewSubmitting || rating === 0}
+                                        >
+                                            {reviewSubmitting ? (
+                                                <><span className={styles.reviewSpinner} /> Đang gửi...</>
+                                            ) : (
+                                                <><Send size={16} /> Gửi đánh giá</>
+                                            )}
+                                        </button>
+
+                                        {rating === 0 && (
+                                            <p className={styles.reviewHint}>Vui lòng chọn số sao để gửi đánh giá</p>
+                                        )}
+                                    </form>
+                                </>
+                            )}
                         </div>
                     </div>
                 )}
