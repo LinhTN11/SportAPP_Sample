@@ -6,11 +6,11 @@ import Link from 'next/link';
 import { venuesAPI, bookingsAPI, reviewsAPI } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { 
-    MapPin, Star, Share2, Heart, ChevronRight, ChevronDown, ChevronLeft, Copy,
+    MapPin, Star, Share2, Heart, ChevronRight, ChevronDown, ChevronLeft,
     Calendar, Clock, ShieldCheck, Info,
     Wifi, Car, UtensilsCrossed, Lock, Smartphone
 } from 'lucide-react';
-import styles from './venueDetail.module.css';
+import styles from './detail.module.css';
 import PageFooter from '@/components/PageFooter';
 import { getSportIcon, getSportLabel, getSportTagClass } from '@/components/venue/SportIcons';
 import MapPicker from '@/components/MapPicker';
@@ -107,69 +107,6 @@ export default function VenueDetailPage({ params }) {
         return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     };
 
-    // --- Client-side pricing calculation (mirrors backend bookingService) ---
-    const getSlotPrice = (pricingRules, slotStartMinutes, slotDurationMinutes, dayOfWeek) => {
-        if (!pricingRules || pricingRules.length === 0) return 0;
-
-        const bookStart = slotStartMinutes;
-        let bookEnd = slotStartMinutes + slotDurationMinutes;
-
-        let totalPrice = 0;
-
-        for (const rule of pricingRules) {
-            // Check dayOfWeek match
-            if (rule.dayOfWeek && rule.dayOfWeek.length > 0 && !rule.dayOfWeek.includes(dayOfWeek)) {
-                continue;
-            }
-
-            let ruleStart = timeToMinutes(rule.startTime);
-            let ruleEnd = timeToMinutes(rule.endTime);
-            if (ruleEnd <= ruleStart) ruleEnd += 24 * 60;
-
-            // Test 3 shifts for midnight-crossing
-            const intervals = [
-                { start: ruleStart - 24 * 60, end: ruleEnd - 24 * 60 },
-                { start: ruleStart, end: ruleEnd },
-                { start: ruleStart + 24 * 60, end: ruleEnd + 24 * 60 },
-            ];
-
-            for (const iv of intervals) {
-                const overlapStart = Math.max(bookStart, iv.start);
-                const overlapEnd = Math.min(bookEnd, iv.end);
-                if (overlapStart < overlapEnd) {
-                    const overlapHours = (overlapEnd - overlapStart) / 60;
-                    totalPrice += overlapHours * Number(rule.price);
-                }
-            }
-        }
-
-        // Fallback: first matching rule
-        if (totalPrice === 0) {
-            const matchingRule = pricingRules.find(r =>
-                !r.dayOfWeek || r.dayOfWeek.length === 0 || r.dayOfWeek.includes(dayOfWeek)
-            );
-            if (matchingRule) {
-                totalPrice = (slotDurationMinutes / 60) * Number(matchingRule.price);
-            }
-        }
-
-        return Math.round(totalPrice);
-    };
-
-    // Get the price-per-hour for a field on a specific date (for display in field cards)
-    const getFieldDisplayPrice = (field, dateStr) => {
-        if (!field?.pricingRules || field.pricingRules.length === 0) return 0;
-        const dayOfWeek = new Date(dateStr).getDay(); // 0=Sun
-        // Find the first rule that matches this day
-        const matchingRule = field.pricingRules.find(r =>
-            !r.dayOfWeek || r.dayOfWeek.length === 0 || r.dayOfWeek.includes(dayOfWeek)
-        ) || field.pricingRules[0];
-        return Number(matchingRule.price);
-    };
-
-    // Get the day-of-week number for the selected date
-    const selectedDayOfWeek = useMemo(() => new Date(selectedDate).getDay(), [selectedDate]);
-
     // Generate time slots (every 30 mins)
     const timeSlots = useMemo(() => {
         // Fallback to 05:00 and 22:00 if venue times aren't specified
@@ -213,22 +150,16 @@ export default function VenueDetailPage({ params }) {
             const endM = currentEnd % 60;
             const endTimeStr = `${endH.toString().padStart(2, '0')}:${endM.toString().padStart(2, '0')}`;
 
-            // Calculate price for this 30-min slot based on pricing rules + selected date
-            const slotPrice = selectedField
-                ? getSlotPrice(selectedField.pricingRules, current, 30, selectedDayOfWeek)
-                : 0;
-
             slots.push({ 
                 time: timeStr, 
                 displayLabel: `${timeStr} - ${endTimeStr}`,
                 minutes: current, 
-                isBooked: isBooked || isPast,
-                price: slotPrice,
+                isBooked: isBooked || isPast 
             });
             current += 30; // 30 min slots
         }
         return slots;
-    }, [venue, bookedSlots, selectedField, selectedDayOfWeek]);
+    }, [venue, bookedSlots]);
 
     const handleTimeClick = (slot) => {
         if (slot.isBooked) return;
@@ -343,7 +274,7 @@ export default function VenueDetailPage({ params }) {
                 bookingDate: formattedDate,
                 startTime,
                 endTime,
-                paymentMethod: 'DIRECT'
+                paymentMethod: paymentType === 'full' ? 'ONLINE' : 'DIRECT'
             };
             
             const { data } = await bookingsAPI.create(payload);
@@ -420,12 +351,9 @@ export default function VenueDetailPage({ params }) {
     }
     const totalReviews = venue.reviews?.length || 0;
 
-    // Calculate price based on pricing rules matching selected date + selected time slots
+    const pricePerHour = selectedField?.pricingRules?.[0]?.price || 0;
     const totalHours = selectedSlots.length * 0.5;
-    const calculatedPrice = (!selectedField?.pricingRules || selectedSlots.length === 0)
-        ? getFieldDisplayPrice(selectedField, selectedDate)
-        : selectedSlots.reduce((sum, slot) => sum + slot.price, 0);
-    const displayPricePerHour = getFieldDisplayPrice(selectedField, selectedDate);
+    const calculatedPrice = totalHours > 0 ? (pricePerHour * totalHours) : pricePerHour;
 
     return (
         <div className={styles.page}>
@@ -443,16 +371,7 @@ export default function VenueDetailPage({ params }) {
                 <header className={styles.venueHeader}>
                     <div className={styles.venueTitleRow}>
                         <div>
-                            <h1 className={styles.venueName}>
-                                {venue.name}
-                                <span 
-                                    className={styles.idBadge} 
-                                    onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(venue.id); alert('Đã copy ID sân chung!'); }}
-                                    title="Copy Venue ID cho AI"
-                                >
-                                    (ID: {venue.id}) <Copy size={14} style={{marginLeft: 4}} />
-                                </span>
-                            </h1>
+                            <h1 className={styles.venueName}>{venue.name}</h1>
                             <div className={styles.venueMeta}>
                                 <div className={styles.rating}>
                                     <Star size={16} fill="#FFC107" color="#FFC107" />
@@ -579,20 +498,11 @@ export default function VenueDetailPage({ params }) {
                                     {venue.fields?.map(field => (
                                         <div key={field.id} className={`${styles.fieldCard} ${selectedField?.id === field.id ? styles.fieldCardSelected : ''}`} onClick={() => setSelectedField(field)}>
                                             <div className={styles.fieldInfo}>
-                                                <h4>
-                                                    {field.name}
-                                                    <span 
-                                                        className={styles.idBadge} 
-                                                        onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(field.id); alert('Đã copy ID sân con để đặt lịch!'); }}
-                                                        title="Copy ID sân con cho AI"
-                                                    >
-                                                        (ID đặt sân: {field.id}) <Copy size={12} style={{marginLeft: 4}} />
-                                                    </span>
-                                                </h4>
+                                                <h4>{field.name}</h4>
                                                 <span className={styles.fieldType}>{getSportLabel(field.sportType)} • {field.fieldType}</span>
                                             </div>
                                             <div className={styles.fieldPrice}>
-                                                <span className={`${styles.priceValue} ${styles.orangePrimary}`}>{formatPrice(getFieldDisplayPrice(field, selectedDate))}đ</span>
+                                                <span className={`${styles.priceValue} ${styles.orangePrimary}`}>{formatPrice(field.pricingRules?.[0]?.price)}đ</span>
                                                 <span className={styles.priceUnit}>/giờ</span>
                                             </div>
                                         </div>
@@ -754,7 +664,7 @@ export default function VenueDetailPage({ params }) {
                         <aside className={styles.bookingWidget}>
                             <div className={styles.widgetHeader}>
                                 <div className={`${styles.widgetPrice} ${styles.orangePrimary}`}>
-                                    {formatPrice(totalHours > 0 ? calculatedPrice : displayPricePerHour)}đ 
+                                    {formatPrice(calculatedPrice)}đ 
                                     <span>{totalHours > 0 ? ` / ${totalHours} giờ` : ' / giờ'}</span>
                                 </div>
                             </div>
@@ -812,8 +722,7 @@ export default function VenueDetailPage({ params }) {
                                                         onClick={() => handleTimeClick(s)}
                                                         disabled={s.isBooked}
                                                     >
-                                                        <span className={styles.timeLabel}>{s.displayLabel}</span>
-                                                        {s.price > 0 && <span className={styles.timePrice}>{formatPrice(s.price * 2)}đ/h</span>}
+                                                        {s.displayLabel}
                                                     </button>
                                                 );
                                             })}
