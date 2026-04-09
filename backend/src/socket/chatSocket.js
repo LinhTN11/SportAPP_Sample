@@ -1,5 +1,7 @@
 const jwt = require('jsonwebtoken');
-const { PrismaClient } = require('@prisma/client');
+
+// Track online users: userId -> Set of socketIds (supports multiple tabs/devices)
+const onlineUsers = new Map();
 
 /**
  * Setup Socket.io for real-time chat
@@ -31,21 +33,34 @@ function setupSocket(io, prisma) {
     });
 
     io.on('connection', (socket) => {
-        console.log(`🔌 User connected: ${socket.user.fullName} (${socket.user.id})`);
+        const userId = socket.user.id;
+        console.log(`🔌 User connected: ${socket.user.fullName} (${userId})`);
 
-        // Join user's personal room for notifications
-        socket.join(`user:${socket.user.id}`);
+        // ── Track online status ──
+        if (!onlineUsers.has(userId)) {
+            onlineUsers.set(userId, new Set());
+        }
+        onlineUsers.get(userId).add(socket.id);
 
-        // Join a chat room
-        socket.on('join-room', async (roomId) => {
+        // Broadcast to ALL other users that this user came online
+        socket.broadcast.emit('user_online', { userId });
+
+        // Send current online users list to the newly connected user
+        const onlineIds = Array.from(onlineUsers.keys());
+        socket.emit('online_users', onlineIds);
+
+        // Join user's personal room for global notifications
+        socket.join(`user:${userId}`);
+
+        // 1. Join a chat room
+        socket.on('join_room', async (roomId) => {
             try {
-                // Verify membership
                 const membership = await prisma.chatRoomMember.findFirst({
                     where: { roomId, userId: socket.user.id },
                 });
 
                 if (membership) {
-                    socket.join(`room:${roomId}`);
+                    socket.join(roomId);
                     console.log(`${socket.user.fullName} joined room: ${roomId}`);
                 }
             } catch (err) {
@@ -54,21 +69,20 @@ function setupSocket(io, prisma) {
         });
 
         // Leave a chat room
-        socket.on('leave-room', (roomId) => {
-            socket.leave(`room:${roomId}`);
+        socket.on('leave_room', (roomId) => {
+            socket.leave(roomId);
         });
 
-        // Send a message
-        socket.on('send-message', async ({ roomId, content, type }) => {
+        // 2. Send a message
+        socket.on('send_message', async ({ roomId, content, type }) => {
             try {
-                // Verify membership
                 const membership = await prisma.chatRoomMember.findFirst({
                     where: { roomId, userId: socket.user.id },
                 });
 
                 if (!membership) return;
 
-                // Save message
+                // Lưu vào database
                 const message = await prisma.message.create({
                     data: {
                         roomId,
@@ -81,16 +95,16 @@ function setupSocket(io, prisma) {
                     },
                 });
 
-                // Broadcast to room
-                io.to(`room:${roomId}`).emit('new-message', message);
+                // Gửi tin nhắn cho những người KHÁC trong phòng
+                socket.to(roomId).emit('new_message', message);
 
-                // Notify other members who are not in the room
+                // Gửi thông báo cho các thành viên không mở khung chat
                 const members = await prisma.chatRoomMember.findMany({
                     where: { roomId, userId: { not: socket.user.id } },
                 });
 
                 for (const member of members) {
-                    io.to(`user:${member.userId}`).emit('message-notification', {
+                    io.to(`user:${member.userId}`).emit('message_notification', {
                         roomId,
                         message,
                     });
@@ -101,38 +115,59 @@ function setupSocket(io, prisma) {
             }
         });
 
-        // Typing indicator
-        socket.on('typing', ({ roomId, isTyping }) => {
-            socket.to(`room:${roomId}`).emit('user-typing', {
-                userId: socket.user.id,
-                fullName: socket.user.fullName,
-                isTyping,
+        // 3. Typing indicator
+        socket.on('typing', ({ roomId, userId, fullName }) => {
+            socket.to(roomId).emit('user_typing', {
+                userId,
+                fullName,
+                roomId
             });
         });
 
-        // Mark messages as read
-        socket.on('mark-read', async ({ roomId }) => {
+        // 4. Mark messages as read
+        socket.on('mark_read', async ({ roomId, messageId }) => {
             try {
-                await prisma.message.updateMany({
-                    where: {
+                if (messageId) {
+                    await prisma.message.update({
+                        where: { id: messageId },
+                        data: { isRead: true },
+                    });
+                    socket.to(roomId).emit('message_read', { messageId, roomId });
+                } else {
+                    await prisma.message.updateMany({
+                        where: {
+                            roomId,
+                            senderId: { not: socket.user.id },
+                            isRead: false,
+                        },
+                        data: { isRead: true },
+                    });
+                    socket.to(roomId).emit('all_messages_read', {
+                        userId: socket.user.id,
                         roomId,
-                        senderId: { not: socket.user.id },
-                        isRead: false,
-                    },
-                    data: { isRead: true },
-                });
-
-                socket.to(`room:${roomId}`).emit('messages-read', {
-                    userId: socket.user.id,
-                    roomId,
-                });
+                    });
+                }
             } catch (err) {
                 console.error('Mark read error:', err);
             }
         });
 
+        // ── Disconnect: update online status ──
         socket.on('disconnect', () => {
-            console.log(`🔌 User disconnected: ${socket.user.fullName}`);
+            console.log(`🔌 User disconnected: ${socket.user.fullName} (${userId})`);
+
+            // Remove this socket from user's set
+            if (onlineUsers.has(userId)) {
+                onlineUsers.get(userId).delete(socket.id);
+
+                // Only mark offline if user has NO remaining connections (all tabs closed)
+                if (onlineUsers.get(userId).size === 0) {
+                    onlineUsers.delete(userId);
+                    // Broadcast offline to all
+                    socket.broadcast.emit('user_offline', { userId });
+                    console.log(`🔴 ${socket.user.fullName} is now offline`);
+                }
+            }
         });
     });
 }
