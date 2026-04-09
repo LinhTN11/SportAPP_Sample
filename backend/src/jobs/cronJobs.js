@@ -81,19 +81,33 @@ function startCronJobs(prisma) {
                             data: { status: 'MATCHED' },
                         });
 
-                        // Create chat room
-                        const chatRoom = await prisma.chatRoom.create({
-                            data: {
-                                type: 'MATCH_GROUP',
-                                name: `Auto-match: ${a.sportType} - ${a.bookingDate.toISOString().split('T')[0]}`,
-                                members: {
-                                    create: [
-                                        { userId: a.userId },
-                                        { userId: b.userId },
-                                    ],
-                                },
+                        // Find existing direct room between the two users
+                        const existingMemberships = await prisma.chatRoomMember.findMany({
+                            where: { userId: a.userId },
+                            include: {
+                                room: { include: { members: true } },
                             },
                         });
+
+                        let chatRoom = existingMemberships.find(m =>
+                            m.room.type === 'DIRECT' &&
+                            m.room.members.length === 2 &&
+                            m.room.members.some(mem => mem.userId === b.userId)
+                        )?.room;
+
+                        if (!chatRoom) {
+                            chatRoom = await prisma.chatRoom.create({
+                                data: {
+                                    type: 'DIRECT',
+                                    members: {
+                                        create: [
+                                            { userId: a.userId },
+                                            { userId: b.userId },
+                                        ],
+                                    },
+                                },
+                            });
+                        }
 
                         // Notify both users
                         const dateStr = a.bookingDate.toISOString().split('T')[0];
@@ -143,56 +157,25 @@ function startCronJobs(prisma) {
         }
     });
 
-    // Job 4: Auto-complete confirmed bookings whose rental time has passed (every minute)
-    cron.schedule('* * * * *', async () => {
+    // Job 4: Mark completed bookings (daily at midnight)
+    cron.schedule('0 0 * * *', async () => {
         try {
-            const now = new Date();
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
 
-            // Find all CONFIRMED bookings where bookingDate + endTime <= now
-            const confirmedBookings = await prisma.booking.findMany({
+            const completed = await prisma.booking.updateMany({
                 where: {
                     status: 'CONFIRMED',
-                    bookingDate: { lte: now },
+                    bookingDate: { lt: yesterday },
                 },
-                select: {
-                    id: true,
-                    bookingDate: true,
-                    endTime: true,
-                    field: { select: { name: true, venue: { select: { name: true } } } },
-                    customerId: true,
-                },
+                data: { status: 'COMPLETED' },
             });
 
-            const toComplete = confirmedBookings.filter(b => {
-                const [h, m] = b.endTime.split(':').map(Number);
-                const endDateTime = new Date(b.bookingDate);
-                endDateTime.setHours(h, m, 0, 0);
-                return endDateTime <= now;
-            });
-
-            if (toComplete.length > 0) {
-                await prisma.booking.updateMany({
-                    where: { id: { in: toComplete.map(b => b.id) } },
-                    data: { status: 'COMPLETED' },
-                });
-
-                // Notify customers
-                for (const b of toComplete) {
-                    await prisma.notification.create({
-                        data: {
-                            userId: b.customerId,
-                            type: 'BOOKING_COMPLETED',
-                            title: 'Hoàn thành đặt sân ✅',
-                            body: `Lịch đặt sân ${b.field.name} tại ${b.field.venue.name} đã hoàn thành. Cảm ơn bạn đã sử dụng dịch vụ!`,
-                            data: { bookingId: b.id },
-                        },
-                    });
-                }
-
-                console.log(`✅ Auto-completed ${toComplete.length} booking(s) past rental time`);
+            if (completed.count > 0) {
+                console.log(`✅ Completed ${completed.count} past bookings`);
             }
         } catch (err) {
-            console.error('Auto-complete bookings job error:', err);
+            console.error('Complete bookings job error:', err);
         }
     });
 }
