@@ -122,7 +122,7 @@ export default function DatePicker({ value, onChange, minDate }) {
     const formatDisplayDate = (dateString) => {
         if (!dateString) return 'Chọn ngày...';
         const [year, month, day] = dateString.split('-');
-        return `${day}/${month}/${year}`;
+        return `Ngày ${day}/${month}/${year}`;
     };
 
     return (
