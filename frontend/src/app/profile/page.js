@@ -184,6 +184,9 @@ export default function ProfilePage() {
                             )}
                             {user.role === 'ADMIN' && (
                                 <>
+                                    <button className={styles.linkCard} onClick={() => router.push('/admin')}>
+                                        <span>📊</span><strong>Admin dashboard</strong>
+                                    </button>
                                     <button className={styles.linkCard} onClick={() => router.push('/admin/venues')}>
                                         <span>✅</span><strong>Duyệt sân</strong>
                                     </button>

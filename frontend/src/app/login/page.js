@@ -22,7 +22,7 @@ export default function LoginPage() {
             const user = await login(form.email, form.password);
 
             // Redirect based on role
-            if (user.role === 'ADMIN') router.push('/admin/venues');
+            if (user.role === 'ADMIN') router.push('/admin');
             else if (user.role === 'OWNER') router.push('/owner/venues');
             else router.push('/venues');
         } catch (err) {

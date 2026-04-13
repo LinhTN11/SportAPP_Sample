@@ -132,6 +132,7 @@ function getNavItems(role) {
 
     if (role === 'ADMIN') {
         return [
+            { href: '/admin', label: 'Dashboard', icon: '📊' },
             { href: '/admin/venues', label: 'Duyệt sân', icon: '✅' },
             { href: '/admin/users', label: 'Người dùng', icon: '👥' },
             { href: '/chat', label: 'Tin nhắn', icon: '💬' },

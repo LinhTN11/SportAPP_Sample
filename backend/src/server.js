@@ -3,7 +3,10 @@ const cors = require('cors');
 const helmet = require('helmet');
 const http = require('http');
 const { Server } = require('socket.io');
-require('dotenv').config();
+const path = require('path');
+
+// Always load backend/.env even when the process starts from another cwd.
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
@@ -50,7 +53,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Serve uploaded files
-const path = require('path');
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Make prisma and io available to routes
