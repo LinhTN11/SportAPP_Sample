@@ -58,13 +58,14 @@ const createVenue = async (req, res, next) => {
 // GET /api/venues
 const listVenues = async (req, res, next) => {
     try {
-        const { city, district, sportType, status, page = 1, limit = 20 } = req.query;
+        const { city, district, sportType, status, page = 1, limit = 20, ownerId } = req.query;
         const skip = (parseInt(page) - 1) * parseInt(limit);
 
         const where = {
             status: status || 'APPROVED',
             ...(city && { city: { contains: city, mode: 'insensitive' } }),
             ...(district && { district: { contains: district, mode: 'insensitive' } }),
+            ...(ownerId && { ownerId }),
         };
 
         if (sportType) {

@@ -1,0 +1,50 @@
+{
+    "faqs": [
+        {
+            "category": "Booking & Pricing",
+            "question": "Tôi có phải đặt cọc không?",
+            "answer": "Có, theo quy định của SportApp, bạn cần đặt cọc tối thiểu 10-20% giá trị đơn đặt sân (tùy chủ sân) để giữ chỗ. Số tiền này sẽ được trừ vào tổng tiền khi bạn đến sân."
+        },
+        {
+            "category": "Booking & Pricing",
+            "question": "Chính sách hủy sân và hoàn tiền như thế nào?",
+            "answer": "Nếu bạn hủy sân trước 24 giờ, bạn sẽ được hoàn 100% tiền cọc. Nếu hủy dưới 24 giờ, tiền cọc sẽ không được hoàn lại để bồi thường cho chủ sân."
+        },
+        {
+            "category": "Booking & Pricing",
+            "question": "Làm sao để biết sân còn trống hay không?",
+            "answer": "Bạn có thể sử dụng tính năng 'Tìm kiếm sân trống' trên Chatbot hoặc vào trang chi tiết của sân đó để xem lịch đặt chỗ thời gian thực."
+        },
+        {
+            "category": "Platform & Account",
+            "question": "SportApp có những môn thể thao nào?",
+            "answer": "Hiện tại SportApp hỗ trợ đặt sân cho các môn: Bóng đá (5, 7, 11 người), Cầu lông, Tennis, Bóng rổ, Pickleball và Gym."
+        },
+        {
+            "category": "Platform & Account",
+            "question": "Làm thế nào để đăng ký làm chủ sân (Owner)?",
+            "answer": "Bạn vào mục 'Cài đặt tài khoản', chọn 'Đăng ký chủ hộ kinh doanh' và cung cấp các thông tin cần thiết về sân bãi. Chúng tôi sẽ phê duyệt yêu cầu của bạn trong vòng 24-48 giờ."
+        },
+        {
+            "category": "Matchmaking",
+            "question": "Tính năng ghép kèo hoạt động như thế nào?",
+            "answer": "Bạn có thể tạo một 'Kèo đấu' mới, hệ thống sẽ hiển thị cho các người chơi khác trong cùng khu vực. Hoặc bạn có thể chọn 'Tự động ghép kèo' để hệ thống tự tìm đối thủ phù hợp nhất cho bạn."
+        },
+        {
+            "category": "Customer Support",
+            "question": "Tôi gặp sự cố khi thanh toán thì liên hệ ai?",
+            "answer": "Bạn có thể gọi hotline 1900-SportApp hoặc gửi email về support@sportapp.com. Chúng tôi hỗ trợ 24/7 cho các vấn đề liên quan đến giao dịch tài chính."
+        },
+        {
+            "category": "Discounts & Vouchers",
+            "question": "Làm sao để dùng mã giảm giá?",
+            "answer": "Ở bước xác nhận đặt sân, bạn sẽ thấy ô 'Nhập mã giảm giá'. Hãy điền mã của bạn vào đó để được áp dụng ưu đãi ngay lập tức."
+        }
+    ],
+    "platform_rules": [
+        "Không được mang chất cấm, chất gây cháy nổ vào khu vực sân.",
+        "Người chơi cần có mặt trước giờ đặt 10-15 phút để làm thủ tục.",
+        "Mọi hành vi gây gổ, mất trật tự tại sân sẽ bị khóa tài khoản vĩnh viễn.",
+        "Chỉ được sử dụng giày chuyên dụng cho từng loại mặt sân (sân cỏ nhân tạo, sân gỗ, sân cứng) để bảo vệ hạ tầng."
+    ]
+}

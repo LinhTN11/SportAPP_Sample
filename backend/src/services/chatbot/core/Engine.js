@@ -25,14 +25,19 @@ class ChatbotEngine {
      */
     async sendMessage(userMessage, user, history = [], coords = null, venueId = null) {
         try {
-            // 1. Resolve location (Optimized: Skip if no coords)
+            // 1. Apply History Limit (Expanded for "difficult guests" as requested)
+            const HISTORY_LIMIT = 20; 
+            const trimmedHistory = history.slice(-HISTORY_LIMIT);
+
+            // 2. Resolve location (Optimized: Skip if no coords)
             let locationLabel = null;
             if (coords) locationLabel = await reverseGeocode(coords.lat, coords.lng);
 
-            // 2. Build system prompt
+            // 3. Build system prompt
             const systemPrompt = promptManager.buildSystemPrompt(user.role, user.fullName, coords, locationLabel);
-            // 3. Resolve IDs & Instant Bypass
-            const uuidRegex = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
+            
+            // 4. Resolve IDs & Instant Bypass
+            const uuidRegex = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{12}/gi; // Optimized regex
             const matches = userMessage.match(uuidRegex);
             const hasID = !!matches;
 
@@ -93,10 +98,10 @@ class ChatbotEngine {
                 }
             }
 
-            // 4. Prepare messages for LLM (Conversational Flow)
+            // 5. Prepare messages for LLM
             const messages = [
                 { role: 'system', content: systemPrompt },
-                ...history,
+                ...trimmedHistory,
                 { role: 'user', content: userMessage }
             ];
 
@@ -110,7 +115,7 @@ class ChatbotEngine {
                 });
             }
 
-            // 5. Tool Setup & LLM Turn
+            // 6. Tool Setup
             let tools = registry.getToolDefinitions(user.role);
             let tool_choice = 'auto';
 
@@ -126,8 +131,8 @@ class ChatbotEngine {
                 tool_choice = 'required';
             }
 
-            // 5. API Call to LM Studio (Unified)
-            console.log(`[AI Engine] Sending turn to LM Studio (${LM_STUDIO_MODEL})...`);
+            // 7. API Call to LLM
+            console.log(`[AI Engine] Sending turn to LLM (${LM_STUDIO_MODEL})...`);
             
             const response = await axios.post(`${LM_STUDIO_URL}/v1/chat/completions`, {
                 model: LM_STUDIO_MODEL,
@@ -140,12 +145,11 @@ class ChatbotEngine {
             const choice = response.data.choices[0];
             const message = choice.message;
 
-            // 6. Tool Call Handling
+            // 8. Parallel Tool Call Handling (OPTIMIZATION 1)
             if (message.tool_calls && message.tool_calls.length > 0) {
-                const toolOutputs = [];
-                const toolMessages = []; 
+                console.log(`[AI Engine] Parallel execution of ${message.tool_calls.length} tool(s)...`);
 
-                for (const tool of message.tool_calls) {
+                const toolPromises = message.tool_calls.map(async (tool) => {
                     const { name, arguments: argStr } = tool.function;
                     let args = {};
                     try {
@@ -154,12 +158,10 @@ class ChatbotEngine {
                         console.error('[AI Engine] Failed to parse tool arguments:', argStr);
                     }
                     
-                    // Inject venueId into args if present in context but missing in args
-                    if (venueId && !args.venueId && (name === 'get_venue_detail' || name === 'get_available_time_slots' || name === 'get_owner_booking_summary')) {
+                    // context injection
+                    if (venueId && !args.venueId && ['get_venue_detail', 'get_available_time_slots', 'get_owner_booking_summary'].includes(name)) {
                         args.venueId = venueId;
                     }
-
-                    console.log(`[AI Engine] Executing action: ${name}...`);
 
                     try {
                         const result = await registry.executeAction(name, {
@@ -171,45 +173,45 @@ class ChatbotEngine {
                         });
 
                         const summary = responseFormatter.format(result.type, result);
-                        console.log(`[AI Engine] Action ${name} completed successfully.`);
-
-                        toolOutputs.push({
+                        return {
                             tool_call_id: tool.id,
                             role: 'tool',
                             name,
                             content: summary,
                             data: result.data,
                             type: result.type,
-                            success: result.success
-                        });
-
-                        toolMessages.push({
-                            role: 'tool',
-                            tool_call_id: tool.id,
-                            name: name,
-                            content: summary
-                        });
-
+                            success: result.success,
+                            rawMessage: {
+                                role: 'tool',
+                                tool_call_id: tool.id,
+                                name: name,
+                                content: summary
+                            }
+                        };
                     } catch (err) {
-                        console.error(`[AI Engine] Action failed: ${name}`, err.message);
                         const errorMsg = `Lỗi: ${err.message}`;
-                        toolOutputs.push({
+                        return {
                             tool_call_id: tool.id,
                             role: 'tool',
                             name,
                             content: errorMsg,
-                            success: false
-                        });
-                        toolMessages.push({
-                            role: 'tool',
-                            tool_call_id: tool.id,
-                            name: name,
-                            content: errorMsg
-                        });
+                            success: false,
+                            rawMessage: {
+                                role: 'tool',
+                                tool_call_id: tool.id,
+                                name: name,
+                                content: errorMsg
+                            }
+                        };
                     }
-                }
+                });
 
-                // 7. Second Pass Logic: Prevent narration for UI actions
+                const toolResults = await Promise.all(toolPromises);
+                
+                const toolOutputs = toolResults.map(({ rawMessage, ...rest }) => rest);
+                const toolMessages = toolResults.map(r => r.rawMessage);
+
+                // 9. Second Pass Logic: Prevent narration for UI actions
                 const UI_DRIVING_TYPES = ['clarification', 'booking_form', 'available_slots', 'venue_detail', 'booking_created', 'options'];
                 const shouldShortCircuit = toolOutputs.some(o => UI_DRIVING_TYPES.includes(o.type));
 
@@ -238,8 +240,6 @@ class ChatbotEngine {
                 });
 
                 const finalMessage = secondResponse.data.choices[0].message;
-                console.log(`[AI Engine] Final response generated.`);
-
                 return {
                     role: 'assistant',
                     message: finalMessage.content,
@@ -247,7 +247,7 @@ class ChatbotEngine {
                 };
             }
 
-            // 6. Direct response
+            // 10. Direct response
             return {
                 role: 'assistant',
                 message: message.content

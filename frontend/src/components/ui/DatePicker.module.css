@@ -1,8 +1,10 @@
 .datePickerContainer {
     position: relative;
     width: 100%;
-    z-index: 9999;
-    /* Đã thêm z-index để luôn nổi lên trên cùng */
+}
+
+.containerActive {
+    z-index: 1001; /* Ensure popover is above everything else in the form */
 }
 
 .trigger {
@@ -44,8 +46,7 @@
     border-radius: 16px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
     border: 1px solid var(--border-light);
-    z-index: 9999;
-    /* Đã sửa từ 1000 thành 9999 */
+    z-index: 1000; /* Adjusted from 9999 to 1000 for better stacking */
     padding: 20px;
     animation: slideUp 0.2s ease-out;
 }
@@ -182,9 +183,9 @@
 }
 
 .dropdownOptionActive {
-    background: rgba(255, 90, 95, 0.08);
+    background: rgba(255, 110, 64, 0.08);
     /* Light Orange Theme */
-    color: #FF5A5F;
+    color: #FF6E40;
     font-weight: 600;
 }
 
@@ -215,7 +216,7 @@
 }
 
 .weekDayWeekend {
-    color: #FF5A5F;
+    color: #FF6E40;
     /* Reddish for weekends */
 }
 
@@ -244,6 +245,35 @@
 
 .dayCell:hover:not(.disabled):not(.selected) {
     background: var(--bg-secondary);
+}
+
+.premiumInput,
+.premiumSelect {
+    width: 100%;
+    height: 48px;
+    padding: 0 16px;
+    border: 2px solid #f1f5f9;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+    background: #ffffff;
+    outline: none;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.premiumInput:hover,
+.premiumSelect:hover {
+    border-color: #FF6E40;
+    background: #fffafa;
+}
+
+.premiumInput:focus,
+.premiumSelect:focus {
+    border-color: #FF6E40;
+    background: white;
+    box-shadow: 0 0 0 4px rgba(255, 110, 64, 0.1);
 }
 
 .dateNumber {

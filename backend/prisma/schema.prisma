@@ -176,6 +176,8 @@ model Venue {
   reviews Review[]
 
   @@map("venues")
+  @@index([status])
+  @@index([city, district])
 }
 
 model Field {
@@ -258,6 +260,9 @@ model Booking {
   review   Review?
 
   @@map("bookings")
+  @@index([status])
+  @@index([bookingDate])
+  @@index([holdExpiresAt])
 }
 
 model Payment {
@@ -300,6 +305,9 @@ model MatchmakingPost {
   matchRequests MatchRequest[]
 
   @@map("matchmaking_posts")
+  @@index([status])
+  @@index([bookingDate])
+  @@index([sportType])
 }
 
 model MatchRequest {
@@ -358,6 +366,7 @@ model Message {
   sender User     @relation(fields: [senderId], references: [id])
 
   @@map("messages")
+  @@index([roomId, createdAt])
 }
 
 model Review {

@@ -426,7 +426,7 @@ export default function MatchmakingPage() {
                             {error && <div className="form-error" style={{ marginBottom: 12 }}>{error}</div>}
 
                             <form onSubmit={handleCreatePost}>
-                                <div className="form-group">
+                                <div className="form-group" style={{ position: 'relative', zIndex: 10 }}>
                                     <label className="form-label">Môn thể thao</label>
                                     <div className={styles.customDropdown} ref={createSportDropdownRef}>
                                         <div 
@@ -466,7 +466,7 @@ export default function MatchmakingPage() {
                                     </div>
                                 </div>
 
-                                <div style={{ display: 'flex', gap: 16 }}>
+                                <div style={{ display: 'flex', gap: 16, position: 'relative', zIndex: 9 }}>
                                     <div className="form-group" style={{ flex: 1 }}>
                                         <label className="form-label">Ngày chơi</label>
                                         <DatePicker 
@@ -478,7 +478,7 @@ export default function MatchmakingPage() {
                                 </div>
 
                                 {/* ==== CỤM CHỌN GIỜ ĐÃ NÂNG CẤP ==== */}
-                                <div style={{ display: 'flex', gap: 16  , position: 'relative', zIndex: 9000 }}>
+                                <div style={{ display: 'flex', gap: 16, position: 'relative', zIndex: 8 }}>
                                     {/* Từ giờ */}
                                     <div className="form-group" style={{ flex: 1 }}>
                                         <label className="form-label">Từ</label>
@@ -551,7 +551,7 @@ export default function MatchmakingPage() {
                                         </div>
                                     </div>
                                 </div>
-                                <div className="form-group">
+                                <div className="form-group" style={{ position: 'relative', zIndex: 7 }}>
                                     <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                                         <MapPin size={16} /> Chọn vị trí trên bản đồ *
                                     </label>

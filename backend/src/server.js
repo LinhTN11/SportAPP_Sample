@@ -3,6 +3,8 @@ const cors = require('cors');
 const helmet = require('helmet');
 const http = require('http');
 const { Server } = require('socket.io');
+const { createClient } = require('redis');
+const { createAdapter } = require('@socket.io/redis-adapter');
 require('dotenv').config();
 
 const { PrismaClient } = require('@prisma/client');
@@ -38,6 +40,19 @@ const io = new Server(server, {
     methods: ['GET', 'POST'],
   },
 });
+
+// Redis Adapter Setup
+if (process.env.REDIS_URL) {
+  const pubClient = createClient({ url: process.env.REDIS_URL });
+  const subClient = pubClient.duplicate();
+
+  Promise.all([pubClient.connect(), subClient.connect()]).then(() => {
+    io.adapter(createAdapter(pubClient, subClient));
+    console.log('🔄 Socket.io Redis adapter connected');
+  }).catch(err => {
+    console.error('❌ Socket.io Redis adapter connection failed:', err);
+  });
+}
 
 // Middleware
 app.use(helmet({

@@ -10,12 +10,12 @@ module.exports = {
         type: 'function',
         function: {
             name: 'search_venues',
-            description: 'Tìm kiếm sân thể thao theo loại, thành phố, quận, và sắp xếp kết quả. Chỉ gọi khi đã biết rõ tiêu chí tìm kiếm (loại thể thao, cách sắp xếp).',
+            description: 'Tìm kiếm và liệt kê các sân thể thao. Hãy gọi ngay khi người dùng bày tỏ nhu cầu tìm chỗ chơi hoặc hỏi sân ở đâu. Nếu thiếu môn thể thao, hãy để trống hoặc hỏi lại.',
             parameters: {
                 type: 'object',
                 properties: {
                     sportType: { type: 'string', description: 'Loại thể thao: football, badminton, tennis, basketball, volleyball, pickleball' },
-                    city: { type: 'string', description: 'Thành phố (CHỈ điền nếu người dùng nhắc đích danh tên thành phố, nếu không hãy để trống và để Tool tự tìm theo tọa độ GPS).' },
+                    city: { type: 'string', description: 'Thành phố (VD: Hà Nội, TP.HCM). Điền nếu người dùng nhắc đích danh, nếu không hãy để trống.' },
                     district: { type: 'string', description: 'Quận/huyện (CHỈ điền nếu người dùng nhắc đích danh, nếu không hãy để trống).' },
                     sortBy: { type: 'string', description: 'Cách sắp xếp: distance (mặc định nếu có tọa độ), rating, price_asc, price_desc.' },
                 },

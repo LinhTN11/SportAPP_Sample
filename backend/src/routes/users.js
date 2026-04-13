@@ -1,9 +1,10 @@
 const router = require('express').Router();
 const { authenticate, authorize } = require('../middleware/auth');
-const { getProfile, updateProfile, listUsers } = require('../controllers/userController');
+const { getProfile, updateProfile, listUsers, getPublicProfile } = require('../controllers/userController');
 
 router.get('/profile', authenticate, getProfile);
 router.put('/profile', authenticate, updateProfile);
+router.get('/:id/public', getPublicProfile);
 router.get('/', authenticate, authorize('ADMIN'), listUsers);
 
 module.exports = router;

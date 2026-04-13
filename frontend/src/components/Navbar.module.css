@@ -88,6 +88,21 @@
   border-radius: 2px 2px 0 0;
 }
 
+.unreadBadge {
+  position: absolute;
+  top: 0;
+  right: -5px;
+  background-color: #FF3B30;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 5px;
+  border-radius: 10px;
+  min-width: 16px;
+  text-align: center;
+  box-shadow: 0 0 0 2px white;
+}
+
 /* ── Guest inline buttons (shown instead of avatar when not logged in) ── */
 .guestActions {
   display: flex;

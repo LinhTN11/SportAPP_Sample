@@ -12,6 +12,12 @@ import styles from './ChatbotWidget.module.css';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
+const BotIcon = ({ size = 20 }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 8V4H8" /><rect width="16" height="12" x="4" y="8" rx="2" /><path d="M2 14h2" /><path d="M20 14h2" /><path d="M15 13v2" /><path d="M9 13v2" />
+    </svg>
+);
+
 export default function ChatbotWidget() {
     const { user, isAuthenticated } = useAuth();
     const router = useRouter();
@@ -351,7 +357,7 @@ export default function ChatbotWidget() {
         timeZone: 'Asia/Ho_Chi_Minh',
     });
 
-    if (!isAuthenticated) return null;
+    if (!isAuthenticated || pathname === '/chat') return null;
 
     const roleLabel = {
         CUSTOMER: 'Khách hàng',
@@ -764,7 +770,9 @@ export default function ChatbotWidget() {
                     {/* Header */}
                     <div className={styles.chatHeader}>
                         <div className={styles.headerLeft}>
-                            <div className={styles.botAvatar}>🤖</div>
+                            <div className={styles.botAvatar}>
+                                <BotIcon size={22} />
+                            </div>
                             <div className={styles.headerInfo}>
                                 <h3>SportApp AI</h3>
                                 <span>{roleLabel[user?.role] || 'Trợ lý'}</span>
@@ -852,7 +860,9 @@ export default function ChatbotWidget() {
                                 <div key={i}>
                                     <div className={`${styles.messageRow} ${msg.role === 'user' ? styles.messageRowUser : styles.messageRowBot}`}>
                                         {msg.role === 'assistant' && (
-                                            <div className={`${styles.msgAvatar} ${styles.msgAvatarBot}`}>🤖</div>
+                                            <div className={`${styles.msgAvatar} ${styles.msgAvatarBot}`}>
+                                                <BotIcon size={16} />
+                                            </div>
                                         )}
                                         <div className={`${styles.msgBubble} ${msg.role === 'user' ? styles.msgBubbleUser :
                                             msg.error ? styles.msgBubbleError : styles.msgBubbleBot
@@ -867,7 +877,9 @@ export default function ChatbotWidget() {
 
                         {isLoading && (
                             <div className={styles.typingIndicator}>
-                                <div className={`${styles.msgAvatar} ${styles.msgAvatarBot}`}>🤖</div>
+                                <div className={`${styles.msgAvatar} ${styles.msgAvatarBot}`}>
+                                    <BotIcon size={16} />
+                                </div>
                                 <div className={styles.typingDots}>
                                     <span></span><span></span><span></span>
                                 </div>

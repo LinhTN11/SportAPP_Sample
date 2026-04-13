@@ -108,4 +108,31 @@ const listUsers = async (req, res, next) => {
     }
 };
 
-module.exports = { getProfile, updateProfile, listUsers };
+// GET /api/users/:id/public
+const getPublicProfile = async (req, res, next) => {
+    try {
+        const user = await prisma.user.findUnique({
+            where: { id: req.params.id },
+            select: {
+                id: true,
+                fullName: true,
+                phone: true,
+                avatarUrl: true,
+                coverImageUrl: true,
+                role: true,
+                isVerified: true,
+                createdAt: true,
+            },
+        });
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        res.json({ success: true, data: { user } });
+    } catch (error) {
+        next(error);
+    }
+};
+
+module.exports = { getProfile, updateProfile, listUsers, getPublicProfile };

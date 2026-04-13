@@ -488,6 +488,34 @@ export default function VenueDetailPage({ params }) {
                                     />
                                 </div>
                             </section>
+
+                            {/* Owner Info */}
+                            {venue.owner && (
+                                <section>
+                                    <h3 className={styles.sectionTitle}>Chủ sân</h3>
+                                    <div className={styles.ownerCard}>
+                                        <div className={styles.ownerInfo}>
+                                            <div className={`avatar avatar-lg ${styles.ownerAvatar}`}>
+                                                {venue.owner.avatarUrl ? (
+                                                    <img src={venue.owner.avatarUrl.startsWith('http') ? venue.owner.avatarUrl : `${SERVER_URL}${venue.owner.avatarUrl}`} alt={venue.owner.fullName} />
+                                                ) : (
+                                                    venue.owner.fullName?.charAt(0) || 'U'
+                                                )}
+                                            </div>
+                                            <div>
+                                                <h4 className={styles.ownerName}>{venue.owner.fullName}</h4>
+                                                <div className={styles.ownerRole}>Chủ sân / Quản lý</div>
+                                            </div>
+                                        </div>
+                                        <div className={styles.ownerActions}>
+                                            <Link href={`/profile/${venue.owner.id}`} className="btn btn-outline btn-sm">Xem hồ sơ</Link>
+                                            <button className={`btn btn-primary btn-sm ${styles.chatBtn}`} onClick={() => router.push(`/chat?user=${venue.owner.id}`)}>
+                                                Chat ngay
+                                            </button>
+                                        </div>
+                                    </div>
+                                </section>
+                            )}
                         </div>
 
                         {/* Group 2: Fields & Pricing */}

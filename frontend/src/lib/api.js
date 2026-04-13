@@ -45,6 +45,7 @@ export const usersAPI = {
     getProfile: () => api.get('/users/profile'),
     updateProfile: (data) => api.put('/users/profile', data),
     listUsers: (params) => api.get('/users', { params }),
+    getPublicProfile: (id) => api.get(`/users/${id}/public`),
 };
 
 // Venues API
@@ -107,14 +108,18 @@ export const matchmakingAPI = {
     acceptRequest: (id) => api.post(`/matchmaking/requests/${id}/accept`),
     rejectRequest: (id) => api.post(`/matchmaking/requests/${id}/reject`),
     cancelRequest: (id) => api.post(`/matchmaking/requests/${id}/cancel`),
+    getSuggestedVenues: (postId) => api.get(`/matchmaking/posts/${postId}/suggested-venues`),
 };
 
 // Chat API
 export const chatAPI = {
     getRooms: () => api.get('/chat/rooms'),
     getMessages: (roomId, params) => api.get(`/chat/rooms/${roomId}/messages`, { params }),
+    getRoomMatchInfo: (roomId) => api.get(`/chat/rooms/${roomId}/match-info`),
     createRoom: (targetUserId) => api.post('/chat/rooms', { targetUserId }),
     sendMessage: (roomId, data) => api.post(`/chat/rooms/${roomId}/messages`, data),
+    suggestVenue: (roomId, data) => api.post(`/chat/rooms/${roomId}/suggest-venue`, data),
+    acceptVenueSuggestion: (messageId) => api.post(`/chat/messages/${messageId}/accept-suggestion`),
 };
 
 // Reviews API

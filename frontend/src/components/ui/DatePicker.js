@@ -126,7 +126,7 @@ export default function DatePicker({ value, onChange, minDate }) {
     };
 
     return (
-        <div className={styles.datePickerContainer} ref={popoverRef}>
+        <div className={`${styles.datePickerContainer} ${isOpen ? styles.containerActive : ''}`} ref={popoverRef}>
             <div 
                 className={`${styles.trigger} ${isOpen ? styles.triggerOpen : ''}`}
                 onClick={() => setIsOpen(!isOpen)}

@@ -57,6 +57,9 @@ export default function Navbar() {
             className={`${styles.navLink} ${pathname === item.href ? styles.navLinkActive : ''}`}
           >
             {item.label}
+            {item.href === '/notifications' && unreadCount > 0 && (
+              <span className={styles.unreadBadge}>{unreadCount > 99 ? '99+' : unreadCount}</span>
+            )}
             {pathname === item.href && <span className={styles.navLinkUnderline} />}
           </Link>
         ))}
@@ -226,6 +229,7 @@ function getNavItems(role) {
       { href: '/matchmaking', label: 'Ghép trận' },
       { href: '/bookings',  label: 'Đặt sân của tôi' },
       { href: '/chat',      label: 'Tin nhắn' },
+      { href: '/notifications', label: 'Thông báo' },
     ];
   }
   if (role === 'OWNER') {
@@ -233,6 +237,7 @@ function getNavItems(role) {
       { href: '/owner/venues',   label: 'Quản lý sân' },
       { href: '/owner/bookings', label: 'Lịch đặt' },
       { href: '/chat',           label: 'Tin nhắn' },
+      { href: '/notifications',  label: 'Thông báo' },
     ];
   }
   if (role === 'ADMIN') {
@@ -240,6 +245,7 @@ function getNavItems(role) {
       { href: '/admin/venues', label: 'Duyệt sân' },
       { href: '/admin/users',  label: 'Người dùng' },
       { href: '/chat',         label: 'Tin nhắn' },
+      { href: '/notifications',  label: 'Thông báo' },
     ];
   }
   return [{ href: '/venues', label: 'Tìm sân' }];
