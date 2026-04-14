@@ -349,6 +349,21 @@
     gap: 6px;
 }
 
+.newChatBtn {
+    border: 1px solid #FFD8C7;
+    background: #FFF4F0;
+    color: #FF6E40;
+    border-radius: 999px;
+    padding: 7px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.newChatBtn:hover {
+    background: #FFE9E0;
+}
+
 .iconBtn {
     width: 36px;
     height: 36px;
@@ -494,6 +509,28 @@
     box-shadow: 0 2px 8px rgba(255, 110, 64, 0.3);
 }
 
+.bubbleImage {
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    overflow: hidden;
+    border-radius: 14px !important;
+}
+
+.messageImage {
+    display: block;
+    max-width: 280px;
+    max-height: 400px;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.messageImage:hover {
+    transform: scale(1.02);
+}
+
 .bubbleTime {
     font-size: 10px;
     color: #9CA3AF;
@@ -540,74 +577,110 @@
     30% { transform: translateY(-4px); opacity: 1; }
 }
 
-/* ── Compose Box ── */
-.composeBox {
+.pinnedWeatherWrap {
+    padding: 10px 18px 2px;
+}
+
+/* --- Universal Chat Sync Styles --- */
+.inputWrapper {
+    position: relative;
     padding: 16px 20px;
-    background: #ffffff;
-    border-top: 1px solid #E5E7EB;
-    display: flex;
-    align-items: center; /* Centered alignment for message input and send button */
-    gap: 10px;
-    flex-shrink: 0;
+    background: white;
+    border-top: 1px solid #F1F5F9;
 }
 
-.composeActions {
+.emojiTray {
+    position: absolute;
+    bottom: 80px;
+    left: 20px;
+    background: white;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 10px;
     display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 250px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    z-index: 100;
+}
+
+.emojiBtn {
+    background: none; border: none; font-size: 20px; cursor: pointer; padding: 4px; border-radius: 6px; transition: 0.2s;
+}
+.emojiBtn:hover { background: #F1F5F9; transform: scale(1.2); }
+
+.composeLeftActions {
+    display: flex;
+    gap: 12px;
     align-items: center;
-    gap: 4px;
     flex-shrink: 0;
 }
 
-.composeIcon {
-    width: 34px;
-    height: 34px;
-    border-radius: 10px;
+.iconBtn {
     background: none;
     border: none;
+    color: #64748B;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #9CA3AF;
     transition: all 0.2s;
 }
 
-.composeIcon:hover {
+.iconBtn:hover {
     color: #FF6E40;
-    background: #FFF4F0;
+    transform: scale(1.1);
+}
+
+.composeBox {
+    background: #FFFFFF;
+    border: 1.5px solid #E5E7EB;
+    border-radius: 16px;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.composeBox:focus-within {
+    border-color: #FF6E40;
+    background: #FFFFFF;
+    box-shadow: 0 0 0 3px rgba(255, 110, 64, 0.1), 0 4px 12px rgba(255, 110, 64, 0.15);
 }
 
 .composeInputWrapper {
     flex: 1;
-    position: relative;
+    display: flex;
+    align-items: center;
 }
 
 .composeInput {
     width: 100%;
-    padding: 10px 14px;
-    border: 1.5px solid #E5E7EB;
-    border-radius: 14px;
+    background: transparent;
+    border: none;
+    padding: 12px 0;
     font-size: 14px;
-    font-family: var(--font-sans, 'Inter', sans-serif);
-    color: #111827;
-    background: #F9FAFB;
-    outline: none;
+    font-family: inherit;
+    color: #1E293B;
     resize: none;
     max-height: 120px;
-    line-height: 1.5; /* 14 * 1.5 = 21px */
+    outline: none;
+    line-height: 1.4;
     transition: all 0.2s;
-    display: block; /* Essential to remove baseline gap */
-    min-height: 44px; /* 21 + 20 (padding) + 3 (border) = 44px */
+    min-height: 44px;
+    vertical-align: middle;
+    box-sizing: border-box;
 }
 
 .composeInput:focus {
-    border-color: #FF6E40;
-    background: #ffffff;
-    box-shadow: 0 0 0 3px rgba(255, 110, 64, 0.1);
+    outline: none;
 }
 
 .composeInput::placeholder {
     color: #9CA3AF;
+    font-size: 14px;
 }
 
 .sendBtn {
@@ -754,17 +827,180 @@
     to { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
-/* ── Read receipt ── */
-.readReceipt {
+/* ── Tool Results Container ── */
+.toolResults {
+    margin-top: 12px;
+    width: 100%;
     display: flex;
-    justify-content: flex-end;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Field Selection Grid */
+.fieldCardGrid {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding: 4px 2px 12px;
+    scrollbar-width: thin;
+}
+
+.fieldCardGrid::-webkit-scrollbar {
+    height: 4px;
+}
+
+.fieldCardGrid::-webkit-scrollbar-thumb {
+    background: #E5E7EB;
+    border-radius: 10px;
+}
+
+.fieldSelectionCard {
+    flex-shrink: 0;
+    width: 160px;
+    background: #ffffff;
+    border: 1px solid #E5E7EB;
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 4px;
-    font-size: 11px;
-    color: #9CA3AF;
-    padding-right: 36px;
-    margin-top: -2px;
+    text-align: center;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.fieldSelectionCard:hover {
+    transform: translateY(-4px);
+    border-color: #FF6E40;
+    box-shadow: 0 12px 24px rgba(255, 110, 64, 0.1);
+}
+
+.fieldCardIcon {
+    font-size: 24px;
+    margin-bottom: 12px;
+}
+
+.fieldCardInfo {
+    margin-bottom: 14px;
+    flex: 1;
+}
+
+.fieldCardName {
+    font-size: 14px;
+    font-weight: 700;
+    color: #111827;
     margin-bottom: 4px;
+}
+
+.fieldCardPrice {
+    font-size: 12px;
+    color: #FF6E40;
+    font-weight: 600;
+}
+
+.fieldSelectBtn {
+    width: 100%;
+    padding: 8px;
+    background: #F3F4F6;
+    border: none;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #4B5563;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.fieldSelectionCard:hover .fieldSelectBtn {
+    background: linear-gradient(135deg, #FF6E40, #D81B60);
+    color: white;
+}
+
+/* Slot Discovery */
+.slotDiscoveryContainer {
+    background: #ffffff;
+    border: 1px solid #E5E7EB;
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.slotDiscoveryHeader {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #374151;
+    margin-bottom: 14px;
+}
+
+.slotChipGrid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.slotDiscoveryChip {
+    padding: 6px 12px;
+    background: #F9FAFB;
+    border: 1.5px solid #E5E7EB;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #4B5563;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.slotDiscoveryChip:hover {
+    border-color: #0066FF;
+    background: #EEF2FF;
+    color: #0066FF;
+    transform: scale(1.05);
+}
+
+/* Options Container */
+.optionsContainer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 4px 0;
+}
+
+.optionChip {
+    padding: 8px 16px;
+    background: #ffffff;
+    border: 1.5px solid #E5E7EB;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #4B5563;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.optionChip:hover:not(:disabled) {
+    border-color: #FF6E40;
+    color: #FF6E40;
+    background: #FFF4F0;
+    transform: translateY(-1px);
+}
+
+.optionChip:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Avatar positioning for bot bubbles */
+.msgBubbleBot {
+    border-left: 3px solid #FF6E40 !important;
+}
+
+.bubbleAvatarWrapper {
+    align-self: flex-start;
+    margin-top: 4px;
 }
 
 /* ── Responsive ── */
@@ -1080,6 +1316,24 @@
     color: #6B7280;
     font-weight: 500;
     font-family: var(--font-sans, 'Inter', sans-serif);
+}
+
+.systemCardWrapper {
+    width: 100%;
+    display: flex;
+    margin: 10px 0;
+}
+
+.systemCardCentered {
+    justify-content: center;
+}
+
+.systemCardIncoming {
+    justify-content: flex-start;
+}
+
+.systemCardOutgoing {
+    justify-content: flex-end;
 }
 
 @media (max-width: 768px) {

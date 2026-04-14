@@ -149,4 +149,15 @@ export const chatbotAPI = {
     getExportUrl: (filename) => `${API_BASE}/chatbot/export/${filename}`,
 };
 
+// Admin Dashboard API
+export const adminAPI = {
+    getStats:       ()           => api.get('/admin/stats'),
+    getCharts:      ()           => api.get('/admin/charts'),
+    getActivity:    ()           => api.get('/admin/activity'),
+    // User management
+    getUsers:       (params)     => api.get('/admin/users', { params }),
+    updateUserRole: (id, role)   => api.patch(`/admin/users/${id}/role`, { role }),
+    deleteUser:     (id)         => api.delete(`/admin/users/${id}`),
+};
+
 export default api;

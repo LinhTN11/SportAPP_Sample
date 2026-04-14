@@ -1,0 +1,865 @@
+.weatherTitleWidget {
+    font-size: 13px !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100vw;
+    min-width: 0;
+    display: block;
+}
+/* Widget: 1 cột, bỏ padding trái, full width */
+.weatherMainGridWidget {
+    display: block;
+    width: 100%;
+    padding-left: 0 !important;
+}
+.weatherHeaderRowWidget {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 0;
+    padding-left: 0;
+}
+.weatherMetaRowWidget {
+    gap: 10px !important;
+    flex-wrap: nowrap;
+    min-width: 0;
+    overflow: hidden;
+}
+.weatherCurrentRowWidget {
+    align-items: stretch !important;
+    min-height: 0;
+    padding-left: 0 !important;
+}
+.weatherCurrentRowWidget {
+    align-items: stretch !important;
+    min-height: 48px;
+}
+.weatherCurrentMetaWidget {
+    justify-content: space-between !important;
+    height: 100%;
+    gap: 0 !important;
+    display: flex;
+    flex-direction: column;
+    /* Căn đều 2 dòng với chiều cao nhiệt độ */
+}
+@media (max-width: 600px) {
+    .weatherTitleWidget {
+        font-size: 11px !important;
+        max-width: 90px;
+    }
+    .weatherCurrentRowWidget {
+        min-height: 38px;
+    }
+}
+/* Thông tin bên trái: 2 dòng, meta ngang */
+.weatherCurrentMeta2 {
+    display: flex;
+    flex-direction: column;
+    padding-left: 0 !important;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    height: 100%;
+    height: 100%;
+    gap: 8px;
+}
+.weatherDesc {
+    font-size: 15px;
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 2px;
+}
+.weatherMetaRow {
+    display: flex;
+    flex-direction: row;
+    gap: 18px;
+}
+
+.weatherCurrentRowWidget {
+    align-items: flex-end !important;
+    min-height: 0;
+    padding-left: 0 !important;
+    gap: 12px;
+    font-size: 13px;
+    color: #334155;
+}
+
+.weatherMetaLine {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+@media (max-width: 600px) {
+    .weatherCurrentMeta2 {
+        gap: 4px;
+    }
+    .weatherMetaRow {
+        gap: 8px;
+        font-size: 11px;
+    }
+    .weatherDesc {
+        font-size: 12px;
+    }
+}
+.weatherCurrentMeta2 {
+    justify-content: space-between;
+}
+/* Forecast: ngày-tháng, icon mưa cùng dòng */
+.weatherForecastDateRow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    margin-bottom: 2px;
+}
+@media (max-width: 900px) {
+    .weatherForecastDateRow {
+        gap: 4px;
+    }
+}
+@media (max-width: 600px) {
+    .weatherForecastDateRow {
+        gap: 2px;
+    }
+}
+/* Forecast Pro: tối ưu chiều ngang, giảm khoảng trống, UI chuyên nghiệp */
+.weatherForecast {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    height: 100%;
+    align-items: stretch;
+}
+.weatherForecastDayPro {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 8px 2px 8px 2px;
+    text-align: center;
+    min-width: 0;
+    min-height: 90px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+}
+.weatherForecastIconPro {
+    font-size: 26px;
+    margin-bottom: 2px;
+    line-height: 1;
+}
+.weatherForecastTempsPro {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 2px;
+}
+.weatherForecastRainPro {
+    font-size: 12px;
+    color: #0ea5e9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+}
+.weatherForecastDate {
+    font-size: 11px;
+    color: #64748b;
+    margin-bottom: 2px;
+}
+@media (max-width: 900px) {
+    .weatherForecast {
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 4px;
+    }
+    .weatherForecastDayPro {
+        padding: 5px 1px 5px 1px;
+        border-radius: 6px;
+        min-height: 70px;
+    }
+    .weatherForecastIconPro {
+        font-size: 20px;
+    }
+    .weatherForecastTempsPro {
+        font-size: 12px;
+    }
+}
+@media (max-width: 600px) {
+    .weatherForecast {
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 2px;
+    }
+    .weatherForecastDayPro {
+        padding: 3px 0 3px 0;
+        border-radius: 4px;
+        min-height: 48px;
+    }
+    .weatherForecastIconPro {
+        font-size: 15px;
+    }
+    .weatherForecastTempsPro {
+        font-size: 10px;
+    }
+}
+/* Weather Card: căn giữa dọc, icon chung cụm, forecast bóng */
+.weatherHeaderRow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 0;
+    padding-left: 10px;
+}
+
+.weatherHeaderInfo {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.weatherCurrentRowCentered {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-content: flex-start;
+    padding-left: 10px;
+    margin-bottom: 4px;
+    min-height: 48px;
+}
+
+@media (max-width: 600px) {
+    .weatherHeaderRow, .weatherCurrentRowCentered {
+        padding-left: 3px;
+        gap: 7px;
+    }
+    .weatherCurrentRowCentered {
+        min-height: 38px;
+    }
+}
+
+/* Hiệu ứng bóng cho forecast */
+.weatherForecastDayShadow {
+    box-shadow: 0 2px 10px 0 rgba(59,130,246,0.10), 0 1.5px 4px 0 rgba(0,0,0,0.04);
+    transition: box-shadow 0.18s, transform 0.18s;
+}
+.weatherForecastDayShadow:hover {
+    box-shadow: 0 6px 18px 0 rgba(59,130,246,0.18), 0 2px 8px 0 rgba(0,0,0,0.07);
+    transform: translateY(-2px) scale(1.03);
+    z-index: 1;
+}
+/* ChatCardRenderer.module.css */
+
+/* --- Layout Containers --- */
+.optionsContainer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 8px 0;
+}
+
+.fieldCardGrid {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding: 10px 2px;
+    scrollbar-width: none;
+}
+.fieldCardGrid::-webkit-scrollbar { display: none; }
+
+/* --- Field Selection Card --- */
+.fieldSelectionCard {
+    flex-shrink: 0;
+    width: 150px;
+    background: white;
+    border: 1px solid #E2E8F0;
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+
+.fieldSelectionCard:hover {
+    transform: translateY(-4px);
+    border-color: #FF6E40;
+    box-shadow: 0 8px 20px rgba(255,110,64,0.12);
+}
+
+.fieldCardIcon { font-size: 24px; margin-bottom: 12px; }
+.fieldCardName { font-size: 14px; font-weight: 700; color: #1E293B; margin-bottom: 4px; text-align: center; }
+.fieldCardPrice { font-size: 12px; color: #FF6E40; font-weight: 600; margin-bottom: 12px; }
+.fieldSelectBtn { 
+    width: 100%; padding: 8px; background: #F3F4F6; border: none; border-radius: 10px;
+    font-size: 12px; font-weight: 600; color: #4B5563; cursor: pointer; transition: 0.2s;
+}
+.fieldSelectionCard:hover .fieldSelectBtn { background: linear-gradient(135deg, #FF6E40, #D81B60); color: white; }
+
+/* --- Option Chips --- */
+.optionChip {
+    padding: 8px 16px; background: white; border: 1.5px solid #E2E8F0; border-radius: 12px;
+    font-size: 13px; font-weight: 600; color: #4B5563; cursor: pointer; transition: 0.2s;
+}
+.optionChip:hover:not(:disabled) { border-color: #FF6E40; color: #FF6E40; background: #FFF5F1; }
+
+/* --- Slot Discovery --- */
+.slotDiscoveryContainer { background: white; border: 1px solid #E2E8F0; border-radius: 16px; padding: 16px; margin: 8px 0; }
+.slotDiscoveryHeader { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: #374151; margin-bottom: 12px; }
+.headerIcon { color: #FF6E40; }
+.slotChipGrid { display: flex; flex-wrap: wrap; gap: 8px; }
+.slotDiscoveryChip { 
+    padding: 6px 12px; background: #F9FAFB; border: 1.5px solid #E2E8F0; border-radius: 999px;
+    font-size: 12px; font-weight: 600; color: #4B5563; cursor: pointer; transition: 0.2s;
+}
+.slotDiscoveryChip:hover { border-color: #0066FF; background: #EEF2FF; color: #0066FF; }
+
+/* --- Booking Form --- */
+.bookingFormContainer { background: white; border-radius: 20px; padding: 20px; border: 1.5px solid #F1F5F9; margin-top: 10px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); }
+
+/* --- Booking Preview Card (Widget Mode) --- */
+.bookingPreviewCard {
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    border: 2px solid #FFE5E0;
+    margin: 8px 0;
+    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.1);
+}
+
+.previewHeader {
+    margin-bottom: 12px;
+}
+
+.previewHeader h4 {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+}
+
+.previewBadge {
+    display: inline-block;
+    background: #FFF5F5;
+    color: #ff6b6b;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.previewOpenBtn {
+    width: 100%;
+    padding: 10px 12px;
+    background: linear-gradient(135deg, #ff6b6b, #ff5252);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-height: 40px;
+}
+
+.previewOpenBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(255, 107, 107, 0.3);
+}
+
+.previewOpenBtn:active {
+    transform: translateY(0);
+}
+
+.formHeader { margin-bottom: 20px; border-bottom: 1px solid #F1F5F9; padding-bottom: 12px; }
+.formVenueInfo h4 { margin: 0; font-size: 16px; font-weight: 800; color: #0F172A; }
+.formFieldBadge { display: inline-block; margin-top: 4px; font-size: 11px; color: #FF6E40; background: rgba(255,110,64,0.1); padding: 2px 10px; border-radius: 20px; font-weight: 700; }
+
+.premiumLabel { display: block; font-size: 10px; font-weight: 800; color: #94A3B8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+.fieldSelectGroup { display: flex; flex-wrap: wrap; gap: 8px; }
+.fieldChip { padding: 6px 12px; border-radius: 10px; border: 1.5px solid #F1F5F9; background: white; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+.fieldChipActive { border-color: #FF6E40; background: #FFF5F1; color: #FF6E40; }
+
+.formTwoColRow { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
+.premiumSelect { width: 100%; height: 44px; padding: 0 12px; border: 2px solid #F1F5F9; border-radius: 12px; font-size: 13px; font-weight: 600; outline: none; cursor: pointer; }
+.premiumSelect:focus { border-color: #FF6E40; }
+.premiumSelectWrap { width: 100%; }
+
+.timeSlotGridWrapper { margin-top: 16px; }
+.blockLabel { font-size: 11px; font-weight: 800; color: #94A3B8; margin-bottom: 12px; display: block; }
+.timeGrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; max-height: 200px; overflow-y: auto; padding-right: 4px; }
+.timeBlock { padding: 8px; border: 1.5px solid #F1F5F9; border-radius: 10px; text-align: center; cursor: pointer; transition: 0.2s; }
+.timeLabel { font-size: 13px; font-weight: 700; display: block; }
+.timePrice { font-size: 10px; font-weight: 600; color: #FF6E40; }
+.timeSelected { background: linear-gradient(135deg, #FF6E40, #D81B60); color: white; border-color: transparent; }
+.timeSelected .timePrice { color: rgba(255,255,255,0.8); }
+.timeBooked {
+    opacity: 0.55;
+    cursor: not-allowed;
+    background: #f9f9f9;
+    border-color: #eee;
+    color: #9ca3af;
+    text-decoration: none;
+}
+
+.timeBooked .timeLabel,
+.timeBooked .timePrice {
+    color: #9ca3af;
+    text-decoration-line: line-through;
+    text-decoration-color: rgba(107, 114, 128, 0.65);
+    text-decoration-thickness: 1.5px;
+    text-decoration-skip-ink: none;
+}
+
+.premiumSubmitBtn { width: 100%; margin-top: 20px; padding: 14px; background: linear-gradient(135deg, #FF6E40, #D81B60); color: white; border: none; border-radius: 14px; font-size: 14px; font-weight: 700; cursor: pointer; transition: 0.2s; }
+.premiumSubmitBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* --- Booking Cancelled Card --- */
+.bookingCancelledCard {
+    background: linear-gradient(135deg, #ffffff 0%, #fff7f7 100%);
+    border: 1.5px solid #ffd7d7;
+    border-radius: 16px;
+    padding: 16px;
+    margin: 8px 0;
+    box-shadow: 0 8px 24px rgba(255, 99, 99, 0.08);
+}
+
+.bookingCancelledHeader {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 800;
+    color: #b42318;
+    margin-bottom: 12px;
+}
+
+.bookingCancelledIcon {
+    color: #ef4444;
+}
+
+.bookingCancelledBody {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.bookingCancelledMeta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 13px;
+    color: #475569;
+    line-height: 1.4;
+}
+
+.bookingRebookBtn {
+    align-self: flex-start;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #FF6E40, #D81B60);
+    color: white;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.bookingRebookBtn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px rgba(255, 110, 64, 0.22);
+}
+
+.bookingRebookBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* --- Weather Card --- */
+
+.weatherCard {
+    width: 100%;
+    max-width: 100%;
+    background: linear-gradient(135deg, #ffffff 0%, #f6fbff 100%);
+    border: 1.5px solid #dbeafe;
+    border-radius: 16px;
+    padding: 10px 10px 12px 10px;
+    margin: 6px 0;
+    box-shadow: 0 6px 18px rgba(59, 130, 246, 0.06);
+    box-sizing: border-box;
+}
+
+
+.weatherMainGrid {
+    display: grid;
+    grid-template-columns: minmax(180px, 1fr) minmax(220px, 1.2fr);
+    gap: 10px;
+    align-items: stretch;
+}
+
+.weatherPrimaryCol,
+.weatherSecondaryCol {
+    min-width: 0;
+}
+
+
+.weatherHeader {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+
+.weatherTitle {
+    font-size: 15px;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.2;
+}
+
+
+.weatherSubtitle {
+    margin-top: 2px;
+    font-size: 11px;
+    color: #64748b;
+}
+
+
+.weatherIcon {
+    font-size: 24px;
+    line-height: 1;
+}
+
+
+.weatherCurrentRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+
+
+.weatherTemp {
+    font-size: 34px;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1;
+}
+
+
+.weatherCurrentMeta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+    color: #334155;
+}
+
+
+.weatherMetaLine {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+
+.weatherWarnings {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+
+.weatherWarningItem {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 7px 10px;
+    border-radius: 10px;
+    background: #fff7ed;
+    color: #9a3412;
+    font-size: 11px;
+    line-height: 1.3;
+}
+
+
+.weatherForecast {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 7px;
+    height: 100%;
+}
+
+
+.weatherForecastDay {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 8px 4px;
+    text-align: center;
+}
+
+
+.weatherForecastDate {
+    font-size: 10px;
+    color: #64748b;
+    margin-bottom: 3px;
+}
+
+
+.weatherForecastIcon {
+    font-size: 17px;
+    line-height: 1;
+    margin-bottom: 3px;
+}
+
+
+.weatherForecastTemps {
+    font-size: 11px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+
+.weatherForecastRain {
+    margin-top: 2px;
+    font-size: 10px;
+    color: #0ea5e9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+}
+
+
+@media (max-width: 1024px) {
+    .weatherMainGrid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+    .weatherCard {
+        padding: 7px 3px 8px 3px;
+        border-radius: 10px;
+    }
+    .weatherMainGrid {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+    .weatherHeader {
+        gap: 5px;
+        margin-bottom: 5px;
+    }
+    .weatherForecast {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 4px;
+    }
+    .weatherForecastDay {
+        padding: 5px 2px;
+        border-radius: 7px;
+    }
+    .weatherTemp {
+        font-size: 26px;
+    }
+    .weatherTitle {
+        font-size: 13px;
+    }
+    .weatherSubtitle {
+        font-size: 10px;
+    }
+}
+
+/* --- Match Card --- */
+.matchCard { 
+    background: white; 
+    border-radius: 16px; 
+    border: 1.5px solid #F1F5F9; 
+    padding: 16px; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
+    width: 100%;
+    max-width: 300px; /* Capped width */
+    margin: 8px 0;
+}
+.matchBadge { display: inline-block; padding: 4px 12px; background: #3B82F6; color: white; border-radius: 20px; font-size: 11px; font-weight: 800; text-transform: uppercase; margin-bottom: 12px; }
+.matchContent { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.matchDetail { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #475569; }
+.matchActions { 
+    display: flex; 
+    gap: 10px;
+    padding: 14px;
+    background: #f9fafb;
+    border-top: 1px solid #e5e7eb;
+    flex-wrap: wrap;
+}
+
+.matchBtnPrimary { 
+    flex: 1;
+    min-width: 100px;
+    padding: 11px 14px; 
+    background: linear-gradient(135deg, #1E293B, #0f172a);
+    color: white; 
+    border: none; 
+    border-radius: 10px; 
+    font-size: 12px; 
+    font-weight: 700; 
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.matchBtnPrimary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(30, 41, 59, 0.2);
+}
+
+.matchBtnSecondary { 
+    flex: 1;
+    min-width: 100px;
+    padding: 11px 14px; 
+    background: white;
+    color: #475569; 
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px; 
+    font-size: 12px; 
+    font-weight: 700; 
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.matchBtnSecondary:hover {
+    border-color: #FF6E40;
+    color: #FF6E40;
+    background: #fff5f1;
+    transform: translateY(-2px);
+}
+
+/* --- Venue Suggest Card --- */
+.venueSuggestCard { 
+    background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+    border-radius: 18px; 
+    border: 1.5px solid #ede9fe;
+    overflow: hidden; 
+    width: 100%;
+    max-width: 320px; /* Slightly wider */
+    margin: 10px 0;
+    box-shadow: 0 8px 24px rgba(255, 110, 64, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.venueSuggestCard:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(255, 110, 64, 0.15);
+    border-color: #ff6e40;
+}
+
+.suggestImageContainer {
+    position: relative;
+    width: 100%;
+    height: 140px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #fee2e2, #fef3c7);
+}
+
+.suggestImg { 
+    width: 100%; 
+    height: 100%; 
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.venueSuggestCard:hover .suggestImg {
+    transform: scale(1.05);
+}
+
+.suggestBadge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: linear-gradient(135deg, #FF6E40, #F97316);
+    color: white;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    box-shadow: 0 4px 12px rgba(255, 110, 64, 0.3);
+}
+
+.suggestBody { 
+    padding: 16px 14px; 
+    background: white;
+}
+
+.suggestBody h5 { 
+    margin: 0 0 6px; 
+    font-size: 16px; 
+    font-weight: 800;
+    color: #1e293b;
+    letter-spacing: -0.02em;
+}
+
+.suggestBody p { 
+    margin: 0 0 12px; 
+    font-size: 12px; 
+    color: #64748b; 
+    display: flex; 
+    align-items: center; 
+    gap: 4px;
+}
+
+.suggestPriceRow {
+    display: flex;
+    align-items: baseline;
+    gap: 2px;
+}
+
+.suggestPrice { 
+    font-size: 18px; 
+    font-weight: 800; 
+    color: #ff6e40;
+    letter-spacing: -0.01em;
+}
+
+.priceUnit {
+    font-size: 12px;
+    font-weight: 600;
+    color: #94a3b8;
+}
+
+.suggestBtn { 
+    flex: 1;
+    padding: 11px 12px; 
+    background: linear-gradient(135deg, #FF6E40, #F97316);
+    color: white; 
+    border: none; 
+    border-radius: 10px;
+    font-size: 13px; 
+    font-weight: 700; 
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.suggestBtn:hover {
+    background: linear-gradient(135deg, #E65A30, #EA580C);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(255, 110, 64, 0.3);
+}
+
+.suggestBtn:active {
+    transform: translateY(0);
+}
+
+/* --- System Status Card --- */
+.systemStatusCard { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: #F0FDF4; border: 1px solid #DCFCE7; border-radius: 12px; color: #166534; font-size: 13px; }
+.statusIcon { color: #22C55E; }

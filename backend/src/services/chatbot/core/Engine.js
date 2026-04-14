@@ -4,11 +4,213 @@ const registry = require('./Registry');
 const promptManager = require('./PromptManager');
 const responseFormatter = require('../formatters/ResponseFormatter');
 const { reverseGeocode } = require('../utils/helpers');
+const {
+    sanitizeAssistantText,
+    extractToolCallsFromText,
+    normalizeToolArgs,
+} = require('../utils/toolCallFallback');
 
 const { resolveId } = require('../utils/resolver');
 const LM_STUDIO_URL = process.env.LM_STUDIO_URL || 'http://127.0.0.1:1234';
 const LM_STUDIO_MODEL = process.env.LM_STUDIO_MODEL || 'qwen2.5-7b-instruct-1m';
+const { normalizeText, normalizeSearchText } = require('../utils/fuzzySearch');
 
+function normalizeIntentText(input) {
+    if (!input) return '';
+    return String(input)
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function extractVenueNameFromBookingIntent(message) {
+    if (!message || typeof message !== 'string') return null;
+
+    const original = message.trim();
+    const normalized = normalizeIntentText(original);
+    const bookingPrefixRegex = /^(dat|book)\s+san\s+/i;
+    if (!bookingPrefixRegex.test(normalized)) return null;
+
+    const originalPrefixRegex = /^\s*(đặt|dat|book)\s+sân\s+/i;
+    const name = original.replace(originalPrefixRegex, '').trim();
+    return name.length >= 2 ? name : null;
+}
+
+function looksLikeSportsIntent(message) {
+    const normalized = normalizeIntentText(message);
+    return /\b(dat|book|tim|san|huy|cancel|dat san|tim san|lich trong|khung gio)\b/.test(normalized);
+}
+
+function looksLikeWeatherIntent(message) {
+    const normalized = normalizeIntentText(message);
+    return /\b(thoi tiet|weather|mua khong|co mua khong|troi co mua|nang|gio|du bao)\b/.test(normalized);
+}
+
+function extractJsonObject(text) {
+    if (!text || typeof text !== 'string') return null;
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) return null;
+    try {
+        return JSON.parse(match[0]);
+    } catch {
+        return null;
+    }
+}
+
+async function inferChatIntentWithLlm(userMessage) {
+    if (!looksLikeSportsIntent(userMessage) && !looksLikeWeatherIntent(userMessage)) return null;
+
+    const messages = [
+        {
+            role: 'system',
+            content: `Bạn là bộ phân tích ý định cho chatbot SportApp.
+Nhiệm vụ: sửa lỗi chính tả gần đúng, chuẩn hóa tiếng Việt, và trích xuất ý định.
+Chỉ trả về JSON hợp lệ, không markdown, không giải thích.
+
+Schema:
+{
+    "intent": "search" | "booking" | "cancel" | "weather" | "other",
+  "searchName": string | null,
+  "venueQuery": string | null,
+  "sportType": string | null,
+  "city": string | null,
+  "district": string | null,
+  "confidence": number,
+  "needsClarification": boolean,
+    "clarificationHint": string | null
+}
+
+Quy tắc:
+- Nếu người dùng muốn đặt sân, set intent = "booking".
+- Nếu người dùng chỉ đang tìm sân, set intent = "search".
+- Nếu người dùng muốn hủy booking, set intent = "cancel".
+- Nếu người dùng hỏi thời tiết, mưa, nắng, hoặc dự báo, set intent = "weather".
+- Nếu tên sân bị gõ sai nhưng bạn đoán được tên gần đúng, hãy chuẩn hóa vào searchName/venueQuery.
+- Nếu không chắc, đặt needsClarification = true và confidence thấp.
+- Không bịa tên sân nếu không có manh mối rõ ràng.`
+        },
+        { role: 'user', content: userMessage }
+    ];
+
+    try {
+        const response = await axios.post(`${LM_STUDIO_URL}/v1/chat/completions`, {
+            model: LM_STUDIO_MODEL,
+            messages,
+            temperature: 0,
+        });
+
+        const content = response.data?.choices?.[0]?.message?.content || '';
+        const parsed = extractJsonObject(content);
+        if (!parsed || typeof parsed !== 'object') return null;
+
+        return {
+            intent: parsed.intent || 'other',
+            searchName: typeof parsed.searchName === 'string' ? parsed.searchName.trim() : null,
+            venueQuery: typeof parsed.venueQuery === 'string' ? parsed.venueQuery.trim() : null,
+            sportType: typeof parsed.sportType === 'string' ? parsed.sportType.trim() : null,
+            city: typeof parsed.city === 'string' ? parsed.city.trim() : null,
+            district: typeof parsed.district === 'string' ? parsed.district.trim() : null,
+            confidence: Number.isFinite(Number(parsed.confidence)) ? Number(parsed.confidence) : 0,
+            needsClarification: Boolean(parsed.needsClarification),
+            clarificationHint: typeof parsed.clarificationHint === 'string' ? parsed.clarificationHint.trim() : null,
+        };
+    } catch (error) {
+        console.warn('[AI Engine] LLM intent inference failed:', error.message);
+        return null;
+    }
+}
+
+async function searchVenueByNameStrictly(name, userLocation, prisma) {
+    if (!name) return null;
+    const result = await registry.executeAction('search_venues', {
+        args: { name },
+        userId: null,
+        userRole: 'CUSTOMER',
+        userLocation,
+        prisma,
+    });
+
+    if (!result?.success || result.type !== 'venues' || !Array.isArray(result.data) || result.data.length === 0) {
+        return null;
+    }
+
+    return result;
+}
+
+async function getWeatherByUserLocation(userLocation, locationLabel, city, prisma) {
+    const weatherArgs = {};
+    if (userLocation?.lat && userLocation?.lng) {
+        weatherArgs.lat = userLocation.lat;
+        weatherArgs.lon = userLocation.lng;
+        weatherArgs.locationLabel = locationLabel || 'Vị trí hiện tại';
+    } else if (city) {
+        weatherArgs.city = city;
+    }
+
+    const weatherResult = await registry.executeAction('get_weather', {
+        args: weatherArgs,
+        userId: null,
+        userRole: 'CUSTOMER',
+        userLocation,
+        prisma,
+    });
+
+    if (!weatherResult?.success) return null;
+
+    const summary = sanitizeAssistantText(responseFormatter.format(weatherResult.type, weatherResult));
+    return {
+        role: 'assistant',
+        message: summary,
+        toolResults: [
+            {
+                tool_call_id: 'weather_bypass_' + Date.now(),
+                role: 'tool',
+                name: 'get_weather',
+                content: summary,
+                data: weatherResult.data,
+                type: weatherResult.type,
+                success: true,
+            }
+        ]
+    };
+}
+
+async function resolveBookingTargetStrict(input, prisma) {
+    if (!input) return { type: 'unknown' };
+
+    const normalizedInput = normalizeSearchText(input);
+    if (!normalizedInput) return { type: 'unknown' };
+
+    const venueCandidates = await prisma.venue.findMany({
+        where: { status: 'APPROVED' },
+        include: {
+            fields: {
+                where: { isActive: true },
+                include: { pricingRules: { where: { isActive: true } } }
+            }
+        },
+        take: 200,
+    });
+
+    for (const venue of venueCandidates) {
+        const normalizedVenueName = normalizeSearchText(venue.name);
+        if (normalizedVenueName === normalizedInput || normalizedVenueName.includes(normalizedInput)) {
+            return { type: 'venue', data: venue };
+        }
+
+        for (const field of venue.fields || []) {
+            const normalizedFieldName = normalizeSearchText(field.name);
+            if (normalizedFieldName === normalizedInput || normalizedFieldName.includes(normalizedInput)) {
+                return { type: 'field', data: field };
+            }
+        }
+    }
+
+    return { type: 'unknown' };
+}
 /**
  * ChatbotEngine
  * Responsibility: The core engine that manages the dialogue loop, 
@@ -36,30 +238,233 @@ class ChatbotEngine {
             // 3. Build system prompt
             const systemPrompt = promptManager.buildSystemPrompt(user.role, user.fullName, coords, locationLabel);
             
-            // 4. Resolve IDs & Instant Bypass
-            const uuidRegex = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{12}/gi; // Optimized regex
+            // 4. Resolve IDs & Instant Command Bypass (NEW: Direct command execution)
+            const availableActions = registry.getToolDefinitions(user.role).map(t => t.function.name);
+            const firstWord = userMessage.split(' ')[0];
+            const semanticIntent = await inferChatIntentWithLlm(userMessage);
+            const intentVenueQuery = semanticIntent?.venueQuery || semanticIntent?.searchName || null;
+            const intentCity = semanticIntent?.city || null;
+            const intentDistrict = semanticIntent?.district || null;
+            const intentSportType = semanticIntent?.sportType || null;
+
+            // 4a. Natural-language direct intent bypass for "đặt sân + tên sân"
+            const venueNameFromIntent = extractVenueNameFromBookingIntent(userMessage);
+            const bookingQuery = intentVenueQuery || venueNameFromIntent;
+            if (semanticIntent?.intent === 'weather' || looksLikeWeatherIntent(userMessage)) {
+                try {
+                    const weatherResponse = await getWeatherByUserLocation(coords, locationLabel, intentCity, prisma);
+                    if (weatherResponse) return weatherResponse;
+                } catch (weatherErr) {
+                    console.error('[AI Engine] Weather bypass failed:', weatherErr.message);
+                }
+            }
+
+            if ((semanticIntent?.intent === 'booking' || venueNameFromIntent) && bookingQuery && !userMessage.startsWith('BOOK_VENUE:')) {
+                try {
+                    console.log(`[AI Engine] Booking intent bypass for venue name: ${bookingQuery}`);
+
+                    const resolvedTarget = await resolveBookingTargetStrict(bookingQuery, prisma);
+
+                    if (resolvedTarget.type === 'field' || resolvedTarget.type === 'venue') {
+                        const fieldId = resolvedTarget.type === 'field'
+                            ? resolvedTarget.data.id
+                            : bookingQuery;
+
+                        const bookingTry = await registry.executeAction('create_booking', {
+                            args: { fieldId },
+                            userId: user.id,
+                            userRole: user.role,
+                            userLocation: coords,
+                            prisma
+                        });
+
+                        if (bookingTry && bookingTry.success) {
+                            const summary = sanitizeAssistantText(responseFormatter.format(bookingTry.type, bookingTry));
+                            return {
+                                role: 'assistant',
+                                message: summary,
+                                toolResults: [
+                                    {
+                                        tool_call_id: 'intent_bypass_' + Date.now(),
+                                        role: 'tool',
+                                        name: 'create_booking',
+                                        content: summary,
+                                        data: bookingTry.data,
+                                        type: bookingTry.type,
+                                        success: true
+                                    }
+                                ]
+                            };
+                        }
+                    }
+
+                    const searchTry = await searchVenueByNameStrictly(bookingQuery, coords, prisma)
+                        || await registry.executeAction('search_venues', {
+                            args: {
+                                name: bookingQuery,
+                                city: intentCity || undefined,
+                                district: intentDistrict || undefined,
+                                sportType: intentSportType || undefined,
+                            },
+                            userId: user.id,
+                            userRole: user.role,
+                            userLocation: coords,
+                            prisma
+                        });
+
+                    const searchSummary = sanitizeAssistantText(responseFormatter.format(searchTry.type, searchTry));
+                    return {
+                        role: 'assistant',
+                        message: searchSummary,
+                        toolResults: [
+                            {
+                                tool_call_id: 'intent_search_' + Date.now(),
+                                role: 'tool',
+                                name: 'search_venues',
+                                content: searchSummary,
+                                data: searchTry.data,
+                                type: searchTry.type,
+                                success: searchTry.success
+                            }
+                        ]
+                    };
+                } catch (intentErr) {
+                    console.error('[AI Engine] Booking intent bypass failed:', intentErr.message);
+                }
+            }
+
+            if (semanticIntent?.intent === 'search' && intentVenueQuery) {
+                try {
+                    const searchTry = await searchVenueByNameStrictly(intentVenueQuery, coords, prisma)
+                        || await registry.executeAction('search_venues', {
+                            args: {
+                                name: intentVenueQuery,
+                                city: intentCity || undefined,
+                                district: intentDistrict || undefined,
+                                sportType: intentSportType || undefined,
+                            },
+                            userId: user.id,
+                            userRole: user.role,
+                            userLocation: coords,
+                            prisma
+                        });
+
+                    if (searchTry) {
+                        const searchSummary = sanitizeAssistantText(responseFormatter.format(searchTry.type, searchTry));
+                        return {
+                            role: 'assistant',
+                            message: searchSummary,
+                            toolResults: [
+                                {
+                                    tool_call_id: 'intent_search_llm_' + Date.now(),
+                                    role: 'tool',
+                                    name: 'search_venues',
+                                    content: searchSummary,
+                                    data: searchTry.data,
+                                    type: searchTry.type,
+                                    success: searchTry.success,
+                                    meta: searchTry.meta,
+                                }
+                            ]
+                        };
+                    }
+                } catch (searchErr) {
+                    console.error('[AI Engine] LLM search bypass failed:', searchErr.message);
+                }
+            }
+            
+            if (availableActions.includes(firstWord)) {
+                console.log(`[AI Engine] Instant Command Bypass triggered for: ${firstWord}`);
+                const argsArr = userMessage.substring(firstWord.length).trim().split(' ');
+                const args = {};
+                argsArr.forEach(arg => {
+                    const parts = arg.split('=');
+                    if (parts.length === 2) {
+                        const [key, value] = parts;
+                        if (key && value) args[key] = value.replace(/^["']|["']$/g, '');
+                    }
+                });
+
+                try {
+                    const result = await registry.executeAction(firstWord, {
+                        args,
+                        userId: user.id,
+                        userRole: user.role,
+                        userLocation: coords,
+                        prisma
+                    });
+
+                    const summary = sanitizeAssistantText(responseFormatter.format(result.type, result));
+                    return {
+                        role: 'assistant',
+                        message: summary,
+                        toolResults: [
+                            {
+                                tool_call_id: 'cmd_bypass_' + Date.now(),
+                                role: 'tool',
+                                name: firstWord,
+                                content: summary,
+                                data: result.data,
+                                type: result.type,
+                                success: result.success
+                            }
+                        ]
+                    };
+                } catch (e) {
+                    console.error('[AI Engine] Direct command execution failed:', e);
+                    // Fallthrough to normal LLM processing
+                }
+            }
+
+            // Fallback for older bypasses
+            const uuidRegex = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
             const matches = userMessage.match(uuidRegex);
             const hasID = !!matches;
+
+            // Deterministic bypass when UI sends a bare UUID after selecting a field/option chip.
+            if (hasID) {
+                const targetID = matches[0];
+                if (userMessage.trim() === targetID) {
+                    try {
+                        const result = await registry.executeAction('create_booking', {
+                            args: { fieldId: targetID },
+                            userId: user.id,
+                            userRole: user.role,
+                            userLocation: coords,
+                            prisma
+                        });
+
+                        const summary = sanitizeAssistantText(responseFormatter.format(result.type, result));
+                        return {
+                            role: 'assistant',
+                            message: summary,
+                            toolResults: [
+                                {
+                                    tool_call_id: 'uuid_bypass_' + Date.now(),
+                                    role: 'tool',
+                                    name: 'create_booking',
+                                    content: summary,
+                                    data: result.data,
+                                    type: result.type,
+                                    success: result.success
+                                }
+                            ]
+                        };
+                    } catch (uuidErr) {
+                        console.error('[AI Engine] UUID bypass failed:', uuidErr.message);
+                    }
+                }
+            }
 
             if (hasID && userMessage.startsWith('BOOK_VENUE:')) {
                 const targetID = matches[0];
                 const resolution = await resolveId(targetID, prisma);
                 console.log(`[AI Engine] Instant Bypass triggered for ${targetID} (${resolution.type})`);
-
+                
                 if (resolution.type === 'field' || resolution.type === 'venue') {
-                    let field = null;
-                    let allFields = [];
-                    let venue = null;
-
-                    if (resolution.type === 'field') {
-                        field = resolution.data;
-                        venue = field.venue;
-                        allFields = [field];
-                    } else {
-                        venue = resolution.data;
-                        allFields = venue.fields || [];
-                        field = allFields[0];
-                    }
+                    const data = resolution.data;
+                    const field = resolution.type === 'field' ? data : data.fields[0];
+                    const venue = resolution.type === 'field' ? data.venue : data;
 
                     if (field) {
                         const bypassResult = {
@@ -73,12 +478,12 @@ class ChatbotEngine {
                                 openTime: venue.openTime,
                                 closeTime: venue.closeTime,
                                 pricingRules: field.pricingRules,
-                                availableFields: allFields.map(f => ({ id: f.id, name: f.name, pricingRules: f.pricingRules })),
+                                availableFields: (venue.fields || []).map(f => ({ id: f.id, name: f.name, pricingRules: f.pricingRules })),
                                 missingFields: ['date', 'startTime', 'time', 'payment'],
                                 currentArgs: { fieldId: field.id }
                             }
                         };
-                        const displayMessage = responseFormatter.format(bypassResult.type, bypassResult);
+                        const displayMessage = sanitizeAssistantText(responseFormatter.format(bypassResult.type, bypassResult));
                         return {
                             role: 'assistant',
                             message: displayMessage,
@@ -145,11 +550,23 @@ class ChatbotEngine {
             const choice = response.data.choices[0];
             const message = choice.message;
 
-            // 8. Parallel Tool Call Handling (OPTIMIZATION 1)
-            if (message.tool_calls && message.tool_calls.length > 0) {
-                console.log(`[AI Engine] Parallel execution of ${message.tool_calls.length} tool(s)...`);
+            // 8. Parallel Tool Call Handling (supports native tool_calls and <tool_call>...</tool_call> fallback)
+            const parsedFallbackCalls = extractToolCallsFromText(message.content);
+            const fallbackToolCalls = parsedFallbackCalls.map((call, idx) => ({
+                id: `text_tool_${Date.now()}_${idx + 1}`,
+                function: {
+                    name: call.name,
+                    arguments: JSON.stringify(call.arguments || {}),
+                },
+            }));
+            const effectiveToolCalls = (message.tool_calls && message.tool_calls.length > 0)
+                ? message.tool_calls
+                : fallbackToolCalls;
 
-                const toolPromises = message.tool_calls.map(async (tool) => {
+            if (effectiveToolCalls.length > 0) {
+                console.log(`[AI Engine] Parallel execution of ${effectiveToolCalls.length} tool(s)...`);
+
+                const toolPromises = effectiveToolCalls.map(async (tool) => {
                     const { name, arguments: argStr } = tool.function;
                     let args = {};
                     try {
@@ -157,6 +574,7 @@ class ChatbotEngine {
                     } catch (e) {
                         console.error('[AI Engine] Failed to parse tool arguments:', argStr);
                     }
+                    args = normalizeToolArgs(name, args);
                     
                     // context injection
                     if (venueId && !args.venueId && ['get_venue_detail', 'get_available_time_slots', 'get_owner_booking_summary'].includes(name)) {
@@ -172,7 +590,7 @@ class ChatbotEngine {
                             prisma
                         });
 
-                        const summary = responseFormatter.format(result.type, result);
+                        const summary = sanitizeAssistantText(responseFormatter.format(result.type, result));
                         return {
                             tool_call_id: tool.id,
                             role: 'tool',
@@ -212,14 +630,19 @@ class ChatbotEngine {
                 const toolMessages = toolResults.map(r => r.rawMessage);
 
                 // 9. Second Pass Logic: Prevent narration for UI actions
-                const UI_DRIVING_TYPES = ['clarification', 'booking_form', 'available_slots', 'venue_detail', 'booking_created', 'options'];
-                const shouldShortCircuit = toolOutputs.some(o => UI_DRIVING_TYPES.includes(o.type));
+                const UI_DRIVING_TYPES = [
+                    'clarification', 'booking_form', 'available_slots', 'venue_detail', 
+                    'booking_created', 'booking_cancelled', 'weather', 'options', 'venues',
+                    'bookings', 'stats', 'owner_venues', 'top_owners', 'platform_stats'
+                ];
+                const shouldShortCircuit = fallbackToolCalls.length > 0 || toolOutputs.some(o => UI_DRIVING_TYPES.includes(o.type));
 
                 if (shouldShortCircuit) {
                     console.log('[AI Engine] UI-intensive result detected. Skipping narration pass.');
                     const primaryResult = toolOutputs.find(o => UI_DRIVING_TYPES.includes(o.type));
-                    let displayMessage = primaryResult.content;
+                    let displayMessage = primaryResult?.content || 'Mình đã xử lý yêu cầu và hiển thị kết quả bên dưới.';
                     displayMessage = displayMessage.replace('[UI_INTERACTION:CLARIFICATION]', '').replace(/\[UI_INTERACTION:.*?\]/g, '').trim();
+                    displayMessage = sanitizeAssistantText(displayMessage);
 
                     return {
                         role: 'assistant',
@@ -242,7 +665,7 @@ class ChatbotEngine {
                 const finalMessage = secondResponse.data.choices[0].message;
                 return {
                     role: 'assistant',
-                    message: finalMessage.content,
+                    message: sanitizeAssistantText(finalMessage.content),
                     toolResults: toolOutputs
                 };
             }
@@ -250,7 +673,7 @@ class ChatbotEngine {
             // 10. Direct response
             return {
                 role: 'assistant',
-                message: message.content
+                message: sanitizeAssistantText(message.content)
             };
 
         } catch (err) {

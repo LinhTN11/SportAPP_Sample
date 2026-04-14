@@ -17,38 +17,65 @@ class ResponseFormatter {
 
         switch (type) {
             case 'venues':
-                if (!data || data.length === 0) return `[Hệ thống] Không tìm thấy bất kỳ sân thể thao nào phù hợp trong khu vực này. Bạn PHẢI thông báo khách hàng hiện tại hệ thống chưa có sân ở đây.`;
-                return `Tìm thấy ${data.length} sân phù hợp. Gồm: ${data.map(v => `${v.name} (${v.district || 'N/A'}, ${v.city || 'N/A'})`).join(', ')}.`;
+                if (!data || data.length === 0) {
+                    if (result.meta?.searchMethod === 'name_not_found') {
+                        return `Không tìm thấy sân có tên "${result.meta.query}". Bạn hãy kiểm tra lại tên sân hoặc cho tôi thêm khu vực/thành phố để tìm chính xác hơn.`;
+                    }
+                    return `[Hệ thống] Không tìm thấy bất kỳ sân thể thao nào phù hợp trong khu vực này. Bạn PHẢI thông báo khách hàng hiện tại hệ thống chưa có sân ở đây.`;
+                }
+                return `Tìm thấy ${data.length} sân phù hợp. Mình đã hiển thị danh sách bên dưới để bạn dễ dàng lựa chọn.`;
             
             case 'venue_detail':
                 return `Sân ${data.name}: ${data.address}. ${data.avgRating > 0 ? 'Đánh giá: ' + data.avgRating + '/5.' : 'Chưa có đánh giá.'}`;
             
             case 'available_slots':
-                return `Ngày ${data.date} còn ${data.slots.length} khung giờ trống: ${data.slots.map(s => s.time).join(', ')}.`;
+                return `Mình đã tìm thấy ${data.slots.length} khung giờ trống cho ngày ${data.date}. Bạn vui lòng chọn giờ muốn đặt ở bảng bên dưới nhé.`;
 
             case 'booking_created':
                 return `Đặt sân thành công cho ${data.venueName} - ${data.fieldName} ngay ${data.date} lúc ${data.time}. Chi phí: ${formatPrice(data.totalPrice)}. BOOKING_ID: ${data.bookingId}.`;
 
+            case 'booking_cancelled':
+                return `Đã hủy booking ${data.bookingId}. Bạn có thể đặt lại ngay bên dưới.`;
+
+            case 'bookings':
+                return `Mình đã tìm thấy ${data.length} đơn đặt sân trong lịch sử của bạn. Chi tiết hiển thị ở danh sách bên dưới nhé.`;
+
+            case 'weather': {
+                const location = data.locationLabel || data.city || 'vị trí hiện tại';
+                const current = data.current || {};
+                const warnings = Array.isArray(data.warnings) && data.warnings.length > 0
+                    ? ` Cảnh báo: ${data.warnings[0].message}`
+                    : '';
+                return `Thời tiết tại ${location}: ${current.icon || ''} ${current.description || 'Không rõ'}, ${current.temperature ?? '-'}°C, độ ẩm ${current.humidity ?? '-'}%, gió ${current.windSpeed ?? '-'} km/h.${warnings}`;
+            }
+
             case 'owner_booking_summary': {
                 const s = data;
-                const times = (s.recentBookings || []).map(b => `[${b.time} ${b.date}]`).join(', ');
-                return `Thống kê (${s.from || 'toàn thời gian'}): ${s.totalCount} tổng đơn, Doanh thu: ${formatPrice(s.totalRevenue)}. (Chi tiết: ${s.successCount} đơn thành công, ${s.statusCounts.PENDING_DEPOSIT} chờ cọc). ${times ? 'Các đơn: ' + times : ''}`;
+                return `Thống kê (${s.from || 'toàn thời gian'}): Có tổng cộng ${s.totalCount} đơn đặt sân với doanh thu ${formatPrice(s.totalRevenue)}. (Chi tiết: ${s.successCount} đơn thành công, ${s.statusCounts.PENDING_DEPOSIT} chờ cọc). Chi tiết từng đơn được liệt kê bên dưới.`;
             }
 
             case 'file_download':
                 return `Báo cáo đã sẵn sàng tại: ${data.downloadUrl}`;
 
             case 'clarification':
-                return `[UI_INTERACTION:CLARIFICATION] ${data.question}. Các lựa chọn: ${data.options.join(', ')}`;
+                return `${data.question}. Các lựa chọn: ${data.options.join(', ')}`;
+
+            case 'options': {
+                const optionNames = (data.fields || data.availableFields || []).map(f => f.name).filter(Boolean);
+                if (optionNames.length > 0) {
+                    return `Mình đã tìm thấy sân phù hợp tại ${data.venueName || 'địa điểm này'}. Bạn vui lòng chọn sân con: ${optionNames.join(', ')}`;
+                }
+                return `Mình đã tìm thấy sân phù hợp. Bạn vui lòng chọn một tùy chọn bên dưới.`;
+            }
             
             case 'platform_stats':
                 return `Toàn sàn (${data.from} - ${data.to}): ${data.totalUsers} người dùng, ${data.totalVenues} sân, ${data.totalBookings} đơn, Doanh thu: ${formatPrice(data.totalRevenue)}.`;
 
             case 'top_owners':
-                return `Bảng xếp hạng chủ sân: ` + data.map((o, i) => `${i + 1}. ${o.name}: ${formatPrice(o.revenue)} (${o.bookingCount} đơn)`).join('| ');
+                return `Đây là danh sách ${data.length} chủ sân có kết quả kinh doanh tốt nhất. Bạn có thể xem thứ hạng chi tiết bên dưới.`;
 
             case 'owner_venues':
-                return `Danh sách sân của bạn: ` + data.map(v => v.name).join(' | ');
+                return `Bạn hiện có ${data.length} sân đang hoạt động trên hệ thống. Chi tiết danh sách được hiển thị bên dưới.`;
 
             case 'date_conversion':
                 return data.message;

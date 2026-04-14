@@ -5,6 +5,11 @@ const { jobQueue, connection } = require('./queue');
  * Start all distributed cron jobs using BullMQ
  */
 function startCronJobs(prisma) {
+    if (!jobQueue || !connection) {
+        console.warn('⏸️ Distributed Cron jobs are disabled (Redis queue unavailable).');
+        return;
+    }
+
     console.log('⏰ Distributed Cron jobs (BullMQ) started');
 
     // 1. Define the Worker to handle jobs

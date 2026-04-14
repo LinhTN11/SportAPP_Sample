@@ -1,6 +1,22 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
+const emitRoomMessageEvents = (io, roomId, message) => {
+    if (!io) return;
+    const roomTargets = [roomId, `room:${roomId}`];
+    const eventNames = ['new_message'];
+    for (const target of roomTargets) {
+        for (const eventName of eventNames) {
+            io.to(target).emit(eventName, message);
+        }
+    }
+};
+
+const emitUserNotificationEvents = (io, userId, payload) => {
+    if (!io) return;
+    io.to(`user:${userId}`).emit('message_notification', payload);
+};
+
 // GET /api/chat/rooms
 const getRooms = async (req, res, next) => {
     try {
@@ -166,13 +182,13 @@ const sendMessage = async (req, res, next) => {
         // Trigger socket.io event if initialized
         const io = req.app.get('io');
         if (io) {
-            io.to(`room:${req.params.roomId}`).emit('new-message', message);
+            emitRoomMessageEvents(io, req.params.roomId, message);
 
             const otherMembers = await prisma.chatRoomMember.findMany({
                 where: { roomId: req.params.roomId, userId: { not: req.user.id } },
             });
             for (const member of otherMembers) {
-                io.to(`user:${member.userId}`).emit('message-notification', {
+                emitUserNotificationEvents(io, member.userId, {
                     roomId: req.params.roomId,
                     message,
                 });
@@ -253,7 +269,17 @@ const suggestVenue = async (req, res, next) => {
 
         const io = req.app.get('io');
         if (io) {
-            io.to(`room:${req.params.roomId}`).emit('new-message', message);
+            emitRoomMessageEvents(io, req.params.roomId, message);
+
+            const otherMembers = await prisma.chatRoomMember.findMany({
+                where: { roomId: req.params.roomId, userId: { not: req.user.id } },
+            });
+            for (const member of otherMembers) {
+                emitUserNotificationEvents(io, member.userId, {
+                    roomId: req.params.roomId,
+                    message,
+                });
+            }
         }
 
         res.status(201).json({ success: true, data: { message } });
@@ -306,7 +332,7 @@ const acceptVenueSuggestion = async (req, res, next) => {
 
         const io = req.app.get('io');
         if (io) {
-            io.to(`room:${message.roomId}`).emit('new-message', acceptMessage);
+            emitRoomMessageEvents(io, message.roomId, acceptMessage);
         }
 
         res.status(201).json({ success: true, data: { message: acceptMessage } });

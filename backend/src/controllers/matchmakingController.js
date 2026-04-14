@@ -217,18 +217,24 @@ const acceptRequest = async (req, res, next) => {
             data: { status: 'REJECTED' },
         });
 
+        // Always create a dedicated MATCH_GROUP room for each accepted match
+        // to avoid mixing match conversations with existing DIRECT rooms.
+        const requesterId = request.requesterId;
+        const ownerId = request.post.userId;
+
         const chatRoom = await prisma.chatRoom.create({
             data: {
                 type: 'MATCH_GROUP',
                 name: `Match: ${request.post.sportType} - ${request.post.bookingDate.toISOString().split('T')[0]}`,
                 members: {
                     create: [
-                        { userId: request.post.userId },
-                        { userId: request.requesterId },
+                        { userId: ownerId },
+                        { userId: requesterId },
                     ],
                 },
             },
         });
+        console.log(`[MatchAccept] Created dedicated match chat room: ${chatRoom.id}`);
 
         // Add a system message to link the match post and provide initial context
         await prisma.message.create({

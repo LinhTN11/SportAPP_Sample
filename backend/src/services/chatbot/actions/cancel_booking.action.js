@@ -23,7 +23,16 @@ module.exports = {
         const { bookingId } = args;
         console.log(`[Chatbot Action] cancel_booking: id=${bookingId}`);
 
-        const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
+        const booking = await prisma.booking.findUnique({
+            where: { id: bookingId },
+            include: {
+                field: {
+                    include: {
+                        venue: true,
+                    },
+                },
+            },
+        });
         if (!booking) return { success: false, message: 'ID đặt sân không tồn tại trong hệ thống.' };
 
         await prisma.booking.update({
@@ -31,6 +40,20 @@ module.exports = {
             data: { status: 'CANCELLED' },
         });
 
-        return { success: true, type: 'booking_cancelled', message: 'Đã hủy đơn thành công!' };
+        return {
+            success: true,
+            type: 'booking_cancelled',
+            message: 'Đã hủy đơn thành công!',
+            data: {
+                bookingId: booking.id,
+                venueId: booking.field?.venue?.id,
+                venueName: booking.field?.venue?.name,
+                fieldId: booking.fieldId,
+                fieldName: booking.field?.name,
+                date: booking.bookingDate.toISOString().split('T')[0],
+                time: `${booking.startTime} - ${booking.endTime}`,
+                totalPrice: booking.totalPrice,
+            },
+        };
     }
 };

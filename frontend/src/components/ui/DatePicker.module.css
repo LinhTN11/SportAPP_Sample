@@ -46,9 +46,15 @@
     border-radius: 16px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
     border: 1px solid var(--border-light);
-    z-index: 1000; /* Adjusted from 9999 to 1000 for better stacking */
+        z-index: 100010; /* Higher than modal to ensure visibility */
     padding: 20px;
     animation: slideUp 0.2s ease-out;
+}
+
+@media (max-width: 480px) {
+    .popover {
+        width: min(320px, calc(100vw - 48px));
+    }
 }
 
 /* Header */

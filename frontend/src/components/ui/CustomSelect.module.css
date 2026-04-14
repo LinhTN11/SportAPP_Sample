@@ -1,0 +1,105 @@
+.selectRoot {
+    position: relative;
+    width: 100%;
+}
+
+.trigger {
+    width: 100%;
+    min-height: 44px;
+    border: 1.5px solid #d9dee6;
+    border-radius: 12px;
+    background: #fff;
+    color: #111827;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    cursor: pointer;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.trigger:hover:not(:disabled),
+.triggerOpen {
+    border-color: #ff6e40;
+}
+
+.trigger:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.value,
+.placeholder {
+    font-size: 14px;
+    font-weight: 600;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.placeholder {
+    color: #9ca3af;
+}
+
+.chevron {
+    color: #6b7280;
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+}
+
+.chevronOpen {
+    transform: rotate(180deg);
+}
+
+.menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    z-index: 1200;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(2, 6, 23, 0.12);
+    padding: 6px;
+    overflow-y: auto;
+}
+
+.optionActive {
+    background: #f5f3ff;
+    color: #4f46e5;
+    font-weight: 700;
+}
+
+.optionDisabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.checkIcon {
+    flex-shrink: 0;
+    color: #4f46e5;
+}
+
+.option {
+    width: 100%;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    padding: 9px 10px;
+    text-align: left;
+    color: #111827;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.option:hover:not(:disabled) {
+    background: #f8fafc;
+}

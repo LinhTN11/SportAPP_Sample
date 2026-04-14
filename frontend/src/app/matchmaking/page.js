@@ -1,7 +1,8 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { matchmakingAPI } from '@/lib/api';
 import Avatar from '@/components/Avatar';
@@ -137,6 +138,9 @@ export default function MatchmakingPage() {
         } finally { setSubmitting(false); }
     };
 
+    const searchParams = useSearchParams();
+    const highlightPostId = searchParams.get('post');
+
     const handleSendRequest = async (postId) => {
         if (!isAuthenticated) { router.push('/login'); return; }
         try {
@@ -147,6 +151,20 @@ export default function MatchmakingPage() {
             alert(err.response?.data?.message || 'Gửi thất bại');
         }
     };
+
+    // Auto-scroll to highlighted post
+    useEffect(() => {
+        if (highlightPostId && posts.length > 0) {
+            setTimeout(() => {
+                const element = document.getElementById(`post-${highlightPostId}`);
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    element.classList.add(styles.highlightedCard);
+                    setTimeout(() => element.classList.remove(styles.highlightedCard), 3000);
+                }
+            }, 500);
+        }
+    }, [highlightPostId, posts]);
     
     // chấp nhận lời mơid
     const handleAccept = async (requestId) => {
@@ -154,6 +172,10 @@ export default function MatchmakingPage() {
             const { data } = await matchmakingAPI.acceptRequest(requestId);
             alert('Ghép trận thành công! Kiểm tra tin nhắn để trao đổi.');
             loadMyPosts();
+            const roomId = data?.data?.chatRoomId;
+            if (roomId) {
+                router.push(`/chat?room=${roomId}`);
+            }
         } catch (err) { alert(err.response?.data?.message || 'Thất bại'); }
     };
     
@@ -267,7 +289,7 @@ export default function MatchmakingPage() {
                                 {posts.map((post) => {
                                     const sportIcon = SportIcons[post.sportType] || SportIcons.all;
                                     return (
-                                    <div key={post.id} className={styles.postCard}>
+                                    <div key={post.id} id={`post-${post.id}`} className={`${styles.postCard} ${highlightPostId === post.id.toString() ? styles.highlightedCard : ''}`}>
                                         {/* Header */}
                                         <div className={styles.postHeader}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

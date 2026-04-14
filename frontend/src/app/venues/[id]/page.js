@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @next/next/no-img-element */
 'use client';
 
 import { useState, useEffect, useMemo, use, useRef } from 'react';
@@ -10,7 +12,7 @@ import {
     Calendar, Clock, ShieldCheck, Info,
     Wifi, Car, UtensilsCrossed, Lock, Smartphone
 } from 'lucide-react';
-import styles from './detail.module.css';
+import styles from './venueDetail.module.css';
 import PageFooter from '@/components/PageFooter';
 import { getSportIcon, getSportLabel, getSportTagClass } from '@/components/venue/SportIcons';
 import MapPicker from '@/components/MapPicker';

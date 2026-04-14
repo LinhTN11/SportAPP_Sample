@@ -4,8 +4,9 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import { ChevronDown, Send, X, Maximize2, Minimize2 } from 'lucide-react';
 import { chatbotAPI, bookingsAPI } from '@/lib/api';
-import VenueChatCard from '@/components/VenueChatCard';
-import DatePicker from '@/components/ui/DatePicker';
+import BotToolResults from '@/components/chat/BotToolResults';
+import ChatCardRenderer from '@/components/chat/ChatCardRenderer';
+import ChatComposer from '@/components/chat/ChatComposer';
 import styles from './chat.module.css';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
@@ -53,79 +54,83 @@ const getSlotPrice = (pricingRules, slotStartMinutes, slotDurationMinutes, dayOf
 };
 
 const CHATBOT_ID = 'sportapp-ai';
+const CHAT_STATE_STORAGE_KEY = 'sportapp-chat-page-state-v1';
+const getAiHistoryKey = (userId) => `sportapp-ai-chat-history-v2-${userId || 'guest'}`;
+const EMOJIS = ['😀', '😂', '😍', '😎', '🤝', '🔥', '⚽', '🏸', '🎾', '🏀', '👍', '❤️'];
+const AI_GREETING = 'Xin chào! Tôi là trợ lý ảo SportApp. Tôi có thể giúp gì cho bạn hôm nay?';
 
-/* ─── Mock Data ─── */
 const SERVER_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000').replace(/\/api\/?$/, '');
 
-const MOCK_CONVERSATIONS = [
-    {
-        id: 1, type: 'user',
-        name: 'Nguyễn Minh Khoa',
-        avatar: null, initials: 'NK',
-        lastMsg: 'Anh ơi sân Thứ 7 còn trống không ạ?',
-        time: '10:42', unread: 2, online: true,
-        avatarGradient: 'linear-gradient(135deg, #FF6E40, #D81B60)',
-    },
-    {
-        id: 2, type: 'venue',
-        name: 'Sân Cầu Lông Phú Nhuận',
-        avatar: null, initials: 'SL',
-        lastMsg: 'Sân đã xác nhận đặt lịch của bạn!',
-        time: '09:15', unread: 0, online: true,
-        avatarGradient: 'linear-gradient(135deg, #0066FF, #5E5CE6)',
-    },
-    {
-        id: 3, type: 'user',
-        name: 'Trần Thị Lan',
-        avatar: null, initials: 'TL',
-        lastMsg: 'OK nhé, tụi mình gặp lúc 7h sáng',
-        time: 'Hôm qua', unread: 0, online: false,
-        avatarGradient: 'linear-gradient(135deg, #F97316, #EF4444)',
-    },
-    {
-        id: 4, type: 'user',
-        name: 'Lê Văn Dũng',
-        avatar: null, initials: 'LD',
-        lastMsg: '😂 cười vỡ bụng với trận hôm qua',
-        time: 'Hôm qua', unread: 0, online: true,
-        avatarGradient: 'linear-gradient(135deg, #059669, #0EA5E9)',
-    },
-    {
-        id: 5, type: 'venue',
-        name: 'Sân Tennis Q7 Elite',
-        avatar: null, initials: 'TN',
-        lastMsg: 'Cảm ơn bạn đã đặt sân!',
-        time: 'T4', unread: 0, online: false,
-        avatarGradient: 'linear-gradient(135deg, #7C3AED, #D81B60)',
-    },
-    {
-        id: 6, type: 'user',
-        name: 'Phạm Thu Hiền',
-        avatar: null, initials: 'PH',
-        lastMsg: 'Đội mình cần thêm 1 người nữa nhé!',
-        time: 'T3', unread: 0, online: false,
-        avatarGradient: 'linear-gradient(135deg, #EC4899, #F97316)',
-    },
-];
+const WEATHER_QUERY_REGEX = /(thoi tiet|thời tiết|du bao|dự báo|mua khong|mưa không|co mua khong|có mưa không|nang|nắng|gio|gió|weather)/i;
 
-const MOCK_MESSAGES = {
-    1: [
-        { id: 1, type: 'incoming', text: 'Chào bạn! Mình thấy bạn cũng hay chơi cầu lông ở khu vực Phú Nhuận nhỉ?', time: '10:20', read: true },
-        { id: 2, type: 'outgoing', text: 'Ừ đúng rồi! Mình hay chơi ở sân Phú Nhuận. Bạn cũng vậy à?', time: '10:22', read: true },
-        { id: 3, type: 'incoming', text: 'Đúng rồi! Tụi mình có đội thường xuyên chơi sáng Thứ 7, bạn có muốn tham gia không?', time: '10:24', read: true },
-        { id: 4, type: 'outgoing', text: 'Nghe hay đó! Thứ 7 tụi mình đánh mấy giờ vậy?', time: '10:25', read: true },
-        { id: 5, type: 'incoming', text: 'Thường là 7h-9h sáng. Trình độ vừa vừa thôi, chơi cho vui là chính 😄', time: '10:28', read: true },
-        { id: 6, type: 'outgoing', text: 'Perfect! Mình level B thôi, không cao siêu gì đâu 😂', time: '10:30', read: true },
-        { id: 7, type: 'incoming', text: 'Vậy thì hợp lắm! Mình sẽ add bạn vào group nhé?', time: '10:35', read: true },
-        { id: 8, type: 'incoming', text: 'Anh ơi sân Thứ 7 còn trống không ạ?', time: '10:42', read: false },
-    ],
-    2: [
-        { id: 1, type: 'incoming', text: 'Xin chào! Sân Cầu Lông Phú Nhuận rất vui được phục vụ bạn.', time: '09:00', read: true },
-        { id: 2, type: 'outgoing', text: 'Cho mình hỏi, Thứ 7 tuần này còn sân từ 7h-9h không ạ?', time: '09:05', read: true },
-        { id: 3, type: 'incoming', text: 'Dạ còn ạ! Hiện tại còn trống sân 1 và sân 3 khung giờ đó.', time: '09:08', read: true },
-        { id: 4, type: 'incoming', text: 'Sân đã xác nhận đặt lịch của bạn!', time: '09:15', read: true, isVenueTag: true, venueName: 'Sân 1 – Thứ 7, 7:00 – 9:00' },
-    ],
+const isWeatherQuery = (text = '') => WEATHER_QUERY_REGEX.test(text);
+
+const buildWeatherCommand = (location) => {
+    if (location?.lat && location?.lng) {
+        return `get_weather lat=${location.lat} lon=${location.lng}`;
+    }
+    return 'get_weather';
 };
+
+const toChatbotUiMessages = (aiMessages = []) => {
+    if (!Array.isArray(aiMessages)) return [];
+    return aiMessages.map((m, idx) => {
+        const createdAt = m.createdAt || new Date().toISOString();
+        const time = new Date(createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+        if (m.role === 'user') {
+            return {
+                id: m.id || `ai-user-${idx}`,
+                type: 'outgoing',
+                isOutgoing: true,
+                text: m.content || '',
+                time,
+                createdAt,
+            };
+        }
+        return {
+            id: m.id || `ai-assistant-${idx}`,
+            type: 'incoming',
+            isOutgoing: false,
+            text: m.content || '',
+            time,
+            isBot: true,
+            createdAt,
+            data: {
+                message: m.content || '',
+                toolResults: m.toolResults || [],
+            },
+        };
+    });
+};
+
+const toAiTranscriptFromUiMessages = (uiMessages = []) => {
+    if (!Array.isArray(uiMessages)) return [];
+    return uiMessages.map((m, idx) => {
+        if (m.isOutgoing) {
+            return {
+                id: m.id || `ai-user-${idx}`,
+                role: 'user',
+                content: m.text || '',
+                createdAt: m.createdAt || new Date().toISOString(),
+            };
+        }
+        return {
+            id: m.id || `ai-assistant-${idx}`,
+            role: 'assistant',
+            content: m.text || '',
+            toolResults: m.data?.toolResults || [],
+            createdAt: m.createdAt || new Date().toISOString(),
+        };
+    });
+};
+
+const serializeAiHistory = (messages = []) => JSON.stringify(
+    messages.map((m) => ({
+        role: m.role,
+        content: m.content,
+        toolResults: m.toolResults || [],
+    }))
+);
 
 /* ─── Icons ─── */
 const BotIcon = ({ size = 20 }) => (
@@ -192,348 +197,6 @@ function ConvItem({ conv, active, onClick }) {
     );
 }
 
-/* ─── Bot Tool Results ─── */
-function BotToolResults({ 
-    toolResults, onSend, isBotLoading,
-    // Booking Form States & Handlers
-    bookingDate, setBookingDate,
-    paymentType, setPaymentType,
-    paymentDropdownOpen, setPaymentDropdownOpen,
-    paymentDropdownRef,
-    availableSlots, selectedSlots,
-    isLoadingSlots, handleSlotClick,
-    selectedFieldId, setSelectedFieldId,
-    fieldDropdownOpen, setFieldDropdownOpen,
-    fieldDropdownRef,
-    handleBookingSubmit
-}) {
-    if (!toolResults || toolResults.length === 0) return null;
-
-    const formatPrice = (price) => {
-        return new Intl.NumberFormat('vi-VN').format(price) + 'đ';
-    };
-
-    return (
-        <div className={styles.toolResults}>
-            {toolResults.map((result, i) => {
-                if (!result.data) return null;
-
-                if ((result.type === 'options' || result.type === 'clarification') && (result.data.options || result.data.fields)) {
-                    const options = result.data.fields || result.data.options;
-                    return (
-                        <div key={`clarification-${i}`} className={styles.optionsContainer}>
-                            {options.map((opt, j) => {
-                                const label = typeof opt === 'object' ? opt.name : opt;
-                                const value = typeof opt === 'object' ? opt.id : opt;
-                                return (
-                                    <button
-                                        key={j}
-                                        className={styles.optionChip}
-                                        onClick={() => onSend(value)}
-                                        disabled={isBotLoading}
-                                    >
-                                        {label}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    );
-                }
-
-                if (result.type === 'venues' && Array.isArray(result.data)) {
-                    return (
-                        <div key={`venues-${i}`} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                            {result.data.map((venue, j) => (
-                                <VenueChatCard
-                                    key={`venue-${i}-${j}`}
-                                    venue={venue}
-                                    onBookClick={(v) => onSend(`BOOK_VENUE: ${v.id}`)}
-                                />
-                            ))}
-                        </div>
-                    );
-                }
-
-                if (result.type === 'file_download') {
-                    const token = typeof window !== 'undefined' ? localStorage.getItem('sportapp_token') : '';
-                    return (
-                        <a
-                            key={`dl-${i}`}
-                            className={styles.downloadBtn}
-                            href={`${API_BASE}/chatbot/export/${result.data.filename}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => {
-                                e.preventDefault();
-                                fetch(`${API_BASE}/chatbot/export/${result.data.filename}`, {
-                                    headers: { Authorization: `Bearer ${token}` },
-                                })
-                                    .then(res => res.blob())
-                                    .then(blob => {
-                                        const url = window.URL.createObjectURL(blob);
-                                        const a = document.createElement('a');
-                                        a.href = url;
-                                        a.download = result.data.filename;
-                                        a.click();
-                                        window.URL.revokeObjectURL(url);
-                                    });
-                            }}
-                        >
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{width: 14, height: 14, marginRight: 6}}>
-                                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
-                            </svg>
-                            📥 {result.data.filename}
-                        </a>
-                    );
-                }
-
-                if (result.type === 'stats') {
-                    return (
-                        <div key={`stats-${i}`} className={styles.statsCard}>
-                            <div className={styles.statItem}>
-                                <div className={styles.statValue}>{result.data.totalUsers}</div>
-                                <div className={styles.statLabel}>Người dùng</div>
-                            </div>
-                            <div className={styles.statItem}>
-                                <div className={styles.statValue}>{result.data.totalVenues}</div>
-                                <div className={styles.statLabel}>Sân hoạt động</div>
-                            </div>
-                            <div className={styles.statItem}>
-                                <div className={styles.statValue}>{result.data.totalBookings}</div>
-                                <div className={styles.statLabel}>Bookings</div>
-                            </div>
-                            <div className={styles.statItem}>
-                                <div className={styles.statValue}>{formatPrice(result.data.totalRevenue)}</div>
-                                <div className={styles.statLabel}>Doanh thu</div>
-                            </div>
-                        </div>
-                    );
-                }
-
-                if (result.type === 'booking_created') {
-                    return (
-                        <div key={`booking-${i}`} className={styles.bookingCard}>
-                            <div className={styles.bookingHeader}>
-                                <svg className={styles.successIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
-                                    <polyline points="22 4 12 14.01 9 11.01" />
-                                </svg>
-                                <span>ĐẶT SÂN THÀNH CÔNG!</span>
-                            </div>
-
-                            <div className={styles.bookingGrid}>
-                                <div className={styles.bookingItem}>
-                                    <div className={styles.bookingIconWrapper}>
-                                        <PinIcon />
-                                    </div>
-                                    <div className={styles.bookingText}>
-                                        <div className={styles.bookingLabel}>ĐỊA ĐIỂM</div>
-                                        <div className={styles.bookingValue}>{result.data.venueName} - {result.data.fieldName}</div>
-                                    </div>
-                                </div>
-
-                                <div className={styles.bookingItem}>
-                                    <div className={styles.bookingIconWrapper}>
-                                        <ClockIcon />
-                                    </div>
-                                    <div className={styles.bookingText}>
-                                        <div className={styles.bookingLabel}>THỜI GIAN</div>
-                                        <div className={styles.bookingValue}>{result.data.date} | {result.data.time}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    );
-                }
-
-                if (result.type === 'bookings' && Array.isArray(result.data)) {
-                    const statusColors = {
-                        PENDING_DEPOSIT: '#ed8936', CONFIRMED: '#38a169',
-                        COMPLETED: '#3182ce', CANCELLED: '#e53e3e', EXPIRED: '#718096',
-                    };
-                    const statusLabels = {
-                        PENDING_DEPOSIT: 'Chờ cọc', CONFIRMED: 'Đã xác nhận',
-                        COMPLETED: 'Hoàn thành', CANCELLED: 'Đã hủy', EXPIRED: 'Hết hạn',
-                    };
-                    return (
-                        <div key={`bookings-${i}`} className={styles.bookingsList}>
-                            {result.data.map((b, j) => (
-                                <div key={j} className={styles.miniBookingCard}>
-                                    <div className={styles.miniBookingHeader}>
-                                        <div className={styles.miniBookingVenue}>{b.venueName}</div>
-                                        <span className={styles.statusBadge} style={{
-                                            color: statusColors[b.status] || '#718096',
-                                            background: (statusColors[b.status] || '#718096') + '15',
-                                        }}>
-                                            {statusLabels[b.status] || b.status}
-                                        </span>
-                                    </div>
-
-                                    <div className={styles.miniBookingInfo}>
-                                        <div className={styles.miniBookingDetail}>
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{width: 12, height: 12, marginRight: 4}}>
-                                                <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
-                                            </svg>
-                                            {b.fieldName} · {b.time}
-                                        </div>
-                                        <div className={styles.miniBookingDetail}>
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{width: 12, height: 12, marginRight: 4}}>
-                                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" />
-                                            </svg>
-                                            {b.date} · {formatPrice(b.totalPrice)}
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    );
-                }
-
-                if (result.type === 'booking_form') {
-                    const { fieldId, fieldName, venueName, availableFields } = result.data;
-                    const activeFieldId = selectedFieldId || fieldId;
-                    const activeFieldName = availableFields?.find(f => f.id === activeFieldId)?.name || fieldName;
-
-                    return (
-                        <div className={styles.bookingFormContainer} key={i}>
-                            <div className={styles.formHeader}>
-                                <div className={styles.formVenueInfo}>
-                                    <h4 style={{margin: '0 0 4px 0', fontSize: '15px'}}>{venueName}</h4>
-                                    {!availableFields && <div className={styles.formFieldBadge}>{fieldName}</div>}
-                                </div>
-                            </div>
-
-                            <form onSubmit={(e) => { e.preventDefault(); handleBookingSubmit(activeFieldId); }}>
-                                {availableFields && availableFields.length > 0 && (
-                                    <div className={`${styles.formFullRow} ${fieldDropdownOpen ? styles.formRowActive : ''}`} style={{ marginBottom: '15px' }}>
-                                        <div className={styles.formItem} ref={fieldDropdownRef}>
-                                            <label className={styles.premiumLabel}>CHỌN SÂN</label>
-                                            <div className={styles.customDropdown}>
-                                                <div
-                                                    className={`${styles.dropdownTrigger} ${fieldDropdownOpen ? styles.dropdownTriggerOpen : ''}`}
-                                                    onClick={() => setFieldDropdownOpen(!fieldDropdownOpen)}
-                                                >
-                                                    <span>{activeFieldName}</span>
-                                                    <ChevronDown size={14} className={`${styles.dropdownChevron} ${fieldDropdownOpen ? styles.dropdownChevronOpen : ''}`} />
-                                                </div>
-
-                                                {fieldDropdownOpen && (
-                                                    <div className={styles.dropdownMenu}>
-                                                        {availableFields.map((f, fi) => (
-                                                            <div
-                                                                key={fi}
-                                                                className={`${styles.dropdownOption} ${activeFieldId === f.id ? styles.dropdownOptionActive : ''}`}
-                                                                onClick={() => {
-                                                                    setSelectedFieldId(f.id);
-                                                                    setFieldDropdownOpen(false);
-                                                                }}
-                                                            >
-                                                                {f.name}
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-
-                                <div className={`${styles.formTwoColRow} ${paymentDropdownOpen ? styles.formRowActive : ''}`}>
-                                    <div className={styles.formItem}>
-                                        <label className={styles.premiumLabel}>NGÀY ĐẶT SÂN</label>
-                                        <div className={styles.datePickerWrapper}>
-                                            <DatePicker
-                                                value={bookingDate}
-                                                onChange={(val) => setBookingDate(val)}
-                                                minDate={new Date().toISOString().split('T')[0]}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className={styles.formItem} ref={paymentDropdownRef}>
-                                        <label className={styles.premiumLabel}>THANH TOÁN</label>
-                                        <div className={styles.customDropdown}>
-                                            <div
-                                                className={`${styles.dropdownTrigger} ${paymentDropdownOpen ? styles.dropdownTriggerOpen : ''}`}
-                                                onClick={() => setPaymentDropdownOpen(!paymentDropdownOpen)}
-                                            >
-                                                <span>{paymentType === 'DEPOSIT' ? 'Đặt cọc' : 'Trả đủ'}</span>
-                                                <ChevronDown size={14} className={`${styles.dropdownChevron} ${paymentDropdownOpen ? styles.dropdownChevronOpen : ''}`} />
-                                            </div>
-
-                                            {paymentDropdownOpen && (
-                                                <div className={styles.dropdownMenu}>
-                                                    <div
-                                                        className={`${styles.dropdownOption} ${paymentType === 'DEPOSIT' ? styles.dropdownOptionActive : ''}`}
-                                                        onClick={() => {
-                                                            setPaymentType('DEPOSIT');
-                                                            setPaymentDropdownOpen(false);
-                                                        }}
-                                                    >
-                                                        Đặt cọc (10%)
-                                                    </div>
-                                                    <div
-                                                        className={`${styles.dropdownOption} ${paymentType === 'FULL' ? styles.dropdownOptionActive : ''}`}
-                                                        onClick={() => {
-                                                            setPaymentType('FULL');
-                                                            setPaymentDropdownOpen(false);
-                                                        }}
-                                                    >
-                                                        Thanh toán đủ
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {bookingDate && (
-                                    <div className={styles.timeSlotBlock}>
-                                        <label className={styles.blockLabel}>Chọn khung giờ</label>
-                                        {isLoadingSlots ? (
-                                            <div className={styles.slotLoader}>Đang tìm khung giờ trống...</div>
-                                        ) : (
-                                            <div className={styles.timeGrid}>
-                                                {availableSlots.length > 0 ? (
-                                                    availableSlots.map((slot, i) => {
-                                                        const isSelected = selectedSlots.find(s => s.time === slot.time);
-                                                        return (
-                                                            <div
-                                                                key={i}
-                                                                className={`${styles.timeBlock} ${slot.booked ? styles.timeBooked : ''} ${isSelected ? styles.timeSelected : ''}`}
-                                                                onClick={() => handleSlotClick(slot)}
-                                                            >
-                                                                <span className={styles.timeLabel}>{slot.displayLabel}</span>
-                                                                {slot.price > 0 && <span className={styles.timePrice}>{formatPrice(slot.price)}</span>}
-                                                            </div>
-                                                        );
-                                                    })
-                                                ) : (
-                                                    <div className={styles.slotPlaceholder}>Không có khung giờ nào khả dụng</div>
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-
-                                <button
-                                    type="submit"
-                                    className={styles.premiumSubmitBtn}
-                                    disabled={isBotLoading || selectedSlots.length === 0}
-                                    style={{ marginTop: '20px' }}
-                                >
-                                    {isBotLoading ? 'Đang xử lý...' : 'Xác nhận đặt sân'}
-                                </button>
-                            </form>
-                        </div>
-                    );
-                }
-
-                return null;
-            })}
-        </div>
-    );
-}
-
 /* ─── Message Bubble ─── */
 function MessageBubble({ 
     msg, conv, onAction, onSend, isBotLoading,
@@ -542,7 +205,14 @@ function MessageBubble({
 }) {
     const isSystem = msg.type === 'system' || msg.type === 'SYSTEM';
     const isOut = msg.isOutgoing; // Use new flag for positioning
-    const isVenueSuggest = isSystem && msg.text.includes('"action":"VENUE_SUGGEST"');
+    const isImageMessage =
+        msg.originalType === 'IMAGE' ||
+        /^\/uploads\//i.test(msg.text || '') ||
+        /^https?:\/\/.*\/uploads\//i.test(msg.text || '');
+
+    const imageSrc = isImageMessage
+        ? (msg.text?.startsWith('http') ? msg.text : `${SERVER_URL}${msg.text}`)
+        : null;
 
     if (isSystem) {
         let data = {};
@@ -556,55 +226,15 @@ function MessageBubble({
             );
         }
 
-        if (data.action === 'VENUE_SUGGEST') {
-            return (
-                <div className={`${styles.messageBubbleWrapper} ${isOut ? styles.outgoing : ''}`}>
-                    {!isOut && <Avatar conv={conv} size={28} />}
-                    <div className={styles.venueCard}>
-                        <img 
-                            src={data.venueImage || data.image || 'https://img.freepik.com/free-vector/stadium-background-design_1284-11883.jpg'} 
-                            className={styles.venueCardImg} 
-                            alt="Venue" 
-                            onError={(e) => {
-                                e.target.onerror = null;
-                                e.target.src = 'https://img.freepik.com/free-vector/stadium-background-design_1284-11883.jpg';
-                            }}
-                        />
-                        <div className={styles.venueCardContent}>
-                            <h4 className={styles.venueCardTitle}>{data.venueName}</h4>
-                            <span className={styles.venueCardAddress}>{data.address}</span>
-                            <div className={styles.venueCardPrice}>~{Number(data.price).toLocaleString()}đ</div>
-                        </div>
-                        <div className={styles.venueCardActions}>
-                            <button className={styles.viewDetailBtn} onClick={() => window.open(`/venues/${data.venueId}`, '_blank')}>Chi tiết</button>
-                            {!isOut && (
-                                <button className={styles.agreeBtn} onClick={() => onAction('accept_venue', msg.id)}>Đồng ý</button>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            );
-        }
-
-        if (data.action === 'VENUE_ACCEPT') {
-            return (
-                <div className={styles.systemMessage}>
-                    <div className={styles.acceptedBanner}>
-                        <div className={styles.acceptedTitle}>✅ Đã chốt sân {data.venueName}!</div>
-                        <p style={{ fontSize: '12px' }}>{data.acceptedBy} đã đồng ý với gợi ý này.</p>
-                        <a href={`/venues/${data.venueId}`} className={styles.bookNowBtn}>Đặt sân ngay</a>
-                    </div>
-                </div>
-            );
-        }
-
-        if (data.action === 'MATCH_INIT') {
-            return null; // Don't show raw JSON for match initialization
-        }
+        if (data.action === 'MATCH_INIT') return null;
 
         return (
-            <div className={styles.systemMessage}>
-                <span className={styles.systemBadge}>{msg.text || (data.sportType ? `Bắt đầu ghép trận ${data.sportType}` : 'Thông báo hệ thống')}</span>
+            <div className={`${styles.systemCardWrapper} ${data.action === 'VENUE_SUGGEST' ? (isOut ? styles.systemCardOutgoing : styles.systemCardIncoming) : styles.systemCardCentered}`}>
+                <ChatCardRenderer
+                    data={data}
+                    messageId={msg.id}
+                    onAction={(act, payload) => onAction('SYSTEM_CARD_ACTION', { action: act, payload, messageId: msg.id })}
+                />
             </div>
         );
     }
@@ -633,8 +263,17 @@ function MessageBubble({
                         </div>
                     )}
                     <div className={`${styles.bubbleContainer} ${isOut ? styles.outgoing : ''}`}>
-                        <div className={`${styles.bubble} ${isOut ? styles.outgoing : styles.incoming} ${msg.isBot ? styles.msgBubbleBot : ''}`}>
-                            {msg.text}
+                        <div className={`${styles.bubble} ${isOut ? styles.outgoing : styles.incoming} ${msg.isBot ? styles.msgBubbleBot : ''} ${isImageMessage ? styles.bubbleImage : ''}`}>
+                            {isImageMessage ? (
+                                <img
+                                    src={imageSrc}
+                                    className={styles.messageImage}
+                                    alt="Sent content"
+                                    onClick={() => window.open(imageSrc, '_blank')}
+                                />
+                            ) : (
+                                msg.text
+                            )}
                         </div>
                         {msg.isBot && msg.data && (
                             <BotToolResults 
@@ -660,10 +299,10 @@ function MessageBubble({
 function BotTypingIndicator() {
     return (
         <div className={styles.typingIndicator}>
-            <div className={styles.typingDots}>
-                <span />
-                <span />
-                <span />
+            <div className={styles.typingBubble}>
+                <span className={styles.typingDot} />
+                <span className={styles.typingDot} />
+                <span className={styles.typingDot} />
             </div>
         </div>
     );
@@ -781,28 +420,25 @@ const SuggestIcon = () => (
     </svg>
 );
 
-const SendIcon = () => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="m22 2-7 20-4-9-9-4 20-7z" /><path d="M22 2 11 13" />
-    </svg>
-);
-
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
+import { useAuth } from '@/lib/auth';
 
 /* ═══════════════════════════════════════════
    MAIN PAGE COMPONENT
    ═══════════════════════════════════════════ */
 function ChatApp() {
+    const { user } = useAuth();
     const [activeConvId, setActiveConvId] = useState(null);
     const [message, setMessage] = useState('');
-    const [messages, setMessages] = useState(MOCK_MESSAGES);
-    const [conversations, setConversations] = useState(MOCK_CONVERSATIONS);
+    const [messages, setMessages] = useState({});
+    const [conversations, setConversations] = useState([]);
     const [activeTab, setActiveTab] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
-    const [isTyping, setIsTyping] = useState(false);
+    const [typingByRoom, setTypingByRoom] = useState({});
     const [isBotLoading, setIsBotLoading] = useState(false);
     const [botHistory, setBotHistory] = useState([]);
+    const [showEmoji, setShowEmoji] = useState(false);
     
     const [matchInfo, setMatchInfo] = useState(null);
     const [isSuggestModalOpen, setIsSuggestModalOpen] = useState(false);
@@ -811,11 +447,23 @@ function ChatApp() {
     
     const messagesEndRef = useRef(null);
     const composeRef = useRef(null);
+    const fileInputRef = useRef(null);
     const socketRef = useRef(null);
     const myIdRef = useRef(null);
+    const typingTimeoutsRef = useRef({});
+    const lastTypingEmitRef = useRef(0);
+    const geoLocationRef = useRef(null);
 
     const activeConv = conversations.find(c => c.id === activeConvId);
     const currentMsgs = activeConvId ? (messages[activeConvId] || []) : [];
+    const isTyping = activeConvId ? Boolean(typingByRoom[activeConvId]) : false;
+
+    useEffect(() => {
+        return () => {
+            Object.values(typingTimeoutsRef.current).forEach(clearTimeout);
+            typingTimeoutsRef.current = {};
+        };
+    }, []);
 
     const filteredConvs = conversations.filter(c => {
         const matchSearch = c.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -834,14 +482,103 @@ function ChatApp() {
     // --- Chatbot Specific States ---
     const [bookingDate, setBookingDate] = useState('');
     const [paymentType, setPaymentType] = useState('DEPOSIT');
-    const [paymentDropdownOpen, setPaymentDropdownOpen] = useState(false);
-    const paymentDropdownRef = useRef(null);
     const [availableSlots, setAvailableSlots] = useState([]);
     const [selectedSlots, setSelectedSlots] = useState([]);
     const [isLoadingSlots, setIsLoadingSlots] = useState(false);
     const [selectedFieldId, setSelectedFieldId] = useState(null);
-    const [fieldDropdownOpen, setFieldDropdownOpen] = useState(false);
-    const fieldDropdownRef = useRef(null);
+    const [pinnedWeatherData, setPinnedWeatherData] = useState(null);
+    const [hasRestoredChatState, setHasRestoredChatState] = useState(false);
+    const aiHistorySyncKeyRef = useRef('');
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+
+        try {
+            const raw = sessionStorage.getItem(CHAT_STATE_STORAGE_KEY);
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (parsed?.activeConvId) setActiveConvId(parsed.activeConvId);
+            }
+
+            const aiHistoryRaw = sessionStorage.getItem(getAiHistoryKey(user?.id));
+            if (aiHistoryRaw) {
+                const aiHistoryParsed = JSON.parse(aiHistoryRaw);
+                if (Array.isArray(aiHistoryParsed?.messages)) {
+                    const transcript = aiHistoryParsed.messages;
+                    setBotHistory(transcript);
+                    setMessages(prev => ({ ...prev, [CHATBOT_ID]: toChatbotUiMessages(transcript) }));
+                    aiHistorySyncKeyRef.current = serializeAiHistory(transcript);
+                } else if (Array.isArray(parsed?.botMessages)) {
+                    setMessages(prev => ({ ...prev, [CHATBOT_ID]: parsed.botMessages }));
+                    const transcript = toAiTranscriptFromUiMessages(parsed.botMessages);
+                    setBotHistory(transcript);
+                    aiHistorySyncKeyRef.current = serializeAiHistory(transcript);
+                }
+            } else if (raw) {
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed?.botMessages)) {
+                    setMessages(prev => ({ ...prev, [CHATBOT_ID]: parsed.botMessages }));
+                    const transcript = toAiTranscriptFromUiMessages(parsed.botMessages);
+                    setBotHistory(transcript);
+                    aiHistorySyncKeyRef.current = serializeAiHistory(transcript);
+                }
+            }
+        } catch (error) {
+            console.warn('Failed to restore chat page state:', error);
+        } finally {
+            setHasRestoredChatState(true);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (typeof window === 'undefined' || !hasRestoredChatState) return;
+
+        const chatbotUiMessages = messages[CHATBOT_ID] || [];
+        const transcript = chatbotUiMessages.length > 0
+            ? toAiTranscriptFromUiMessages(chatbotUiMessages)
+            : botHistory;
+        const historyKey = serializeAiHistory(transcript);
+
+        if (aiHistorySyncKeyRef.current === historyKey) return;
+        aiHistorySyncKeyRef.current = historyKey;
+
+        const payload = {
+            activeConvId,
+            botMessages: chatbotUiMessages,
+        };
+
+        try {
+            sessionStorage.setItem(CHAT_STATE_STORAGE_KEY, JSON.stringify(payload));
+            sessionStorage.setItem(getAiHistoryKey(user?.id), JSON.stringify({ messages: transcript }));
+            // Dispatch custom event for same-tab sync
+            window.dispatchEvent(new CustomEvent('ai-history-updated', { detail: { messages: transcript, historyKey } }));
+        } catch (error) {
+            console.warn('Failed to persist chat page state:', error);
+        }
+    }, [activeConvId, botHistory, messages, hasRestoredChatState]);
+
+    // Listen for AI chat history updates from widget (same-tab sync)
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+
+        const handleAiHistoryUpdate = (e) => {
+            try {
+                const { messages, historyKey } = e.detail || {};
+                if (!Array.isArray(messages)) return;
+                if (historyKey && aiHistorySyncKeyRef.current === historyKey) return;
+                if (historyKey) aiHistorySyncKeyRef.current = historyKey;
+                if (Array.isArray(messages)) {
+                    setBotHistory(messages);
+                    setMessages(prev => ({ ...prev, [CHATBOT_ID]: toChatbotUiMessages(messages) }));
+                }
+            } catch (error) {
+                console.warn('Failed to sync AI chat history:', error);
+            }
+        };
+
+        window.addEventListener('ai-history-updated', handleAiHistoryUpdate);
+        return () => window.removeEventListener('ai-history-updated', handleAiHistoryUpdate);
+    }, []);
 
     // Fetch available slots when date or field changes in the form
     useEffect(() => {
@@ -937,43 +674,28 @@ function ChatApp() {
         }
     }, [currentMsgs, activeConv]);
 
-    // Close dropdowns when clicking outside
-    useEffect(() => {
-        const handleClickOutside = (e) => {
-            if (paymentDropdownRef.current && !paymentDropdownRef.current.contains(e.target)) {
-                setPaymentDropdownOpen(false);
-            }
-            if (fieldDropdownRef.current && !fieldDropdownRef.current.contains(e.target)) {
-                setFieldDropdownOpen(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
-
     const handleSlotClick = (slot) => {
         if (slot.booked) return;
-        if (selectedSlots.length === 0 || selectedSlots.length > 1) {
-            setSelectedSlots([slot]);
-            return;
+        const nextSlot = availableSlots.find(s => s.minutes === slot.minutes + 30 && !s.booked);
+        const prevSlot = availableSlots.find(s => s.minutes === slot.minutes - 30 && !s.booked);
+
+        let picked = [];
+        if (nextSlot) {
+            picked = [slot, nextSlot];
+        } else if (prevSlot) {
+            picked = [prevSlot, slot];
         }
-        const firstSlot = selectedSlots[0];
-        if (firstSlot.time === slot.time) {
+
+        if (picked.length !== 2) {
             setSelectedSlots([]);
             return;
         }
-        const start = Math.min(firstSlot.minutes, slot.minutes);
-        const end = Math.max(firstSlot.minutes, slot.minutes);
-        const range = availableSlots.filter(s => s.minutes >= start && s.minutes <= end);
-        if (range.some(s => s.booked)) {
-            setSelectedSlots([slot]);
-            return;
-        }
-        setSelectedSlots(range.sort((a, b) => a.minutes - b.minutes));
+
+        setSelectedSlots(picked.sort((a, b) => a.minutes - b.minutes));
     };
 
     const handleBookingSubmit = async (fieldId) => {
-        if (selectedSlots.length === 0) return;
+        if (selectedSlots.length !== 2) return;
         const startTime = selectedSlots[0].time;
         const lastSlot = selectedSlots[selectedSlots.length - 1];
         const endTime = lastSlot.displayLabel.split(' - ')[1];
@@ -1047,6 +769,7 @@ function ChatApp() {
                         const formattedMsgs = msgsList.map(m => ({
                             id: m.id,
                             type: m.senderId === targetUserId ? 'incoming' : 'outgoing',
+                            originalType: m.type,
                             text: m.content,
                             time: new Date(m.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
                             read: m.isRead
@@ -1079,6 +802,21 @@ function ChatApp() {
             handleIncomingMessage(data.message);
         });
 
+        socket.on('user_typing', (payload) => {
+            const roomId = payload?.roomId;
+            if (!roomId || payload?.userId === myIdRef.current) return;
+
+            setTypingByRoom(prev => ({ ...prev, [roomId]: true }));
+
+            if (typingTimeoutsRef.current[roomId]) {
+                clearTimeout(typingTimeoutsRef.current[roomId]);
+            }
+
+            typingTimeoutsRef.current[roomId] = setTimeout(() => {
+                setTypingByRoom(prev => ({ ...prev, [roomId]: false }));
+            }, 2600);
+        });
+
         function handleIncomingMessage(m) {
             setMessages(prev => {
                 const arr = prev[m.roomId] || [];
@@ -1090,6 +828,7 @@ function ChatApp() {
                     id: m.id,
                     type: m.type === 'SYSTEM' ? 'system' : (isOutgoing ? 'outgoing' : 'incoming'),
                     isOutgoing: isOutgoing, // Added explicit flag for positioning
+                    originalType: m.type,
                     text: m.content,
                     time: new Date(m.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
                     read: m.isRead
@@ -1098,6 +837,13 @@ function ChatApp() {
                 // If it's a SYSTEM message in the active room, check for UI updates
                 if (m.roomId === m.roomId && m.type === 'SYSTEM' && m.content.includes('MATCH_INIT')) {
                     try { setMatchInfo(JSON.parse(m.content)); } catch(e) {}
+                }
+
+                if (!isOutgoing) {
+                    if (typingTimeoutsRef.current[m.roomId]) {
+                        clearTimeout(typingTimeoutsRef.current[m.roomId]);
+                    }
+                    setTypingByRoom(prev => ({ ...prev, [m.roomId]: false }));
                 }
 
                 return { ...prev, [m.roomId]: [...arr, newMsg] };
@@ -1118,9 +864,23 @@ function ChatApp() {
         }
 
         return () => {
+            socket.off('user_typing');
             socket.disconnect();
         };
     }, []); // Only on mount
+
+    const handleTyping = useCallback(() => {
+        if (!socketRef.current || !activeConvId || activeConvId === CHATBOT_ID || !myIdRef.current) return;
+
+        const now = Date.now();
+        if (now - lastTypingEmitRef.current < 900) return;
+
+        lastTypingEmitRef.current = now;
+        socketRef.current.emit('typing', {
+            roomId: activeConvId,
+            userId: myIdRef.current,
+        });
+    }, [activeConvId]);
 
     // Handle Join/Leave Room for Real-time
     useEffect(() => {
@@ -1207,6 +967,7 @@ function ChatApp() {
                         id: m.id,
                         type: m.type === 'SYSTEM' ? 'system' : (m.senderId === myIdRef.current ? 'outgoing' : 'incoming'),
                         isOutgoing: m.senderId === myIdRef.current, // Added here too
+                        originalType: m.type,
                         text: m.content,
                         time: new Date(m.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
                         read: m.isRead
@@ -1240,6 +1001,38 @@ function ChatApp() {
                     // Success, handled by socket event
                 }).catch(e => alert("Không thể đồng ý gợi ý này."));
             });
+            return;
+        }
+
+        if (action === 'SYSTEM_CARD_ACTION' && data) {
+            const { action: cardAction, payload, messageId } = data;
+
+            if (cardAction === 'ACCEPT_VENUE_SUGGESTION') {
+                import('@/lib/api').then(({ chatAPI }) => {
+                    chatAPI.acceptVenueSuggestion(messageId)
+                        .catch(() => alert('Không thể đồng ý gợi ý này.'));
+                });
+                return;
+            }
+
+            if (typeof cardAction === 'string' && cardAction.startsWith('BOOK_VENUE:')) {
+                const venueId = cardAction.split(':')[1]?.trim();
+                if (venueId) window.location.href = `/venues/${venueId}`;
+                return;
+            }
+
+            if (cardAction === 'VIEW_MATCH_DETAILS') {
+                if (payload) window.location.href = `/matchmaking?post=${payload}`;
+                return;
+            }
+
+            if (cardAction === 'JOIN_MATCH') {
+                import('@/lib/api').then(({ matchmakingAPI }) => {
+                    matchmakingAPI.sendRequest(payload)
+                        .then(() => alert('Đã gửi yêu cầu tham gia thành công!'))
+                        .catch(e => alert(e.response?.data?.message || 'Không thể tham gia.'));
+                });
+            }
         }
     };
 
@@ -1269,6 +1062,58 @@ function ChatApp() {
         });
     };
 
+    const getBrowserLocation = useCallback(() => {
+        if (geoLocationRef.current) return Promise.resolve(geoLocationRef.current);
+        if (typeof navigator === 'undefined' || !navigator.geolocation) return Promise.resolve(null);
+
+        return new Promise((resolve) => {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const location = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude,
+                    };
+                    geoLocationRef.current = location;
+                    resolve(location);
+                },
+                () => resolve(null),
+                { enableHighAccuracy: true, timeout: 5000, maximumAge: 5 * 60 * 1000 }
+            );
+        });
+    }, []);
+
+    useEffect(() => {
+        if (activeConvId !== CHATBOT_ID) return;
+
+        let cancelled = false;
+        let intervalId = null;
+
+        const fetchPinnedWeather = async () => {
+            try {
+                const location = await getBrowserLocation();
+                const command = buildWeatherCommand(location);
+                const { chatbotAPI } = await import('@/lib/api');
+                const res = await chatbotAPI.sendMessage(command, [], location || undefined);
+                const weatherTool = (res.data?.data?.toolResults || []).find(t => t.type === 'weather');
+                if (!cancelled && weatherTool?.data) {
+                    setPinnedWeatherData(weatherTool.data);
+                }
+            } catch (error) {
+                if (!cancelled) {
+                    console.warn('Failed to refresh pinned weather:', error?.message || error);
+                }
+            }
+        };
+
+        fetchPinnedWeather();
+        intervalId = setInterval(fetchPinnedWeather, 15 * 60 * 1000);
+
+        return () => {
+            cancelled = true;
+            if (intervalId) clearInterval(intervalId);
+        };
+    }, [activeConvId, getBrowserLocation]);
+
     const onSelectVenue = (venue) => {
         import('@/lib/api').then(({ chatAPI }) => {
             chatAPI.suggestVenue(activeConvId, {
@@ -1280,18 +1125,45 @@ function ChatApp() {
         });
     };
 
+    const handleNewAiChat = useCallback(() => {
+        const greeting = [{
+            id: `ai-greeting-${Date.now()}`,
+            role: 'assistant',
+            content: AI_GREETING,
+            createdAt: new Date().toISOString(),
+        }];
+        const historyKey = serializeAiHistory(greeting);
+        setBotHistory(greeting);
+        setMessages(prev => ({ ...prev, [CHATBOT_ID]: toChatbotUiMessages(greeting) }));
+        aiHistorySyncKeyRef.current = historyKey;
+        setBookingDate('');
+        setSelectedFieldId(null);
+        setSelectedSlots([]);
+        setAvailableSlots([]);
+        try {
+            sessionStorage.setItem(getAiHistoryKey(user?.id), JSON.stringify({ messages: greeting }));
+            window.dispatchEvent(new CustomEvent('ai-history-updated', { detail: { messages: greeting, historyKey } }));
+        } catch (error) {
+            console.warn('Failed to reset AI chat:', error);
+        }
+    }, [user?.id]);
+
     const handleSend = async (messageText) => {
         const msgText = typeof messageText === 'string' ? messageText : message.trim();
         if (!msgText || !activeConvId || !activeConv) return;
         setMessage('');
 
         if (activeConvId === CHATBOT_ID) {
+            const nowIso = new Date().toISOString();
+            const location = await getBrowserLocation();
+            const outboundText = isWeatherQuery(msgText) ? buildWeatherCommand(location) : msgText;
             const userMsg = {
                 id: Date.now(),
                 type: 'outgoing',
                 isOutgoing: true,
                 text: msgText,
                 time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+                createdAt: nowIso,
             };
             setMessages(prev => ({ 
                 ...prev, 
@@ -1305,7 +1177,7 @@ function ChatApp() {
                 console.log("[Chat Debug] Sending message:", msgText);
                 console.log("[Chat Debug] History context:", history);
                 
-                const res = await chatbotAPI.sendMessage(msgText, history);
+                const res = await chatbotAPI.sendMessage(outboundText, history, location || undefined);
                 const data = res.data.data;
                 
                 console.log("[Chat Debug] Bot response received:", data);
@@ -1317,15 +1189,20 @@ function ChatApp() {
                     text: data.message,
                     time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
                     isBot: true,
-                    data: data // Store full response for complex rendering
+                    data: data, // Store full response for complex rendering
+                    createdAt: new Date().toISOString(),
                 };
 
                 setMessages(prev => ({ 
                     ...prev, 
                     [CHATBOT_ID]: [...(prev[CHATBOT_ID] || []), botMsg] 
                 }));
-                // Update history with raw strings for the API
-                setBotHistory(prev => [...prev.slice(-4), { role: 'user', content: msgText }, { role: 'assistant', content: data.message }]);
+                // Update history with raw strings for the API - keep all messages for sync with widget
+                setBotHistory(prev => [
+                    ...prev,
+                    { role: 'user', content: msgText, createdAt: nowIso },
+                    { role: 'assistant', content: data.message, toolResults: data.toolResults || [], createdAt: new Date().toISOString() }
+                ]);
             } catch (err) {
                 console.error("Bot error:", err);
             } finally {
@@ -1346,6 +1223,40 @@ function ChatApp() {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             handleSend();
+        }
+    };
+
+    const handleUploadImage = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file || !activeConv || !activeConvId) return;
+
+        try {
+            const { uploadAPI, chatAPI } = await import('@/lib/api');
+            const uploadRes = await uploadAPI.single(file);
+            const imageUrl = uploadRes?.data?.data?.url;
+            if (!imageUrl) return;
+
+            if (activeConvId === CHATBOT_ID) {
+                const imageMsg = {
+                    id: Date.now(),
+                    type: 'outgoing',
+                    isOutgoing: true,
+                    originalType: 'IMAGE',
+                    text: imageUrl,
+                    time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+                };
+                setMessages(prev => ({
+                    ...prev,
+                    [CHATBOT_ID]: [...(prev[CHATBOT_ID] || []), imageMsg],
+                }));
+                return;
+            }
+
+            await chatAPI.sendMessage(activeConvId, { content: imageUrl, type: 'IMAGE' });
+        } catch (error) {
+            console.error('Send image error:', error);
+        } finally {
+            e.target.value = '';
         }
     };
 
@@ -1449,6 +1360,13 @@ function ChatApp() {
                                         </div>
                                     </div>
                                 </div>
+                                <div className={styles.chatHeaderActions}>
+                                    {activeConvId === CHATBOT_ID && (
+                                        <button className={styles.newChatBtn} onClick={handleNewAiChat}>
+                                            Tạo chat mới
+                                        </button>
+                                    )}
+                                </div>
                             </div>
 
                             {/* Match Banner if available */}
@@ -1457,6 +1375,17 @@ function ChatApp() {
                                 roomType={activeConv.roomType} 
                                 onSuggest={handleSuggestVenue} 
                             />
+
+                            {activeConvId === CHATBOT_ID && pinnedWeatherData && (
+                                <div className={styles.pinnedWeatherWrap}>
+                                    <ChatCardRenderer
+                                        type="weather"
+                                        data={pinnedWeatherData}
+                                        onAction={handleSend}
+                                        isLoading={false}
+                                    />
+                                </div>
+                            )}
 
                             {/* Messages */}
                             <div className={styles.messagesArea}>
@@ -1496,13 +1425,9 @@ function ChatApp() {
                                     const bookingStates = {
                                         bookingDate, setBookingDate,
                                         paymentType, setPaymentType,
-                                        paymentDropdownOpen, setPaymentDropdownOpen,
-                                        paymentDropdownRef,
                                         availableSlots, selectedSlots,
                                         isLoadingSlots,
                                         selectedFieldId, setSelectedFieldId,
-                                        fieldDropdownOpen, setFieldDropdownOpen,
-                                        fieldDropdownRef
                                     };
                                     const bookingHandlers = {
                                         handleSlotClick,
@@ -1540,27 +1465,22 @@ function ChatApp() {
                             </div>
 
                             {/* Compose */}
-                            <div className={styles.composeBox}>
-                                <div className={styles.composeInputWrapper}>
-                                    <textarea
-                                        ref={composeRef}
-                                        className={styles.composeInput}
-                                        placeholder={`Nhắn tin cho ${activeConv.name}...`}
-                                        value={message}
-                                        onChange={e => setMessage(e.target.value)}
-                                        onKeyDown={handleKeyDown}
-                                        rows={1}
-                                    />
-                                </div>
-                                <button
-                                    className={styles.sendBtn}
-                                    onClick={handleSend}
-                                    disabled={!message.trim()}
-                                    title="Gửi"
-                                >
-                                    <SendIcon />
-                                </button>
-                            </div>
+                            <ChatComposer
+                                activeConv={activeConv}
+                                activeConvId={activeConvId}
+                                chatbotId={CHATBOT_ID}
+                                message={message}
+                                setMessage={setMessage}
+                                showEmoji={showEmoji}
+                                setShowEmoji={setShowEmoji}
+                                emojis={EMOJIS}
+                                composeRef={composeRef}
+                                fileInputRef={fileInputRef}
+                                onSend={handleSend}
+                                onKeyDown={handleKeyDown}
+                                onUploadImage={handleUploadImage}
+                                onTyping={handleTyping}
+                            />
                         </>
                     )}
                 </div>

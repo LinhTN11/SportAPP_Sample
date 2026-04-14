@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 'use client';
 
 import Link from 'next/link';
@@ -242,6 +243,7 @@ function getNavItems(role) {
   }
   if (role === 'ADMIN') {
     return [
+      { href: '/admin/dashboard', label: 'Dashboard' },
       { href: '/admin/venues', label: 'Duyệt sân' },
       { href: '/admin/users',  label: 'Người dùng' },
       { href: '/chat',         label: 'Tin nhắn' },

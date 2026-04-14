@@ -2,8 +2,50 @@ const { sendMessage } = require('../services/chatbotService');
 const { getWeatherForCity } = require('../services/weatherService');
 const path = require('path');
 const fs = require('fs');
+const prisma = require('../services/chatbot/utils/prisma');
+const registry = require('../services/chatbot/core/Registry');
+const responseFormatter = require('../services/chatbot/formatters/ResponseFormatter');
+const {
+    sanitizeAssistantText,
+    extractToolCallsFromText,
+    normalizeToolArgs,
+} = require('../services/chatbot/utils/toolCallFallback');
 
 const EXPORTS_DIR = path.join(__dirname, '../../exports');
+
+async function recoverToolResultsFromRawMessage(messageText, user, location) {
+    const parsedCalls = extractToolCallsFromText(messageText);
+    if (parsedCalls.length === 0) return null;
+
+    const executed = await Promise.all(parsedCalls.map(async (call, idx) => {
+        const toolName = call.name;
+        const toolArgs = normalizeToolArgs(toolName, call.arguments || {});
+
+        const result = await registry.executeAction(toolName, {
+            args: toolArgs,
+            userId: user.id,
+            userRole: user.role,
+            userLocation: location,
+            prisma,
+        });
+
+        return {
+            tool_call_id: `controller_recovery_${Date.now()}_${idx + 1}`,
+            role: 'tool',
+            name: toolName,
+            content: responseFormatter.format(result.type, result),
+            data: result.data,
+            type: result.type,
+            success: result.success,
+        };
+    }));
+
+    const primary = executed[0];
+    return {
+        message: primary?.content || 'Mình đã xử lý yêu cầu và hiển thị kết quả bên dưới.',
+        toolResults: executed,
+    };
+}
 
 /**
  * POST /api/chatbot/message
@@ -19,12 +61,27 @@ const handleMessage = async (req, res, next) => {
 
         const result = await sendMessage(message.trim(), req.user, history, location, venueId);
 
+        let safeMessage = sanitizeAssistantText(result.message);
+        let safeToolResults = result.toolResults || [];
+
+        if (safeToolResults.length === 0 && /<tool_call\b/i.test(result.message || '')) {
+            try {
+                const recovered = await recoverToolResultsFromRawMessage(result.message, req.user, location);
+                if (recovered) {
+                    safeMessage = recovered.message;
+                    safeToolResults = recovered.toolResults;
+                }
+            } catch (recoveryError) {
+                console.error('[Chatbot Controller] Tool-call recovery failed:', recoveryError.message);
+            }
+        }
+
         res.json({
             success: true,
             data: {
-                message: result.message,
-                contextMessage: result.contextMessage || result.message,
-                toolResults: result.toolResults || [],
+                message: safeMessage,
+                contextMessage: sanitizeAssistantText(result.contextMessage || safeMessage),
+                toolResults: safeToolResults,
                 error: result.error || false,
             },
         });

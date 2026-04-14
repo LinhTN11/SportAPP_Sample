@@ -81,15 +81,21 @@
 
 /* ── Post Card ── */
 .postCard {
-    background: #FFFFFF;
-    border: 1px solid #E5E7EB;
-    border-radius: 20px;
+    background: white;
+    border-radius: 16px;
+    border: 1.5px solid #F1F5F9;
     padding: 16px;
-    min-height: 220px;
-    box-shadow: 0px 2px 12px rgba(0, 0, 0, 0.08);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
     display: flex;
     flex-direction: column;
+}
+
+.highlightedCard {
+    border-color: #FF5A00 !important;
+    box-shadow: 0 0 20px rgba(255, 90, 0, 0.2) !important;
+    transform: scale(1.02);
+    background: #FFFAF8 !important;
 }
 
 .postCard:hover {

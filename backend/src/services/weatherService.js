@@ -66,7 +66,15 @@ function getCityCoords(city) {
 async function getWeatherForCity(city) {
     try {
         const { lat, lon } = getCityCoords(city);
+        return await getWeatherByCoords(lat, lon, city || 'Hồ Chí Minh');
+    } catch (error) {
+        console.error('Weather API error:', error.message);
+        return null;
+    }
+}
 
+async function getWeatherByCoords(lat, lon, locationLabel = 'Vị trí hiện tại') {
+    try {
         const res = await axios.get('https://api.open-meteo.com/v1/forecast', {
             params: {
                 latitude: lat,
@@ -107,7 +115,7 @@ async function getWeatherForCity(city) {
             },
             forecast,
             warnings,
-            city: city || 'Hồ Chí Minh',
+            locationLabel,
         };
     } catch (error) {
         console.error('Weather API error:', error.message);
@@ -140,4 +148,4 @@ function getWeatherWarnings(current, forecast) {
     return warnings;
 }
 
-module.exports = { getWeatherForCity };
+module.exports = { getWeatherForCity, getWeatherByCoords };

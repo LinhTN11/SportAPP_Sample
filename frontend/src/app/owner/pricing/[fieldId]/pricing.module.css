@@ -862,6 +862,10 @@
     padding: 4px 10px;
 }
 
+.timeSelect {
+    flex: 1;
+}
+
 .timeRange :global(.form-input) {
     flex: 1;
     border: none;

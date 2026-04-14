@@ -23,6 +23,7 @@ const notificationRoutes = require('./routes/notifications');
 const paymentRoutes = require('./routes/payments');
 const uploadRoutes = require('./routes/upload');
 const chatbotRoutes = require('./routes/chatbot');
+const adminRoutes = require('./routes/admin');
 
 // Import socket handler
 const { setupSocket } = require('./socket/chatSocket');
@@ -32,26 +33,62 @@ const { startCronJobs } = require('./jobs/cronJobs');
 
 const app = express();
 const server = http.createServer(app);
+const redisEnabled = process.env.REDIS_ENABLED === 'true';
+
+const configuredOrigins = (process.env.CLIENT_URL || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const defaultDevOrigins = [
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+];
+
+const allowedOrigins = new Set([...defaultDevOrigins, ...configuredOrigins]);
+
+const isOriginAllowed = (origin) => {
+  if (!origin) return true;
+  if (allowedOrigins.has(origin)) return true;
+  return /^http:\/\/(localhost|127\.0\.0\.1):\d+$/i.test(origin);
+};
+
+const corsOriginDelegate = (origin, callback) => {
+  if (isOriginAllowed(origin)) {
+    callback(null, true);
+    return;
+  }
+  callback(new Error(`CORS blocked for origin: ${origin}`));
+};
 
 // Socket.io setup
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:3000',
+    origin: corsOriginDelegate,
     methods: ['GET', 'POST'],
+    credentials: true,
   },
 });
 
-// Redis Adapter Setup
-if (process.env.REDIS_URL) {
-  const pubClient = createClient({ url: process.env.REDIS_URL });
+// Redis Adapter Setup (opt-in via REDIS_ENABLED=true)
+if (redisEnabled && process.env.REDIS_URL) {
+  const pubClient = createClient({
+    url: process.env.REDIS_URL,
+    socket: {
+      // Prevent endless ECONNREFUSED spam when Redis is down in local dev.
+      reconnectStrategy: () => false,
+    },
+  });
   const subClient = pubClient.duplicate();
 
   Promise.all([pubClient.connect(), subClient.connect()]).then(() => {
     io.adapter(createAdapter(pubClient, subClient));
     console.log('🔄 Socket.io Redis adapter connected');
   }).catch(err => {
-    console.error('❌ Socket.io Redis adapter connection failed:', err);
+    console.warn('⚠️ Socket.io Redis adapter unavailable, running without Redis adapter:', err.message || err);
   });
+} else if (process.env.REDIS_URL && !redisEnabled) {
+  console.warn('ℹ️ Redis adapter disabled. Set REDIS_ENABLED=true to enable Socket.io Redis adapter.');
 }
 
 // Middleware
@@ -59,7 +96,7 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
 }));
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  origin: corsOriginDelegate,
   credentials: true,
 }));
 app.use(express.json());
@@ -86,6 +123,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/chatbot', chatbotRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

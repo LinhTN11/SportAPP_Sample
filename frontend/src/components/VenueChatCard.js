@@ -1,6 +1,8 @@
+/* eslint-disable @next/next/no-img-element */
 'use client';
 
 import Link from 'next/link';
+import { MapPin, Star } from 'lucide-react';
 import styles from './ChatbotWidget.module.css';
 
 export default function VenueChatCard({ venue, onBookClick }) {
@@ -56,7 +58,7 @@ export default function VenueChatCard({ venue, onBookClick }) {
                     alignItems: 'center',
                     gap: '4px',
                 }}>
-                    📍 {venue.address || `${venue.district}, ${venue.city}`}
+                    <MapPin size={12} style={{ color: '#888' }} /> {venue.address || `${venue.district}, ${venue.city}`}
                 </p>
                 <div style={{
                     display: 'flex',
@@ -64,14 +66,18 @@ export default function VenueChatCard({ venue, onBookClick }) {
                     justifyContent: 'space-between',
                     gap: '8px',
                 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                         {venue.avgRating > 0 && (
                             <span style={{
                                 fontSize: '11px',
                                 color: '#f59e0b',
                                 fontWeight: 600,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '3px',
+                                whiteSpace: 'nowrap'
                             }}>
-                                ⭐ {venue.avgRating.toFixed(1)}
+                                <Star size={11} fill="#f59e0b" style={{ color: '#f59e0b' }} /> {venue.avgRating.toFixed(1)}
                             </span>
                         )}
                         {venue.distance && (
@@ -79,8 +85,12 @@ export default function VenueChatCard({ venue, onBookClick }) {
                                 fontSize: '11px',
                                 color: '#2196f3',
                                 fontWeight: 600,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '3px',
+                                whiteSpace: 'nowrap'
                             }}>
-                                📍 {venue.distance} km
+                                <MapPin size={11} style={{ color: '#2196f3' }} /> {venue.distance} km
                             </span>
                         )}
                         {venue.minPrice && (
@@ -88,6 +98,7 @@ export default function VenueChatCard({ venue, onBookClick }) {
                                 fontSize: '11px',
                                 color: '#ff6b35',
                                 fontWeight: 600,
+                                whiteSpace: 'nowrap'
                             }}>
                                 {formatPrice(venue.minPrice)}
                             </span>

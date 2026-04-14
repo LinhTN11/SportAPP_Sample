@@ -36,6 +36,15 @@ function setupSocket(io, prisma) {
         const userId = socket.user.id;
         console.log(`🔌 User connected: ${socket.user.fullName} (${userId})`);
 
+        const emitToRoom = (roomId, eventName, payload) => {
+            io.to(roomId).emit(eventName, payload);
+            io.to(`room:${roomId}`).emit(eventName, payload);
+        };
+
+        const emitToUser = (targetUserId, eventName, payload) => {
+            io.to(`user:${targetUserId}`).emit(eventName, payload);
+        };
+
         // ── Track online status ──
         if (!onlineUsers.has(userId)) {
             onlineUsers.set(userId, new Set());
@@ -53,7 +62,7 @@ function setupSocket(io, prisma) {
         socket.join(`user:${userId}`);
 
         // 1. Join a chat room
-        socket.on('join_room', async (roomId) => {
+        const handleJoinRoom = async (roomId) => {
             try {
                 const membership = await prisma.chatRoomMember.findFirst({
                     where: { roomId, userId: socket.user.id },
@@ -61,20 +70,26 @@ function setupSocket(io, prisma) {
 
                 if (membership) {
                     socket.join(roomId);
+                    socket.join(`room:${roomId}`);
                     console.log(`${socket.user.fullName} joined room: ${roomId}`);
                 }
             } catch (err) {
                 console.error('Join room error:', err);
             }
-        });
+        };
+
+        socket.on('join_room', handleJoinRoom);
 
         // Leave a chat room
-        socket.on('leave_room', (roomId) => {
+        const handleLeaveRoom = (roomId) => {
             socket.leave(roomId);
-        });
+            socket.leave(`room:${roomId}`);
+        };
+
+        socket.on('leave_room', handleLeaveRoom);
 
         // 2. Send a message
-        socket.on('send_message', async ({ roomId, content, type }) => {
+        const handleSendMessage = async ({ roomId, content, type }) => {
             try {
                 const membership = await prisma.chatRoomMember.findFirst({
                     where: { roomId, userId: socket.user.id },
@@ -97,6 +112,7 @@ function setupSocket(io, prisma) {
 
                 // Gửi tin nhắn cho những người KHÁC trong phòng
                 socket.to(roomId).emit('new_message', message);
+                socket.to(`room:${roomId}`).emit('new_message', message);
 
                 // Gửi thông báo cho các thành viên không mở khung chat
                 const members = await prisma.chatRoomMember.findMany({
@@ -104,35 +120,41 @@ function setupSocket(io, prisma) {
                 });
 
                 for (const member of members) {
-                    io.to(`user:${member.userId}`).emit('message_notification', {
+                    const payload = {
                         roomId,
                         message,
-                    });
+                    };
+                    emitToUser(member.userId, 'message_notification', payload);
                 }
             } catch (err) {
                 console.error('Send message error:', err);
                 socket.emit('error', { message: 'Failed to send message' });
             }
-        });
+        };
+
+        socket.on('send_message', handleSendMessage);
 
         // 3. Typing indicator
         socket.on('typing', ({ roomId, userId, fullName }) => {
-            socket.to(roomId).emit('user_typing', {
+            const payload = {
                 userId,
                 fullName,
                 roomId
-            });
+            };
+            socket.to(roomId).emit('user_typing', payload);
+            socket.to(`room:${roomId}`).emit('user_typing', payload);
         });
 
         // 4. Mark messages as read
-        socket.on('mark_read', async ({ roomId, messageId }) => {
+        const handleMarkRead = async ({ roomId, messageId }) => {
             try {
                 if (messageId) {
                     await prisma.message.update({
                         where: { id: messageId },
                         data: { isRead: true },
                     });
-                    socket.to(roomId).emit('message_read', { messageId, roomId });
+                    const payload = { messageId, roomId };
+                    emitToRoom(roomId, 'message_read', payload);
                 } else {
                     await prisma.message.updateMany({
                         where: {
@@ -142,15 +164,18 @@ function setupSocket(io, prisma) {
                         },
                         data: { isRead: true },
                     });
-                    socket.to(roomId).emit('all_messages_read', {
+                    const payload = {
                         userId: socket.user.id,
                         roomId,
-                    });
+                    };
+                    emitToRoom(roomId, 'all_messages_read', payload);
                 }
             } catch (err) {
                 console.error('Mark read error:', err);
             }
-        });
+        };
+
+        socket.on('mark_read', handleMarkRead);
 
         // ── Disconnect: update online status ──
         socket.on('disconnect', () => {

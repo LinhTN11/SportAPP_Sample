@@ -1,6 +1,7 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { authAPI } from '@/lib/api';
 
 const AuthContext = createContext(null);
@@ -10,7 +11,6 @@ export function AuthProvider({ children }) {
     const [loading, setLoading] = useState(true);
     const [token, setToken] = useState(null);
 
-    // Load user from localStorage on mount
     useEffect(() => {
         const savedToken = localStorage.getItem('sportapp_token');
         const savedUser = localStorage.getItem('sportapp_user');
@@ -49,6 +49,15 @@ export function AuthProvider({ children }) {
     const logout = useCallback(() => {
         localStorage.removeItem('sportapp_token');
         localStorage.removeItem('sportapp_user');
+        try {
+            Object.keys(sessionStorage).forEach(key => {
+                if (key.startsWith('sportapp-ai-chat-history')) {
+                    sessionStorage.removeItem(key);
+                }
+            });
+        } catch (e) {
+            console.warn('Failed to clear session storage on logout', e);
+        }
         setToken(null);
         setUser(null);
         window.location.href = '/login';

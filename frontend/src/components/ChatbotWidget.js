@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -6,7 +7,13 @@ import axios from 'axios';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { chatbotAPI, bookingsAPI } from '@/lib/api';
+import {
+    sanitizeRawToolCallText,
+    parseRawToolCall,
+    buildBypassCommand,
+} from '@/lib/chatbotToolFallback';
 import VenueChatCard from './VenueChatCard';
+import ChatCardRenderer from './chat/ChatCardRenderer';
 import DatePicker from '@/components/ui/DatePicker';
 import styles from './ChatbotWidget.module.css';
 
@@ -17,6 +24,20 @@ const BotIcon = ({ size = 20 }) => (
         <path d="M12 8V4H8" /><rect width="16" height="12" x="4" y="8" rx="2" /><path d="M2 14h2" /><path d="M20 14h2" /><path d="M15 13v2" /><path d="M9 13v2" />
     </svg>
 );
+
+const parseSystemActionPayload = (content) => {
+    if (typeof content !== 'string') return null;
+
+    const trimmed = content.trim();
+    if (!trimmed.startsWith('{') || !trimmed.endsWith('}')) return null;
+
+    try {
+        const parsed = JSON.parse(trimmed);
+        return parsed?.action ? parsed : null;
+    } catch (_) {
+        return null;
+    }
+};
 
 export default function ChatbotWidget() {
     const { user, isAuthenticated } = useAuth();
@@ -29,7 +50,6 @@ export default function ChatbotWidget() {
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [weather, setWeather] = useState(null);
-    const [conversationHistory, setConversationHistory] = useState([]);
     const [userLocation, setUserLocation] = useState(null);
     const [bookingDate, setBookingDate] = useState('');
     const [paymentType, setPaymentType] = useState('DEPOSIT');
@@ -301,8 +321,7 @@ export default function ChatbotWidget() {
         const userMsg = { role: 'user', content: text };
         setMessages(prev => [...prev, userMsg]);
 
-        const newHistory = [...conversationHistory, { role: 'user', content: text }];
-        const trimmedHistory = conversationHistory.slice(-4);
+        const trimmedHistory = messages.slice(-10); // Synchronized with main chat (10 messages)
         setIsLoading(true);
 
         try {
@@ -310,7 +329,34 @@ export default function ChatbotWidget() {
             const currentVenueId = venueMatch ? venueMatch[1] : null;
 
             const res = await chatbotAPI.sendMessage(text, trimmedHistory, userLocation, currentVenueId);
-            const data = res.data.data;
+            let data = res.data.data;
+
+            if ((!data.toolResults || data.toolResults.length === 0) && /<tool_call\b/i.test(data.message || '')) {
+                const parsedTool = parseRawToolCall(data.message);
+                const bypassCommand = buildBypassCommand(parsedTool);
+
+                if (bypassCommand) {
+                    try {
+                        const recovered = await chatbotAPI.sendMessage(bypassCommand, trimmedHistory, userLocation, currentVenueId);
+                        data = recovered.data.data;
+                    } catch (_) {
+                        data = {
+                            ...data,
+                            message: sanitizeRawToolCallText(data.message) || 'Mình đã hiểu yêu cầu, bạn thử lại giúp mình một lần nữa nhé.',
+                        };
+                    }
+                } else {
+                    data = {
+                        ...data,
+                        message: sanitizeRawToolCallText(data.message),
+                    };
+                }
+            } else {
+                data = {
+                    ...data,
+                    message: sanitizeRawToolCallText(data.message),
+                };
+            }
 
             const botMsg = {
                 role: 'assistant',
@@ -320,10 +366,6 @@ export default function ChatbotWidget() {
             };
 
             setMessages(prev => [...prev, botMsg]);
-            setConversationHistory([
-                ...newHistory.slice(-4),
-                { role: 'assistant', content: data.contextMessage || data.message },
-            ]);
         } catch (err) {
             setMessages(prev => [...prev, {
                 role: 'assistant',
@@ -334,7 +376,7 @@ export default function ChatbotWidget() {
         } finally {
             setIsLoading(false);
         }
-    }, [input, isLoading, conversationHistory, userLocation, pathname]);
+    }, [input, isLoading, userLocation, pathname]);
 
     const handleKeyDown = (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
@@ -369,16 +411,20 @@ export default function ChatbotWidget() {
         CUSTOMER: [
             'Tìm sân bóng đá',
             'Xem booking của tôi',
+            'Hôm nay có sân nào trống không?',
             'Sân nào gần đây đang giảm giá?',
+            'Chính sách hủy sân?'
         ],
         OWNER: [
             'Xuất báo cáo doanh thu tháng này',
+            'Xem danh sách sân của tôi',
             'Xem booking tuần này',
             'Tìm sân bóng đá',
         ],
         ADMIN: [
             'Thống kê toàn hệ thống',
             'Xuất báo cáo nền tảng',
+            'Xem các chủ sân hàng đầu',
             'Tìm sân bóng đá',
         ],
     };
@@ -393,11 +439,36 @@ export default function ChatbotWidget() {
 
                     if ((result.type === 'options' || result.type === 'clarification') && (result.data.options || result.data.fields)) {
                         const options = result.data.fields || result.data.options;
+                        const isFields = !!result.data.fields;
+
                         return (
-                            <div key={`clarification-${i}`} className={styles.optionsContainer}>
+                            <div key={`clarification-${i}`} className={isFields ? styles.fieldCardGrid : styles.optionsContainer}>
                                 {options.map((opt, j) => {
                                     const label = typeof opt === 'object' ? opt.name : opt;
                                     const value = typeof opt === 'object' ? opt.id : opt;
+                                    const pricing = typeof opt === 'object' ? opt.pricingRules : null;
+
+                                    if (isFields) {
+                                        return (
+                                            <div key={j} className={styles.fieldSelectionCard}>
+                                                <div className={styles.fieldCardIcon}>🏟️</div>
+                                                <div className={styles.fieldCardInfo}>
+                                                    <div className={styles.fieldCardName}>{label}</div>
+                                                    <div className={styles.fieldCardPrice}>
+                                                        {pricing && pricing.length > 0 ? `Từ ${formatPrice(pricing[0].price)}/h` : 'Giá linh hoạt'}
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    className={styles.fieldSelectBtn}
+                                                    onClick={() => handleSend(value)}
+                                                    disabled={isLoading}
+                                                >
+                                                    Chọn
+                                                </button>
+                                            </div>
+                                        );
+                                    }
+
                                     return (
                                         <button
                                             key={j}
@@ -409,6 +480,32 @@ export default function ChatbotWidget() {
                                         </button>
                                     );
                                 })}
+                            </div>
+                        );
+                    }
+
+                    if (result.type === 'available_slots' && result.data.slots) {
+                        return (
+                            <div key={`slots-${i}`} className={styles.slotDiscoveryContainer}>
+                                <div className={styles.slotDiscoveryHeader}>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}>
+                                        <circle cx="12" cy="12" r="10" />
+                                        <polyline points="12 6 12 12 16 14" />
+                                    </svg>
+                                    Giờ trống ngày {result.data.date}
+                                </div>
+                                <div className={styles.slotChipGrid}>
+                                    {result.data.slots.map((slot, j) => (
+                                        <button
+                                            key={j}
+                                            className={styles.slotDiscoveryChip}
+                                            onClick={() => handleSend(`Đặt sân vào lúc ${slot.time}`)}
+                                            disabled={isLoading}
+                                        >
+                                            {slot.time}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
                         );
                     }
@@ -856,6 +953,14 @@ export default function ChatbotWidget() {
                             if (msg.role === 'user' && (msg.content.startsWith('BOOK_VENUE:') || msg.content.startsWith('create_booking'))) {
                                 return null;
                             }
+
+                            const systemPayload = msg.role === 'assistant' ? parseSystemActionPayload(msg.content) : null;
+                            const hasToolCardForSystemPayload = !!(
+                                systemPayload &&
+                                msg.toolResults?.some((result) => result?.data?.action === systemPayload.action)
+                            );
+                            const shouldHideRawBubble = msg.role === 'assistant' && !!systemPayload;
+
                             return (
                                 <div key={i}>
                                     <div className={`${styles.messageRow} ${msg.role === 'user' ? styles.messageRowUser : styles.messageRowBot}`}>
@@ -864,12 +969,23 @@ export default function ChatbotWidget() {
                                                 <BotIcon size={16} />
                                             </div>
                                         )}
-                                        <div className={`${styles.msgBubble} ${msg.role === 'user' ? styles.msgBubbleUser :
-                                            msg.error ? styles.msgBubbleError : styles.msgBubbleBot
-                                            }`}>
-                                            {msg.content}
-                                        </div>
+                                        {!shouldHideRawBubble && (
+                                            <div className={`${styles.msgBubble} ${msg.role === 'user' ? styles.msgBubbleUser :
+                                                msg.error ? styles.msgBubbleError : styles.msgBubbleBot
+                                                }`}>
+                                                {msg.content}
+                                            </div>
+                                        )}
                                     </div>
+                                    {msg.role === 'assistant' && systemPayload && systemPayload.action !== 'MATCH_INIT' && !hasToolCardForSystemPayload && (
+                                        <div className={styles.toolResults}>
+                                            <ChatCardRenderer
+                                                data={systemPayload}
+                                                onAction={handleSend}
+                                                isLoading={isLoading}
+                                            />
+                                        </div>
+                                    )}
                                     {msg.role === 'assistant' && msg.toolResults && renderToolResults(msg.toolResults, i)}
                                 </div>
                             );

@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 // Reusable Avatar component – shows image if avatarUrl exists, otherwise initials
 export default function Avatar({ user, size = 'md', className = '' }) {
     const sizeClass = size === 'sm' ? 'avatar-sm' : size === 'lg' ? 'avatar-lg' : '';

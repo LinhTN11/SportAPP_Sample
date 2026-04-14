@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 'use client';
 
 import { MapPin, Star, Clock, Settings, Pencil, Trash2 } from 'lucide-react';

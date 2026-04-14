@@ -27,6 +27,7 @@ module.exports = {
     roles: ['CUSTOMER', 'OWNER', 'ADMIN'],
     execute: async ({ args, userId, prisma }) => {
         const { fieldId, bookingDate, startTime, endTime, paymentType } = args;
+        console.log('[Chatbot Action] Running create_booking with args:', JSON.stringify(args));
         const resolution = await resolveId(fieldId, prisma);
 
         if (resolution.type === 'venue') {
@@ -34,9 +35,10 @@ module.exports = {
             const allFields = venue.fields || [];
             if (allFields.length === 0) return { success: false, message: 'Sân này hiện chưa có sân con nào khả dụng để đặt.' };
 
+            // If only one field, auto-select it. Otherwise, return field selection UI.
             return {
                 success: true,
-                type: 'booking_form',
+                type: allFields.length > 1 ? 'options' : 'booking_form',
                 data: {
                     fieldId: allFields[0].id,
                     fieldName: allFields[0].name,
@@ -45,7 +47,8 @@ module.exports = {
                     openTime: venue.openTime,
                     closeTime: venue.closeTime,
                     pricingRules: allFields[0].pricingRules,
-                    availableFields: allFields.map(f => ({ id: f.id, name: f.name, pricingRules: f.pricingRules })),
+                    fields: allFields.map(f => ({ id: f.id, name: f.name, pricingRules: f.pricingRules })),
+                    availableFields: allFields.map(f => ({ id: f.id, name: f.name })),
                     missingFields: ['date', 'startTime', 'time', 'payment'],
                     currentArgs: args
                 }
@@ -53,7 +56,7 @@ module.exports = {
         }
 
         if (resolution.type !== 'field') {
-            return { success: false, message: `Không tìm thấy sân với ID "${fieldId}". Vui lòng kiểm tra lại.` };
+            return { success: false, message: `Không tìm thấy sân với tên hoặc ID "${fieldId}". Vui lòng thử tìm kiếm tên chính xác hơn.` };
         }
 
         const field = resolution.data;

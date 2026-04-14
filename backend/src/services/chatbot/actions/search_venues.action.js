@@ -1,4 +1,7 @@
 const { normalizeSportType, normalizeCityName, haversineDistance } = require('../utils/helpers');
+const { rankByContainment, fuzzySearch, normalizeSearchText } = require('../utils/fuzzySearch');
+
+const CANONICAL_SPORTS = new Set(['football', 'badminton', 'tennis', 'basketball', 'volleyball', 'pickleball']);
 
 /**
  * Action: search_venues
@@ -15,6 +18,7 @@ module.exports = {
                 type: 'object',
                 properties: {
                     sportType: { type: 'string', description: 'Loại thể thao: football, badminton, tennis, basketball, volleyball, pickleball' },
+                    name: { type: 'string', description: 'Tên sân cụ thể người dùng muốn tìm (ví dụ: "Phú Nhuận", "Bách Khoa").' },
                     city: { type: 'string', description: 'Thành phố (VD: Hà Nội, TP.HCM). Điền nếu người dùng nhắc đích danh, nếu không hãy để trống.' },
                     district: { type: 'string', description: 'Quận/huyện (CHỈ điền nếu người dùng nhắc đích danh, nếu không hãy để trống).' },
                     sortBy: { type: 'string', description: 'Cách sắp xếp: distance (mặc định nếu có tọa độ), rating, price_asc, price_desc.' },
@@ -30,15 +34,92 @@ module.exports = {
         console.log(`[Chatbot Action] search_venues: sport=${normalizedSport}, city=${normalizedCity}, district=${args.district}, userLocation=${!!userLocation}`);
 
         const fieldWhere = { isActive: true };
-        if (normalizedSport) {
+        if (normalizedSport && CANONICAL_SPORTS.has(normalizedSport)) {
             fieldWhere.sportType = { equals: normalizedSport, mode: 'insensitive' };
         }
+
+        const fieldWhereNoSport = { isActive: true };
 
         let results = [];
         let searchMethod = 'text';
 
+        // 0. Name-based search (Priority, with fuzzy fallback)
+        if (args.name) {
+            searchMethod = 'name';
+            const searchName = normalizeSearchText(args.name);
+            const directMatches = await prisma.venue.findMany({
+                where: {
+                    status: 'APPROVED',
+                    name: { contains: args.name, mode: 'insensitive' }
+                },
+                include: {
+                    fields: { where: fieldWhereNoSport, include: { pricingRules: { where: { isActive: true } } } },
+                    _count: { select: { reviews: true } },
+                },
+                take: 8
+            });
+
+            let mergedVenues = directMatches.filter(v => v.fields.length > 0);
+
+            if (mergedVenues.length === 0) {
+                const candidates = await prisma.venue.findMany({
+                    where: { status: 'APPROVED' },
+                    select: { id: true, name: true, city: true, district: true },
+                    take: 500,
+                });
+
+                const byContains = rankByContainment(searchName, candidates, 'name').map(v => ({ ...v, __score: 0 }));
+                const byFuzzy = fuzzySearch(searchName, candidates, {
+                    keys: ['name', 'city', 'district'],
+                    threshold: 0.38,
+                    limit: 5,
+                });
+
+                const ranked = [...byContains, ...byFuzzy]
+                    .sort((a, b) => (a.__score ?? 1) - (b.__score ?? 1));
+
+                const directIds = new Set(mergedVenues.map(v => v.id));
+                const fuzzyIds = [];
+
+                for (const item of ranked) {
+                    if (directIds.has(item.id) || fuzzyIds.includes(item.id)) continue;
+                    fuzzyIds.push(item.id);
+                    if (fuzzyIds.length >= 8) break;
+                }
+
+                if (fuzzyIds.length > 0) {
+                    const fuzzyVenues = await prisma.venue.findMany({
+                        where: { id: { in: fuzzyIds }, status: 'APPROVED' },
+                        include: {
+                            fields: { where: fieldWhereNoSport, include: { pricingRules: { where: { isActive: true } } } },
+                            _count: { select: { reviews: true } },
+                        },
+                    });
+
+                    const fuzzyById = new Map(fuzzyVenues.filter(v => v.fields.length > 0).map(v => [v.id, v]));
+                    const orderedFuzzy = fuzzyIds.map(id => fuzzyById.get(id)).filter(Boolean);
+                    mergedVenues = [...mergedVenues, ...orderedFuzzy];
+                    if (orderedFuzzy.length > 0) searchMethod = 'name_fuzzy';
+                }
+            }
+
+            results = await processVenueResults(mergedVenues, userLocation, prisma);
+
+            if (results.length === 0) {
+                return {
+                    success: true,
+                    type: 'venues',
+                    data: [],
+                    meta: {
+                        searchMethod: 'name_not_found',
+                        query: args.name,
+                    },
+                };
+            }
+        }
+
         // 1. Radius-based search (Iterative) if User GPS is available
-        if (userLocation && userLocation.lat && userLocation.lng) {
+        if (results.length === 0 && userLocation && userLocation.lat && userLocation.lng) {
             searchMethod = 'radius';
             const radii = [10, 30, 50, 100]; // Radius steps in km
             
@@ -87,22 +168,6 @@ module.exports = {
 
             const venuesWithFields = venues.filter(v => v.fields.length > 0);
             results = await processVenueResults(venuesWithFields, userLocation, prisma);
-        }
-
-        // 3. Final Fallback: If still nothing, try searching by city only (ignoring district)
-        if (results.length === 0 && (normalizedCity || args.district)) {
-             const fallbackVenues = await prisma.venue.findMany({
-                where: { 
-                    status: 'APPROVED',
-                    ...(normalizedCity && { city: { contains: normalizedCity, mode: 'insensitive' } }),
-                },
-                include: {
-                    fields: { where: fieldWhere, include: { pricingRules: { where: { isActive: true } } } },
-                    _count: { select: { reviews: true } },
-                },
-                take: 5
-            });
-            results = await processVenueResults(fallbackVenues.filter(v => v.fields.length > 0), userLocation, prisma);
         }
 
         // Sorting

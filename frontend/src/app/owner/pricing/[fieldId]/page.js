@@ -19,6 +19,7 @@ import {
 import { vi } from 'date-fns/locale';
 import { fieldsAPI } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import CustomSelect from '@/components/ui/CustomSelect';
 import { MapPin, CalendarDays, ClipboardList, Pencil, Plus, Trash2, DollarSign, Clock } from 'lucide-react';
 import styles from './pricing.module.css';
 
@@ -445,15 +446,21 @@ function PricingEditorContent() {
                                         <div className="form-group">
                                             <label className="form-label">Khung giờ</label>
                                             <div className={styles.timeRange}>
-                                                <select className="form-input" value={form.startTime}
-                                                    onChange={e => setForm(f => ({ ...f, startTime: e.target.value }))}>
-                                                    {TIME_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
-                                                </select>
+                                                <CustomSelect
+                                                    className={styles.timeSelect}
+                                                    value={form.startTime}
+                                                    onChange={(nextValue) => setForm(f => ({ ...f, startTime: nextValue }))}
+                                                    options={TIME_OPTIONS.map(t => ({ value: t, label: t }))}
+                                                    menuMaxHeight={260}
+                                                />
                                                 <span className={styles.timeArrow}>→</span>
-                                                <select className="form-input" value={form.endTime}
-                                                    onChange={e => setForm(f => ({ ...f, endTime: e.target.value }))}>
-                                                    {TIME_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
-                                                </select>
+                                                <CustomSelect
+                                                    className={styles.timeSelect}
+                                                    value={form.endTime}
+                                                    onChange={(nextValue) => setForm(f => ({ ...f, endTime: nextValue }))}
+                                                    options={TIME_OPTIONS.map(t => ({ value: t, label: t }))}
+                                                    menuMaxHeight={260}
+                                                />
                                             </div>
                                         </div>
 
