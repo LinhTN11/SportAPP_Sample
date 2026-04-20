@@ -11,9 +11,9 @@ const StatCard = ({ title, value, icon: Icon, color, subtext, trendValue }) => {
                 <div className={styles.statIcon} style={{ background: `${color}10`, color: color }}>
                     <Icon size={26} strokeWidth={2.5} />
                 </div>
-                {trendValue !== undefined && (
-                    <div className={`${styles.statTrend} ${trendValue > 0 ? styles.trendUp : styles.trendDown}`}>
-                        {trendValue > 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                {trendValue !== undefined && trendValue !== null && (
+                    <div className={`${styles.statTrend} ${trendValue > 0 ? styles.trendUp : (trendValue < 0 ? styles.trendDown : '')}`}>
+                        {trendValue > 0 ? <TrendingUp size={14} /> : (trendValue < 0 ? <TrendingDown size={14} /> : null)}
                         {Math.abs(trendValue)}%
                     </div>
                 )}
@@ -46,46 +46,60 @@ export default function DashboardStats({ stats }) {
                 value={`${(summary.totalRevenue || 0).toLocaleString('vi-VN')}đ`}
                 icon={CreditCard}
                 color="#4f46e5"
-                trendValue={12.5}
-                subtext="Giá trị booking hoàn thành"
+                trendValue={summary.revenueTrend}
+                subtext="Booking đã hoàn thành (COMPLETED)"
             />
             <StatCard
-                title="Lợi nhuận gộp"
+                title="Lợi nhuận sàn (Phí HH)"
                 value={`${(summary.totalCommission || 0).toLocaleString('vi-VN')}đ`}
                 icon={TrendingUp}
                 color="#10b981"
-                trendValue={-5.4}
-                subtext="Từ phí hoa hồng sân"
+                trendValue={summary.commissionTrend}
+                subtext="Phí hoa hồng trước thuế GTGT (5%)"
             />
             <StatCard
                 title="Tổng Bookings"
-                value={summary.totalBookings}
+                value={summary.totalBookings || 0}
                 icon={ShoppingBag}
                 color="#8b5cf6"
-                trendValue={-2.4}
-                subtext={`${summary.todayBookings} đơn hôm nay`}
+                trendValue={summary.bookingTrend}
+                subtext={summary.todayBookings !== undefined ? `${summary.todayBookings} đơn hôm nay` : null}
             />
             <StatCard
-                title="Người dùng"
-                value={summary.totalUsers}
+                title="Người dùng mới"
+                value={summary.newUsersRange ?? 0}
                 icon={Users}
                 color="#f59e0b"
-                trendValue={15.8}
-                subtext={`+${summary.newUsersLast7Days} khách mới`}
+                trendValue={summary.userTrend}
+                subtext={`Tổng: ${summary.totalUsers || 0} người dùng trên nền tảng`}
             />
             <StatCard
                 title="Sân chờ phê duyệt"
-                value={summary.pendingVenues}
+                value={summary.pendingVenues || 0}
                 icon={Clock}
                 color="#ef4444"
                 subtext="Cần xử lý trong 24h"
             />
             <StatCard
                 title="Tương tác xã hội"
-                value={summary.totalMatches}
+                value={summary.totalMatches || 0}
                 icon={Activity}
                 color="#ec4899"
-                subtext="Tin tuyển đối thủ mới"
+                subtext="Tin tuyển đối thủ trong kỳ"
+            />
+            <StatCard
+                title="Thuế GTGT Sàn (10% HH)"
+                value={`${(summary.platformVat || 0).toLocaleString('vi-VN')}đ`}
+                icon={CreditCard}
+                color="#6366f1"
+                subtext="VAT sàn phải nộp (10% của phí HH)"
+            />
+            <StatCard
+                title="Thuế thu hộ chủ sân"
+                value={`${((summary.withheldOwnerVat || 0) + (summary.withheldOwnerPit || 0)).toLocaleString('vi-VN')}đ`}
+                icon={ShoppingBag}
+                color="#f43f5e"
+                subtext={`GTGT: ${(summary.withheldOwnerVat || 0).toLocaleString('vi-VN')}đ (5%) | TNCN: ${(summary.withheldOwnerPit || 0).toLocaleString('vi-VN')}đ (2%)`}
             />
         </div>
     );

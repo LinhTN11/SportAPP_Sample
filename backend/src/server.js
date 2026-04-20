@@ -24,6 +24,7 @@ const paymentRoutes = require('./routes/payments');
 const uploadRoutes = require('./routes/upload');
 const chatbotRoutes = require('./routes/chatbot');
 const adminRoutes = require('./routes/admin');
+const taxRoutes = require('./routes/tax');
 
 // Import socket handler
 const { setupSocket } = require('./socket/chatSocket');
@@ -124,6 +125,7 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/tax', taxRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

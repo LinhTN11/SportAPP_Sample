@@ -169,6 +169,22 @@ export default function Navbar() {
                         </div>
                       </Link>
                     )}
+
+                    {user.role === 'OWNER' && (
+                      <Link
+                        href="/owner/taxes"
+                        onClick={() => setIsDropdownOpen(false)}
+                        className={styles.dropdownItem}
+                      >
+                        <div className={styles.dropdownItemIcon}>
+                          <History size={18} />
+                        </div>
+                        <div className={styles.dropdownItemText}>
+                          <div className={styles.itemTitle}>Thuế & Chứng từ</div>
+                          <div className={styles.itemDesc}>Khấu trừ thuế và chứng từ ĐT</div>
+                        </div>
+                      </Link>
+                    )}
                   </div>
 
                   {/* Footer — logout */}
@@ -231,14 +247,17 @@ function getNavItems(role) {
       { href: '/bookings',  label: 'Đặt sân của tôi' },
       { href: '/chat',      label: 'Tin nhắn' },
       { href: '/notifications', label: 'Thông báo' },
+      { href: '/support',       label: 'Hỗ trợ' },
     ];
   }
   if (role === 'OWNER') {
     return [
       { href: '/owner/venues',   label: 'Quản lý sân' },
       { href: '/owner/bookings', label: 'Lịch đặt' },
+      { href: '/owner/taxes',    label: 'Thuế & Chứng từ' },
       { href: '/chat',           label: 'Tin nhắn' },
       { href: '/notifications',  label: 'Thông báo' },
+      { href: '/support',        label: 'Hỗ trợ' },
     ];
   }
   if (role === 'ADMIN') {
@@ -246,6 +265,8 @@ function getNavItems(role) {
       { href: '/admin/dashboard', label: 'Dashboard' },
       { href: '/admin/venues', label: 'Duyệt sân' },
       { href: '/admin/users',  label: 'Người dùng' },
+      { href: '/admin/taxes',  label: 'Quản lý thuế' },
+      { href: '/admin/support', label: 'Hộp thư HT' },
       { href: '/chat',         label: 'Tin nhắn' },
       { href: '/notifications',  label: 'Thông báo' },
     ];

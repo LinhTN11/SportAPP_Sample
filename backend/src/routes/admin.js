@@ -6,7 +6,10 @@ const {
     getRecentActivity,
     getUsers,
     updateUserRole,
+    updateUserTaxInfo,
     deleteUser,
+    getPlatformSettings,
+    updatePlatformSettings,
 } = require('../controllers/adminController');
 
 // All routes here are for ADMIN only
@@ -20,6 +23,11 @@ router.get('/activity', getRecentActivity);
 // User management
 router.get('/users', getUsers);
 router.patch('/users/:id/role', updateUserRole);
+router.patch('/users/:id/tax-info', updateUserTaxInfo);
 router.delete('/users/:id', deleteUser);
+
+// Platform settings
+router.get('/settings/platform', getPlatformSettings);
+router.patch('/settings/platform', updatePlatformSettings);
 
 module.exports = router;

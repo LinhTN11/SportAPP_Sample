@@ -11,6 +11,15 @@ import styles from './dashboard.module.css';
 import DashboardStats from '@/components/admin/DashboardStats';
 import DashboardCharts from '@/components/admin/DashboardCharts';
 import RecentActivity from '@/components/admin/RecentActivity';
+import CustomSelect from '@/components/ui/CustomSelect';
+
+const TIME_PERIODS = [
+    { value: 'today', label: 'Hôm nay' },
+    { value: '7d', label: '7 ngày qua' },
+    { value: '30d', label: '30 ngày qua' },
+    { value: 'this_month', label: 'Tháng này' },
+    { value: 'all', label: 'Toàn thời gian' },
+];
 
 export default function AdminDashboardPage() {
     const router = useRouter();
@@ -22,6 +31,7 @@ export default function AdminDashboardPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [lastUpdated, setLastUpdated] = useState(new Date());
+    const [period, setPeriod] = useState('30d');
 
     // Check authorization
     useEffect(() => {
@@ -36,7 +46,7 @@ export default function AdminDashboardPage() {
             setError(null);
             
             const [statsRes, chartsRes, activityRes] = await Promise.all([
-                adminAPI.getStats(),
+                adminAPI.getStats({ period }),
                 adminAPI.getCharts(),
                 adminAPI.getActivity()
             ]);
@@ -57,7 +67,8 @@ export default function AdminDashboardPage() {
         if (user?.role === 'ADMIN') {
             fetchData();
         }
-    }, [user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user, period]);
 
     if (authLoading || (loading && !stats)) {
         return (
@@ -98,7 +109,15 @@ export default function AdminDashboardPage() {
                             Theo dõi các chỉ số kinh doanh và vận hành hệ thống
                         </p>
                     </div>
-                    <div className={styles.headerActions}>
+                    <div className={styles.headerActions} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ width: 160 }}>
+                            <CustomSelect 
+                                value={period}
+                                onChange={(val) => setPeriod(val)}
+                                options={TIME_PERIODS}
+                                fixed
+                            />
+                        </div>
                         <button 
                             onClick={fetchData} 
                             className={styles.panelAction} 

@@ -362,5 +362,14 @@ export default function ChatCardRenderer({
         );
     }
 
+    if (data.action === 'SUPPORT_INIT') {
+        return (
+            <div className={`${styles.systemStatusCard} ${styles.supportInitCard}`}>
+                <Activity size={16} className={styles.statusIcon} />
+                <span>Phiên hỗ trợ mới về: <b>{data.category}</b></span>
+            </div>
+        );
+    }
+
     return null;
 }

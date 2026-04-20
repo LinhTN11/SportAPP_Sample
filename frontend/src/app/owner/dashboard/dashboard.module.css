@@ -1,4 +1,4 @@
-﻿.page {
+.page {
     padding: var(--space-2xl) 0 var(--space-3xl);
     min-height: calc(100vh - var(--nav-height));
     background: #FFF5ED;
@@ -511,6 +511,18 @@
     background: rgba(255, 90, 95, 0.08);
     border-color: #FF5A5F;
     color: #FF5A5F;
+}
+
+.quickActionSupport {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+    color: #10b981;
+}
+
+.quickActionSupport:hover {
+    background: #dcfce7;
+    border-color: #10b981;
+    color: #10b981;
 }
 
 .quickActionIcon {

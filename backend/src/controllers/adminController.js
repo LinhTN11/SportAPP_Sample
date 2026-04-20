@@ -1,52 +1,199 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const { getSettings, saveSettings } = require('../config/platformSettings');
 
 /**
  * Get overall dashboard statistics
  */
 const getDashboardStats = async (req, res) => {
     try {
+        const { period = '30d' } = req.query;
         const now = new Date();
         const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const sevenDaysAgo = new Date(now);
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+        let startDate = new Date(0);
+        let endDate = new Date(now);
+        let prevStartDate = new Date(0);
+        let prevEndDate = new Date(0);
+
+        if (period === 'today') {
+            startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            prevStartDate = new Date(startDate);
+            prevStartDate.setDate(prevStartDate.getDate() - 1);
+            prevEndDate = new Date(startDate);
+        } else if (period === '7d') {
+            startDate = new Date(now);
+            startDate.setDate(startDate.getDate() - 7);
+            prevStartDate = new Date(startDate);
+            prevStartDate.setDate(prevStartDate.getDate() - 7);
+            prevEndDate = new Date(startDate);
+        } else if (period === '30d') {
+            startDate = new Date(now);
+            startDate.setDate(startDate.getDate() - 30);
+            prevStartDate = new Date(startDate);
+            prevStartDate.setDate(prevStartDate.getDate() - 30);
+            prevEndDate = new Date(startDate);
+        } else if (period === 'this_month') {
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            prevStartDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            prevEndDate = new Date(startDate);
+        } else {
+            // 'all'
+            startDate = new Date(0);
+            prevStartDate = new Date(0);
+            prevEndDate = new Date(0);
+        }
+
+        const dateFilter = period !== 'all' ? { gte: startDate, lte: endDate } : undefined;
+        // avoid passing undefined to where object if we don't want to filter at all
+        const currentWhere = dateFilter ? { createdAt: dateFilter } : {};
+        const prevWhere = period !== 'all' ? { createdAt: { gte: prevStartDate, lte: prevEndDate } } : { createdAt: { lte: new Date(0) } };
 
         const [
             totalUsers,
             roleCounts,
             venueCounts,
-            bookingAgg,
             pendingVenuesCount,
             matchmakingCount,
-            newUsers7d,
-            todayBookings
+            todayBookings,
+            
+            // Current: CONFIRMED+COMPLETED (booking count)
+            currentBookingsAgg,
+            // Current: COMPLETED only (actual revenue & taxes)
+            currentCompletedAgg,
+            currentNewUsers,
+            
+            // Previous: CONFIRMED+COMPLETED
+            prevBookingsAgg,
+            // Previous: COMPLETED only
+            prevCompletedAgg,
+            prevNewUsers
         ] = await Promise.all([
-            prisma.user.count(),
+            prisma.user.count(),                                          // all-time total
             prisma.user.groupBy({ by: ['role'], _count: { id: true } }),
             prisma.venue.groupBy({ by: ['status'], _count: { id: true } }),
-            prisma.booking.aggregate({
-                _sum: { totalPrice: true, commissionAmount: true },
-                _count: { id: true },
-                where: { status: { in: ['CONFIRMED', 'COMPLETED'] } }
-            }),
             prisma.venue.count({ where: { status: 'PENDING' } }),
-            prisma.matchmakingPost.count(),
-            prisma.user.count({ where: { createdAt: { gte: sevenDaysAgo } } }),
-            prisma.booking.count({ where: { createdAt: { gte: startOfDay } } })
+            prisma.matchmakingPost.count({ where: currentWhere }), // period-filtered
+            prisma.booking.count({ where: { createdAt: { gte: startOfDay } } }),
+            
+            // Current period - CONFIRMED+COMPLETED for bookings count
+            prisma.booking.aggregate({
+                _sum: { 
+                    totalPrice: true, 
+                    commissionAmount: true,
+                    platformFee: true,
+                    platformVat: true,
+                    ownerVat: true,
+                    ownerPit: true
+                },
+                _count: { id: true },
+                where: { 
+                    status: { in: ['CONFIRMED', 'COMPLETED'] },
+                    ...currentWhere
+                }
+            }),
+            // Current period - COMPLETED only for actual revenue
+            prisma.booking.aggregate({
+                _sum: { totalPrice: true, platformFee: true, platformVat: true, ownerVat: true, ownerPit: true },
+                where: { status: 'COMPLETED', ...currentWhere }
+            }),
+            prisma.user.count({ where: currentWhere }),
+
+            // Previous period
+            prisma.booking.aggregate({
+                _sum: { 
+                    totalPrice: true, 
+                    commissionAmount: true,
+                    platformFee: true,
+                    platformVat: true,
+                    ownerVat: true,
+                    ownerPit: true
+                },
+                _count: { id: true },
+                where: { 
+                    status: { in: ['CONFIRMED', 'COMPLETED'] },
+                    ...prevWhere
+                }
+            }),
+            prisma.booking.aggregate({
+                _sum: { totalPrice: true, platformFee: true },
+                where: { status: 'COMPLETED', ...prevWhere }
+            }),
+            prisma.user.count({ where: prevWhere })
         ]);
+
+        const calcTrend = (current, previous) => {
+            if (period === 'all') return 0;
+            if (previous === 0) return current > 0 ? 100 : 0;
+            return Number((((current - previous) / previous) * 100).toFixed(1));
+        };
+
+        // Booking count (CONFIRMED + COMPLETED)
+        const currBookings = currentBookingsAgg._count.id;
+        const prevBookings = prevBookingsAgg._count.id;
+
+        // Doanh thu thực tế = totalPrice của COMPLETED (đã hoàn thành)
+        const currRevenue = Number(currentCompletedAgg._sum.totalPrice || 0);
+        const prevRevenue = Number(prevCompletedAgg._sum.totalPrice || 0);
+
+        // Lợi nhuận sàn = platformFee của COMPLETED
+        // Fallback: nếu platformFee null (booking cũ) → tính 5% totalPrice
+        const currPlatformFeeRaw = Number(currentCompletedAgg._sum.platformFee);
+        const currPlatformFee = currPlatformFeeRaw > 0
+            ? currPlatformFeeRaw
+            : Math.round(currRevenue * 0.05);
+
+        const prevPlatformFeeRaw = Number(prevCompletedAgg._sum.platformFee);
+        const prevPlatformFee = prevPlatformFeeRaw > 0
+            ? prevPlatformFeeRaw
+            : Math.round(prevRevenue * 0.05);
+
+        // Thuế VAT sàn (10% của platformFee)
+        const currPlatformVatRaw = Number(currentCompletedAgg._sum.platformVat);
+        const currPlatformVat = currPlatformVatRaw > 0
+            ? currPlatformVatRaw
+            : Math.round(currPlatformFee * 0.10);
+
+        // Thuế thu hộ chủ sân (ownerVat=5%, ownerPit=2% của totalPrice)
+        const currOwnerVatRaw = Number(currentCompletedAgg._sum.ownerVat);
+        const currOwnerVat = currOwnerVatRaw > 0
+            ? currOwnerVatRaw
+            : Math.round(currRevenue * 0.05);
+
+        const currOwnerPitRaw = Number(currentCompletedAgg._sum.ownerPit);
+        const currOwnerPit = currOwnerPitRaw > 0
+            ? currOwnerPitRaw
+            : Math.round(currRevenue * 0.02);
 
         res.json({
             success: true,
             data: {
                 summary: {
                     totalUsers,
-                    newUsersLast7Days: newUsers7d,
+                    newUsersRange: currentNewUsers,
+                    userTrend: calcTrend(currentNewUsers, prevNewUsers),
+                    
                     totalVenues: venueCounts.reduce((sum, v) => sum + v._count.id, 0),
                     pendingVenues: pendingVenuesCount,
-                    totalBookings: bookingAgg._count.id,
+                    
+                    totalBookings: currBookings,
                     todayBookings,
-                    totalRevenue: Number(bookingAgg._sum.totalPrice || 0),
-                    totalCommission: Number(bookingAgg._sum.commissionAmount || 0),
+                    bookingTrend: calcTrend(currBookings, prevBookings),
+                    
+                    // Doanh thu thực (chỉ COMPLETED)
+                    totalRevenue: currRevenue,
+                    revenueTrend: calcTrend(currRevenue, prevRevenue),
+                    
+                    // Lợi nhuận sàn = platformFee (trước thuế GTGT)
+                    totalCommission: currPlatformFee,
+                    commissionTrend: calcTrend(currPlatformFee, prevPlatformFee),
+
+                    // Doanh thu sàn sau khi tách ra riêng
+                    platformRevenue: currPlatformFee,
+                    platformVat: currPlatformVat,
+                    withheldOwnerVat: currOwnerVat,
+                    withheldOwnerPit: currOwnerPit,
+                    
                     totalMatches: matchmakingCount
                 },
                 roleDistribution: roleCounts.map(r => ({ role: r.role, count: r._count.id })),
@@ -235,6 +382,30 @@ const updateUserRole = async (req, res) => {
 };
 
 /**
+ * Admin: Update a user's tax info  PATCH /api/admin/users/:id/tax-info
+ */
+const updateUserTaxInfo = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { taxCode, address } = req.body;
+
+        const user = await prisma.user.update({
+            where: { id },
+            data: {
+                ...(taxCode !== undefined && { taxCode }),
+                ...(address !== undefined && { address }),
+            },
+            select: { id: true, fullName: true, email: true, taxCode: true, address: true }
+        });
+
+        res.json({ success: true, message: 'Tax info updated', data: { user } });
+    } catch (error) {
+        console.error('Error in updateUserTaxInfo:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+};
+
+/**
  * Admin: Delete a user  DELETE /api/admin/users/:id
  */
 const deleteUser = async (req, res) => {
@@ -253,11 +424,39 @@ const deleteUser = async (req, res) => {
     }
 };
 
+/**
+ * Admin: Get platform settings  GET /api/admin/settings/platform
+ */
+const getPlatformSettings = (req, res) => {
+    try {
+        const settings = getSettings();
+        res.json({ success: true, data: settings });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Không thể đọc cài đặt nền tảng' });
+    }
+};
+
+/**
+ * Admin: Update platform settings  PATCH /api/admin/settings/platform
+ */
+const updatePlatformSettings = (req, res) => {
+    try {
+        const { platformName, taxCode, address, representative } = req.body;
+        const updated = saveSettings({ platformName, taxCode, address, representative });
+        res.json({ success: true, message: 'Cài đặt đã được lưu', data: updated });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Không thể lưu cài đặt nền tảng' });
+    }
+};
+
 module.exports = {
     getDashboardStats,
     getChartData,
     getRecentActivity,
     getUsers,
     updateUserRole,
+    updateUserTaxInfo,
     deleteUser,
+    getPlatformSettings,
+    updatePlatformSettings,
 };

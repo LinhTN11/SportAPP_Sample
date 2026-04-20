@@ -102,9 +102,17 @@ const createBooking = async (req, res, next) => {
 
         const totalPrice = await calculateTotalPrice(fieldId, bookingDate, startTime, endTime);
         const depositRate = parseFloat(process.env.DEFAULT_DEPOSIT_RATE) || 0.10;
-        const commissionRate = parseFloat(field.venue.commissionRate) || 0.05;
         const depositAmount = Math.round(totalPrice * depositRate);
-        const commissionAmount = Math.round(totalPrice * commissionRate);
+
+        // Platform base fee + Platform VAT (10%)
+        const commissionRate = parseFloat(field.venue.commissionRate) || 0.05;
+        const platformFee = Math.round(totalPrice * commissionRate);
+        const platformVat = Math.round(platformFee * 0.10);
+        const commissionAmount = platformFee + platformVat;
+
+        // Owner Taxes: 5% VAT, 2% PIT
+        const ownerVat = Math.round(totalPrice * 0.05);
+        const ownerPit = Math.round(totalPrice * 0.02);
 
         const holdMinutes = field.venue.holdDurationMinutes || 10;
         const holdExpiresAt = new Date(Date.now() + holdMinutes * 60 * 1000);
@@ -119,6 +127,10 @@ const createBooking = async (req, res, next) => {
                 totalPrice,
                 depositAmount,
                 commissionAmount,
+                platformFee,
+                platformVat,
+                ownerVat,
+                ownerPit,
                 paymentMethod,
                 status: 'PENDING_DEPOSIT',
                 holdExpiresAt,

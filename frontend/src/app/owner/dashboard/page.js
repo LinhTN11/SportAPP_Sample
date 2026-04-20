@@ -40,6 +40,7 @@ export default function OwnerDashboardPage() {
         confirmedBookings: 0,
         completedBookings: 0,
         totalRevenue: 0,
+        netRevenue: 0,
         todayRevenue: 0,
         occupancyRate: 0,
     });
@@ -85,10 +86,21 @@ export default function OwnerDashboardPage() {
             const completedBks = allBk.filter(b => b.status === 'COMPLETED');
             const pendingBks = allBk.filter(b => b.status === 'PENDING_DEPOSIT');
             const paidBks = allBk.filter(b => ['CONFIRMED', 'COMPLETED'].includes(b.status));
-            const totalRevenue = paidBks.reduce((s, b) => s + (b.totalPrice || 0), 0);
+            const totalRevenue = paidBks.reduce((s, b) => s + (Number(b.totalPrice) || 0), 0);
+            const netRevenue = paidBks.reduce((s, b) => {
+                const price = Number(b.totalPrice) || 0;
+                const platformFeeTotal = Number(b.commissionAmount) || 0;
+                const ownerTaxes = (Number(b.ownerVat) || 0) + (Number(b.ownerPit) || 0);
+                return s + (price - platformFeeTotal - ownerTaxes);
+            }, 0);
             const todayRevenue = todayBks
                 .filter(b => ['CONFIRMED', 'COMPLETED'].includes(b.status))
-                .reduce((s, b) => s + (b.totalPrice || 0), 0);
+                .reduce((s, b) => {
+                    const price = Number(b.totalPrice) || 0;
+                    const platformFeeTotal = Number(b.commissionAmount) || 0;
+                    const ownerTaxes = (Number(b.ownerVat) || 0) + (Number(b.ownerPit) || 0);
+                    return s + (price - platformFeeTotal - ownerTaxes);
+                }, 0);
             const totalFields = venueList.reduce((s, v) => s + (v.fields?.length || 0), 0);
             const occupancy = allBk.length > 0
                 ? Math.round((confirmedBks.length + completedBks.length) / allBk.length * 100)
@@ -103,6 +115,7 @@ export default function OwnerDashboardPage() {
                 confirmedBookings: confirmedBks.length,
                 completedBookings: completedBks.length,
                 totalRevenue,
+                netRevenue,
                 todayRevenue,
                 occupancyRate: occupancy,
             });
@@ -198,10 +211,11 @@ export default function OwnerDashboardPage() {
                             </svg>
                         </div>
                         <div className={styles.statBody}>
-                            <div className={styles.statValue}>{fmtCurrency(stats.totalRevenue)}đ</div>
-                            <div className={styles.statLabel}>Tổng doanh thu</div>
+                            <div className={styles.statValue}>{fmtCurrency(stats.netRevenue)}đ</div>
+                            <div className={styles.statLabel}>Thu nhập thực tế (Net)</div>
+                            <div className={styles.statSub}>Đã trừ phí sàn & thuế</div>
                             {stats.todayRevenue > 0 && (
-                                <div className={styles.statSub}>+{fmtCurrency(stats.todayRevenue)}đ hôm nay</div>
+                                <div className={styles.statSub} style={{ color: '#10b981', fontWeight: 600 }}>+{fmtCurrency(stats.todayRevenue)}đ hôm nay</div>
                             )}
                         </div>
                     </div>
@@ -363,9 +377,17 @@ export default function OwnerDashboardPage() {
                                     <span className={styles.quickActionIcon}>🔔</span>
                                     <span>Thông báo</span>
                                 </Link>
+                                <Link href="/owner/taxes" className={styles.quickAction}>
+                                    <span className={styles.quickActionIcon}>📑</span>
+                                    <span>Thuế & Chứng từ</span>
+                                </Link>
                                 <Link href="/profile" className={styles.quickAction}>
                                     <span className={styles.quickActionIcon}>👤</span>
                                     <span>Hồ sơ cá nhân</span>
+                                </Link>
+                                <Link href="/support" className={`${styles.quickAction} ${styles.quickActionSupport}`}>
+                                    <span className={styles.quickActionIcon}>🎧</span>
+                                    <span>Liên hệ hỗ trợ</span>
                                 </Link>
                             </div>
                         </div>

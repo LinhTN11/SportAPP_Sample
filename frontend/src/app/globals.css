@@ -2,6 +2,7 @@
    SportApp – Apple-Inspired Design System
    ========================================== */
 
+@import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 /* ── CSS Custom Properties ────────────────── */
@@ -793,5 +794,3 @@ textarea.form-input {
   border: 1px solid var(--border);
   color: var(--text-primary);
 }
-
-@import "tailwindcss";

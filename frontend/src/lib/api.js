@@ -42,10 +42,12 @@ export const authAPI = {
 
 // Users API
 export const usersAPI = {
-    getProfile: () => api.get('/users/profile'),
-    updateProfile: (data) => api.put('/users/profile', data),
-    listUsers: (params) => api.get('/users', { params }),
-    getPublicProfile: (id) => api.get(`/users/${id}/public`),
+    getProfile:       ()           => api.get('/users/profile'),
+    updateProfile:    (data)       => api.put('/users/profile', data),
+    updateTaxInfo:    (data)       => api.put('/users/profile', data), // taxCode, address
+    listUsers:        (params)     => api.get('/users', { params }),
+    getPublicProfile: (id)         => api.get(`/users/${id}/public`),
+    getAdminContact:  ()           => api.get('/users/admin-contact'), // for support chat
 };
 
 // Venues API
@@ -151,13 +153,25 @@ export const chatbotAPI = {
 
 // Admin Dashboard API
 export const adminAPI = {
-    getStats:       ()           => api.get('/admin/stats'),
-    getCharts:      ()           => api.get('/admin/charts'),
-    getActivity:    ()           => api.get('/admin/activity'),
+    getStats:               (params)     => api.get('/admin/stats', { params }),
+    getCharts:              ()           => api.get('/admin/charts'),
+    getActivity:            ()           => api.get('/admin/activity'),
     // User management
-    getUsers:       (params)     => api.get('/admin/users', { params }),
-    updateUserRole: (id, role)   => api.patch(`/admin/users/${id}/role`, { role }),
-    deleteUser:     (id)         => api.delete(`/admin/users/${id}`),
+    getUsers:               (params)     => api.get('/admin/users', { params }),
+    updateUserRole:         (id, role)   => api.patch(`/admin/users/${id}/role`, { role }),
+    updateUserTaxInfo:      (id, data)   => api.patch(`/admin/users/${id}/tax-info`, data),
+    deleteUser:             (id)         => api.delete(`/admin/users/${id}`),
+    // Platform settings
+    getPlatformSettings:    ()           => api.get('/admin/settings/platform'),
+    updatePlatformSettings: (data)       => api.patch('/admin/settings/platform', data),
+};
+
+// Tax API
+export const taxAPI = {
+    getVouchers: () => api.get('/tax/vouchers'),
+    getAllAdminVouchers: () => api.get('/tax/admin/vouchers'),
+    getExport: (id) => api.get(`/tax/vouchers/${id}/export`),
+    generateVouchers: (data) => api.post('/tax/generate', data),
 };
 
 export default api;

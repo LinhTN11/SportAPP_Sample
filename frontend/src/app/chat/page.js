@@ -791,6 +791,9 @@ function ChatApp() {
         const token = localStorage.getItem('sportapp_token');
         if (!token) return;
 
+        // Sync myIdRef with user from auth context to ensure message positioning is correct
+        if (user?.id) myIdRef.current = user.id;
+
         const socket = io(SERVER_URL, { auth: { token } });
         socketRef.current = socket;
 

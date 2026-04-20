@@ -11,6 +11,8 @@ const getProfile = async (req, res, next) => {
                 email: true,
                 fullName: true,
                 phone: true,
+                taxCode: true,
+                address: true,
                 avatarUrl: true,
                 coverImageUrl: true,
                 role: true,
@@ -29,13 +31,15 @@ const getProfile = async (req, res, next) => {
 // PUT /api/users/profile
 const updateProfile = async (req, res, next) => {
     try {
-        const { fullName, phone, avatarUrl, coverImageUrl, preferredLanguage } = req.body;
+        const { fullName, phone, taxCode, address, avatarUrl, coverImageUrl, preferredLanguage } = req.body;
 
         const user = await prisma.user.update({
             where: { id: req.user.id },
             data: {
                 ...(fullName && { fullName }),
                 ...(phone && { phone }),
+                ...(taxCode !== undefined && { taxCode }),
+                ...(address !== undefined && { address }),
                 ...(avatarUrl !== undefined && { avatarUrl }),
                 ...(coverImageUrl !== undefined && { coverImageUrl }),
                 ...(preferredLanguage && { preferredLanguage }),
@@ -45,6 +49,8 @@ const updateProfile = async (req, res, next) => {
                 email: true,
                 fullName: true,
                 phone: true,
+                taxCode: true,
+                address: true,
                 avatarUrl: true,
                 coverImageUrl: true,
                 role: true,
@@ -135,4 +141,21 @@ const getPublicProfile = async (req, res, next) => {
     }
 };
 
-module.exports = { getProfile, updateProfile, listUsers, getPublicProfile };
+// GET /api/users/admin-contact
+// Returns the first ADMIN user for support chat
+const getAdminContact = async (req, res, next) => {
+    try {
+        const admin = await prisma.user.findFirst({
+            where: { role: 'ADMIN' },
+            select: { id: true, fullName: true, avatarUrl: true, email: true },
+        });
+        if (!admin) {
+            return res.status(404).json({ success: false, message: 'Không tìm thấy admin' });
+        }
+        res.json({ success: true, data: { admin } });
+    } catch (error) {
+        next(error);
+    }
+};
+
+module.exports = { getProfile, updateProfile, listUsers, getPublicProfile, getAdminContact };

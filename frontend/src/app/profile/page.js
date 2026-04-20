@@ -513,6 +513,12 @@ export default function ProfilePage() {
                                     </div>
                                     <strong>Thông báo</strong>
                                 </button>
+                                <button className={`${styles.linkCard} ${styles.supportLink}`} onClick={() => router.push('/support')}>
+                                    <div className={`${styles.linkIconWrap}`} style={{ background: '#ecfdf5' }}>
+                                        <span style={{ fontSize: '24px' }}>🎧</span>
+                                    </div>
+                                    <strong>Hỗ trợ</strong>
+                                </button>
                             </div>
                         </div>
                     </div>
