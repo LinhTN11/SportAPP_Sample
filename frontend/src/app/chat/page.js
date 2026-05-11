@@ -444,16 +444,24 @@ function ChatApp() {
     const [isSuggestModalOpen, setIsSuggestModalOpen] = useState(false);
     const [suggestedVenues, setSuggestedVenues] = useState([]);
     const [isLoadingVenues, setIsLoadingVenues] = useState(false);
+    const [onlineUserIds, setOnlineUserIds] = useState(new Set());
     
     const messagesEndRef = useRef(null);
     const composeRef = useRef(null);
     const fileInputRef = useRef(null);
     const socketRef = useRef(null);
-    const myIdRef = useRef(null);
-    const activeConvIdRef = useRef(null);
+    const myIdRef = useRef(user?.id || null);
+    const activeConvIdRef = useRef(activeConvId);
     const typingTimeoutsRef = useRef({});
     const lastTypingEmitRef = useRef(0);
     const geoLocationRef = useRef(null);
+
+    // Ensure myIdRef is always up to date with the authenticated user
+    useEffect(() => {
+        if (user?.id) {
+            myIdRef.current = user.id;
+        }
+    }, [user?.id]);
 
     useEffect(() => {
         activeConvIdRef.current = activeConvId;
@@ -475,7 +483,10 @@ function ChatApp() {
         if (activeTab === 'venues') return matchSearch && c.type === 'venue';
         if (activeTab === 'users') return matchSearch && c.type === 'user';
         return matchSearch;
-    });
+    }).map(c => ({
+        ...c,
+        online: c.type === 'bot' || (c.targetUserId && onlineUserIds.has(c.targetUserId))
+    }));
 
     const botConvs = filteredConvs.filter(c => c.type === 'bot');
     const userConvs = filteredConvs.filter(c => c.type === 'user');
@@ -773,9 +784,11 @@ function ChatApp() {
 
                         const formattedMsgs = msgsList.map(m => ({
                             id: m.id,
-                            type: m.senderId === targetUserId ? 'incoming' : 'outgoing',
+                            type: m.type === 'SYSTEM' ? 'system' : (m.senderId === myIdRef.current ? 'outgoing' : 'incoming'),
+                            isOutgoing: m.senderId === myIdRef.current,
                             originalType: m.type,
                             text: m.content,
+                            data: m.type === 'SYSTEM' ? (() => { try { return JSON.parse(m.content); } catch(e) { return null; } })() : null,
                             time: new Date(m.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
                             read: m.isRead
                         }));
@@ -796,7 +809,7 @@ function ChatApp() {
         const token = localStorage.getItem('sportapp_token');
         if (!token) return;
 
-        // Sync myIdRef with user from auth context to ensure message positioning is correct
+        // Ensure myIdRef is set before socket operations
         if (user?.id) myIdRef.current = user.id;
 
         const socket = io(SERVER_URL, { auth: { token } });
@@ -834,6 +847,22 @@ function ChatApp() {
             }));
         });
 
+        socket.on('online_users', (ids) => {
+            setOnlineUserIds(new Set(ids));
+        });
+
+        socket.on('user_online', ({ userId }) => {
+            setOnlineUserIds(prev => new Set([...prev, userId]));
+        });
+
+        socket.on('user_offline', ({ userId }) => {
+            setOnlineUserIds(prev => {
+                const next = new Set(prev);
+                next.delete(userId);
+                return next;
+            });
+        });
+
         function handleIncomingMessage(m) {
             setMessages(prev => {
                 const arr = prev[m.roomId] || [];
@@ -847,6 +876,7 @@ function ChatApp() {
                     isOutgoing: isOutgoing, // Added explicit flag for positioning
                     originalType: m.type,
                     text: m.content,
+                    data: m.type === 'SYSTEM' ? (() => { try { return JSON.parse(m.content); } catch(e) { return null; } })() : null,
                     time: new Date(m.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
                     read: m.isRead
                 };
@@ -948,7 +978,7 @@ function ChatApp() {
                         lastMsg: r.lastMessage ? formatLastMsg(r.lastMessage.content, r.lastMessage.type) : 'Bắt đầu cuộc trò chuyện...',
                         time: r.lastMessage ? new Date(r.lastMessage.createdAt).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'}) : '',
                         unread: r.unreadCount || 0,
-                        online: true,
+                        online: false,
                         avatarGradient: isVenue ? 'linear-gradient(135deg, #0066FF, #5E5CE6)' : 'linear-gradient(135deg, #FF6E40, #D81B60)',
                         targetUserId: partner.id,
                         isReal: true
@@ -991,6 +1021,7 @@ function ChatApp() {
                         isOutgoing: m.senderId === myIdRef.current, // Added here too
                         originalType: m.type,
                         text: m.content,
+                        data: m.type === 'SYSTEM' ? (() => { try { return JSON.parse(m.content); } catch(e) { return null; } })() : null,
                         time: new Date(m.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
                         read: m.isRead
                     }));

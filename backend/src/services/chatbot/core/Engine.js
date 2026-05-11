@@ -11,9 +11,21 @@ const {
 } = require('../utils/toolCallFallback');
 
 const { resolveId } = require('../utils/resolver');
-const LM_STUDIO_URL = process.env.LM_STUDIO_URL || 'http://127.0.0.1:1234';
-const LM_STUDIO_MODEL = process.env.LM_STUDIO_MODEL || 'qwen2.5-7b-instruct-1m';
 const { normalizeText, normalizeSearchText } = require('../utils/fuzzySearch');
+const AI_API_URL = process.env.AI_API_URL || 'https://openrouter.ai/api/v1';
+const AI_MODEL = process.env.AI_MODEL || 'google/gemini-2.0-flash-001';
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+
+// Create axios instance for AI calls
+const aiApi = axios.create({
+    baseURL: AI_API_URL,
+    headers: {
+        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+        'HTTP-Referer': 'https://sportapp.vn', // Optional for OpenRouter
+        'X-Title': 'SportApp', // Optional for OpenRouter
+        'Content-Type': 'application/json'
+    }
+});
 
 function normalizeIntentText(input) {
     if (!input) return '';
@@ -96,8 +108,8 @@ Quy tắc:
     ];
 
     try {
-        const response = await axios.post(`${LM_STUDIO_URL}/v1/chat/completions`, {
-            model: LM_STUDIO_MODEL,
+        const response = await aiApi.post('/chat/completions', {
+            model: AI_MODEL,
             messages,
             temperature: 0,
         });
@@ -537,10 +549,10 @@ class ChatbotEngine {
             }
 
             // 7. API Call to LLM
-            console.log(`[AI Engine] Sending turn to LLM (${LM_STUDIO_MODEL})...`);
+            console.log(`[AI Engine] Sending turn to LLM (${AI_MODEL})...`);
             
-            const response = await axios.post(`${LM_STUDIO_URL}/v1/chat/completions`, {
-                model: LM_STUDIO_MODEL,
+            const response = await aiApi.post('/chat/completions', {
+                model: AI_MODEL,
                 messages,
                 tools: tools.length > 0 ? tools : undefined,
                 tool_choice,
@@ -652,8 +664,8 @@ class ChatbotEngine {
                 }
 
                 console.log(`[AI Engine] Sending tool results back to LLM for final response...`);
-                const secondResponse = await axios.post(`${LM_STUDIO_URL}/v1/chat/completions`, {
-                    model: LM_STUDIO_MODEL,
+                const secondResponse = await aiApi.post('/chat/completions', {
+                    model: AI_MODEL,
                     messages: [
                         ...messages,
                         message, 
