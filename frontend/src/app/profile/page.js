@@ -11,7 +11,7 @@ import {
     Edit2, Save, X, Camera,
     Building2, Users, Star, Trophy,
     MessageCircle, Bell, ClipboardList, CheckSquare,
-    CalendarX, ArrowRight
+    CalendarX, ArrowRight, Headphones
 } from 'lucide-react';
 import styles from './profile.module.css';
 
@@ -23,7 +23,7 @@ export default function ProfilePage() {
     });
     const [editing, setEditing] = useState(false);
     const [saving, setSaving] = useState(false);
-    const [message, setMessage] = useState('');
+    const [message, setMessage] = useState(null);
     const [activeTab, setActiveTab] = useState('overview');
     const [recentBookings, setRecentBookings] = useState([]);
     const [bookingsLoading, setBookingsLoading] = useState(false);
@@ -68,15 +68,15 @@ export default function ProfilePage() {
     const handleSave = async (e) => {
         e.preventDefault();
         setSaving(true);
-        setMessage('');
+        setMessage(null);
         try {
             const { data } = await usersAPI.updateProfile(form);
             updateUser(data.data.user);
             setEditing(false);
-            setMessage('✅ Cập nhật thành công!');
-            setTimeout(() => setMessage(''), 3000);
+            setMessage({ text: 'Cập nhật thành công!', type: 'success' });
+            setTimeout(() => setMessage(null), 3000);
         } catch (err) {
-            setMessage('❌ ' + (err.response?.data?.message || 'Cập nhật thất bại'));
+            setMessage({ text: err.response?.data?.message || 'Cập nhật thất bại', type: 'error' });
         } finally { setSaving(false); }
     };
     const loadReviews = async () => {
@@ -273,10 +273,12 @@ export default function ProfilePage() {
 
                                 {message && (
                                     <div className={styles.message} style={{ 
-                                        background: message.startsWith('✅') ? '#F0FDF4' : '#FEF2F2',
-                                        color: message.startsWith('✅') ? '#10B981' : '#DC2626'
+                                        background: message.type === 'success' ? '#F0FDF4' : '#FEF2F2',
+                                        color: message.type === 'success' ? '#10B981' : '#DC2626',
+                                        display: 'flex', alignItems: 'center', gap: '8px'
                                     }}>
-                                        {message}
+                                        {message.type === 'success' ? <CheckCircle size={18} /> : <XCircle size={18} />}
+                                        {message.text}
                                     </div>
                                 )}
 
@@ -322,7 +324,7 @@ export default function ProfilePage() {
                                         <button 
                                             type="button" 
                                             className={styles.cancelButton} 
-                                            onClick={() => { setEditing(false); setMessage(''); }}
+                                            onClick={() => { setEditing(false); setMessage(null); }}
                                         >
                                             <X size={16} />
                                             Hủy
@@ -514,8 +516,8 @@ export default function ProfilePage() {
                                     <strong>Thông báo</strong>
                                 </button>
                                 <button className={`${styles.linkCard} ${styles.supportLink}`} onClick={() => router.push('/support')}>
-                                    <div className={`${styles.linkIconWrap}`} style={{ background: '#ecfdf5' }}>
-                                        <span style={{ fontSize: '24px' }}>🎧</span>
+                                    <div className={`${styles.linkIconWrap}`} style={{ background: '#ecfdf5', color: '#10b981' }}>
+                                        <Headphones size={24} />
                                     </div>
                                     <strong>Hỗ trợ</strong>
                                 </button>

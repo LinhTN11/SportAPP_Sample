@@ -1,6 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
+@source "./**/*.{js,ts,jsx,tsx,mdx}";
+@source "../components/**/*.{js,ts,jsx,tsx,mdx}";
+
 /* ==========================================
    SportApp – Apple-Inspired Design System
    ========================================== */
@@ -10,6 +13,7 @@
   /* Brand gradient */
   --brand-start: #FF6E40;
   --brand-end: #D81B60;
+  --brand-bg: #FFF2EE;    /* light tint for hover/active backgrounds */
 
   /* Colors – Sophisticated blue palette */
   --primary: #0071E3;
@@ -258,12 +262,12 @@ img {
 }
 
 .btn-primary {
-  background: var(--primary);
+  background: var(--brand-start);
   color: var(--text-inverse);
 }
 
 .btn-primary:hover {
-  background: var(--primary-hover);
+  background: #FF8157;
   transform: scale(1.02);
 }
 
@@ -430,7 +434,7 @@ textarea.form-input {
   width: 40px;
   height: 40px;
   border-radius: var(--radius-full);
-  background: linear-gradient(135deg, var(--primary), var(--accent));
+  background: var(--brand-start);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -504,10 +508,149 @@ textarea.form-input {
 }
 
 /* ── Global Sport Colors ─────────────────── */
-.sport-color-football { color: var(--primary) !important; }
+/* Text-only (for icons standalone) */
+.sport-color-football  { color: var(--brand-start) !important; }
 .sport-color-badminton { color: var(--warning) !important; }
-.sport-color-tennis { color: var(--warning) !important; }
-.sport-color-basketball { color: var(--danger) !important; }
-.sport-color-volleyball { color: var(--accent) !important; }
-.sport-color-pickleball { color: var(--success) !important; }
-.sport-color-default { color: var(--text-secondary) !important; }
+.sport-color-tennis    { color: var(--warning) !important; }
+.sport-color-basketball{ color: var(--danger)  !important; }
+.sport-color-volleyball{ color: var(--accent)  !important; }
+.sport-color-pickleball{ color: var(--success) !important; }
+.sport-color-default   { color: var(--text-secondary) !important; }
+
+/* Background + text when inside .sport-tag — matches .badge color system */
+.sport-tag.sport-color-football  { background: var(--brand-bg);      color: var(--brand-start)    !important; }
+.sport-tag.sport-color-badminton { background: var(--warning-bg);    color: #A66800               !important; }
+.sport-tag.sport-color-tennis    { background: var(--warning-bg);    color: #A66800               !important; }
+.sport-tag.sport-color-basketball{ background: var(--danger-bg);     color: var(--danger)         !important; }
+.sport-tag.sport-color-volleyball{ background: var(--accent-light);  color: var(--accent)         !important; }
+.sport-tag.sport-color-pickleball{ background: var(--success-bg);    color: #1B8A36               !important; }
+.sport-tag.sport-color-default   { background: var(--bg-tertiary);   color: var(--text-secondary) !important; }
+
+/* ── Sport Tag ───────────────────────────── */
+/* Follows .badge design: pill, bg-tertiary, text-secondary */
+.sport-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+
+/* ── Tab Filter ──────────────────────────── */
+/* Follows .btn design system: pill shape, no border on inactive */
+.tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  border: none;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.tab:hover {
+  background: var(--border);
+  color: var(--text-primary);
+}
+
+.tab.active {
+  background: var(--brand-start);
+  color: var(--text-inverse);
+}
+
+.tab.active:hover {
+  background: #FF8157;
+}
+
+/* ── Modal Header & Close ────────────────── */
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.modal-close {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  border: none;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-size: 18px;
+  font-weight: 400;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.modal-close:hover {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+/* ── Empty State ─────────────────────────── */
+.empty-state {
+  text-align: center;
+  padding: var(--space-3xl) var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.empty-state-icon {
+  color: var(--text-tertiary);
+  margin-bottom: var(--space-sm);
+}
+
+.empty-state-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.empty-state-text {
+  font-size: 14px;
+  color: var(--text-secondary);
+  max-width: 360px;
+  line-height: 1.6;
+}
+
+/* ── Skeleton ────────────────────────────── */
+.skeleton {
+  background: linear-gradient(90deg, #F3F4F6 0%, #E5E7EB 50%, #F3F4F6 100%);
+  background-size: 200% 100%;
+  border-radius: var(--radius-sm);
+  animation: shimmer 1.5s infinite;
+}
+
+/* ── Spinner ─────────────────────────────── */
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}

@@ -4,6 +4,7 @@ import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth';
+import { User, Home, AlertTriangle } from 'lucide-react';
 import styles from '../login/auth.module.css';
 
 function RegisterForm() {
@@ -59,7 +60,7 @@ function RegisterForm() {
                         className={`${styles.roleOption} ${form.role === 'CUSTOMER' ? styles.selected : ''}`}
                         onClick={() => setForm({ ...form, role: 'CUSTOMER' })}
                     >
-                        <span className={styles.roleIcon}>👤</span>
+                        <span className={styles.roleIcon}><User size={24} /></span>
                         <span className={styles.roleLabel}>Khách hàng</span>
                         <span className={styles.roleDesc}>Đặt sân & ghép trận</span>
                     </button>
@@ -68,7 +69,7 @@ function RegisterForm() {
                         className={`${styles.roleOption} ${form.role === 'OWNER' ? styles.selected : ''}`}
                         onClick={() => setForm({ ...form, role: 'OWNER' })}
                     >
-                        <span className={styles.roleIcon}>🏠</span>
+                        <span className={styles.roleIcon}><Home size={24} /></span>
                         <span className={styles.roleLabel}>Chủ sân</span>
                         <span className={styles.roleDesc}>Quản lý & cho thuê sân</span>
                     </button>
@@ -76,7 +77,7 @@ function RegisterForm() {
 
                 {error && (
                     <div className={styles.errorBox}>
-                        <span className={styles.errorIcon}>⚠️</span>
+                        <span className={styles.errorIcon}><AlertTriangle size={18} /></span>
                         {error}
                     </div>
                 )}

@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { bookingsAPI, reviewsAPI } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { CalendarDays, Clock, Wallet, X, Star, Send, MessageSquare, Sparkles } from 'lucide-react';
+import { CalendarDays, Clock, Wallet, X, Star, Send, MessageSquare, Sparkles, Calendar, Building2 } from 'lucide-react';
 import styles from './bookings.module.css';
 import PaymentQRModal from '@/components/PaymentQR/PaymentQRModal';
 import CountdownTimer from '@/components/PaymentQR/CountdownTimer';
@@ -28,11 +28,11 @@ export default function BookingsPage() {
     const [reviewDone, setReviewDone] = useState(false);
 
     const RATING_LABELS = {
-        1: 'Rất tệ 😞',
-        2: 'Tệ 😕',
-        3: 'Bình thường 😐',
-        4: 'Tốt 😊',
-        5: 'Tuyệt vời 🤩',
+        1: 'Rất tệ',
+        2: 'Tệ',
+        3: 'Bình thường',
+        4: 'Tốt',
+        5: 'Tuyệt vời',
     };
     const activeRating = hoveredStar || rating;
 
@@ -151,7 +151,7 @@ export default function BookingsPage() {
                     </div>
                 ) : bookings.length === 0 ? (
                     <div className="empty-state">
-                        <div className="empty-state-icon">📅</div>
+                        <div className="empty-state-icon"><Calendar size={48} color="#D1D5DB" /></div>
                         <div className="empty-state-title">Chưa có đặt sân nào</div>
                         <div className="empty-state-text">Bắt đầu tìm sân và đặt ngay!</div>
                         <button className="btn btn-primary" onClick={() => router.push('/venues')}>
@@ -173,7 +173,7 @@ export default function BookingsPage() {
                                             <img src={imgSrc} alt={booking.field?.venue?.name} />
                                         </div>
                                     ) : (
-                                        <div className={styles.imagePlaceholder}>⚽</div>
+                                        <div className={styles.imagePlaceholder}><Building2 size={24} color="#9CA3AF" /></div>
                                     )}
 
                                     {/* Card Body */}
@@ -222,7 +222,7 @@ export default function BookingsPage() {
                                                 )}
                                                 {['CONFIRMED', 'COMPLETED'].includes(booking.status) && !booking.review && (
                                                     <button className={styles.btnReview} onClick={() => setShowReviewModal(booking.id)}>
-                                                        ⭐ Đánh giá
+                                                        <Star size={16} style={{ display: 'inline', verticalAlign: 'text-bottom' }} /> Đánh giá
                                                     </button>
                                                 )}
                                                 {booking.status === 'PENDING_DEPOSIT' && (

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { venuesAPI, bookingsAPI } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { Hand, Clock, CheckCircle, Trophy, Inbox, Building2, Plus, ClipboardList, Bell, FileText, User, Headphones } from 'lucide-react';
 import styles from './dashboard.module.css';
 
 const statusMap = {
@@ -164,7 +165,7 @@ export default function OwnerDashboardPage() {
             <div className={styles.welcomeBanner}>
                 <div className={styles.welcomeInner}>
                     <div>
-                        <div className={styles.welcomeGreet}>Xin chào trở lại 👋</div>
+                        <div className={styles.welcomeGreet}>Xin chào trở lại <Hand size={20} style={{ display: 'inline-block', verticalAlign: 'text-bottom' }} /></div>
                         <h1 className={styles.welcomeName}>{user?.fullName}</h1>
                         <p className={styles.welcomeSub}>
                             Bạn đang quản lý <strong>{stats.approvedVenues}</strong> sân hoạt động
@@ -252,9 +253,9 @@ export default function OwnerDashboardPage() {
                 {/* ── Booking Status Summary ── */}
                 <div className={styles.statusRow}>
                     {[
-                        { key: 'pendingBookings', label: 'Chờ cọc', icon: '⏳', color: '#f59e0b' },
-                        { key: 'confirmedBookings', label: 'Đã xác nhận', icon: '✅', color: '#10b981' },
-                        { key: 'completedBookings', label: 'Hoàn thành', icon: '🏆', color: '#6366f1' },
+                        { key: 'pendingBookings', label: 'Chờ cọc', icon: <Clock size={16} />, color: '#f59e0b' },
+                        { key: 'confirmedBookings', label: 'Đã xác nhận', icon: <CheckCircle size={16} />, color: '#10b981' },
+                        { key: 'completedBookings', label: 'Hoàn thành', icon: <Trophy size={16} />, color: '#6366f1' },
                     ].map(item => (
                         <div key={item.key} className={styles.statusChip} style={{ '--chip-color': item.color }}>
                             <span className={styles.statusChipIcon}>{item.icon}</span>
@@ -280,7 +281,7 @@ export default function OwnerDashboardPage() {
 
                         {recentBookings.length === 0 ? (
                             <div className={styles.emptyPanel}>
-                                <span>📭</span>
+                                <Inbox size={32} color="#9ca3af" />
                                 <p>Chưa có đơn đặt sân nào</p>
                             </div>
                         ) : (
@@ -333,7 +334,7 @@ export default function OwnerDashboardPage() {
 
                         {venues.length === 0 ? (
                             <div className={styles.emptyPanel}>
-                                <span>🏟️</span>
+                                <Building2 size={32} color="#9ca3af" />
                                 <p>Chưa có sân nào</p>
                                 <Link href="/owner/venues" className={styles.addVenueBtn}>
                                     + Thêm sân mới
@@ -345,7 +346,7 @@ export default function OwnerDashboardPage() {
                                     const vs = venueStatusMap[v.status] || venueStatusMap.PENDING;
                                     return (
                                         <div key={v.id} className={styles.venueItem}>
-                                            <div className={styles.venueItemIcon}>🏟️</div>
+                                            <div className={styles.venueItemIcon}><Building2 size={24} /></div>
                                             <div className={styles.venueItemInfo}>
                                                 <div className={styles.venueItemName}>{v.name}</div>
                                                 <div className={styles.venueItemSub}>
@@ -366,27 +367,27 @@ export default function OwnerDashboardPage() {
                             <div className={styles.quickActionsTitle}>Thao tác nhanh</div>
                             <div className={styles.quickActionsList}>
                                 <Link href="/owner/venues" className={styles.quickAction}>
-                                    <span className={styles.quickActionIcon}>➕</span>
+                                    <span className={styles.quickActionIcon}><Plus size={18} /></span>
                                     <span>Thêm sân mới</span>
                                 </Link>
                                 <Link href="/owner/bookings" className={styles.quickAction}>
-                                    <span className={styles.quickActionIcon}>📋</span>
+                                    <span className={styles.quickActionIcon}><ClipboardList size={18} /></span>
                                     <span>Xem lịch đặt</span>
                                 </Link>
                                 <Link href="/notifications" className={styles.quickAction}>
-                                    <span className={styles.quickActionIcon}>🔔</span>
+                                    <span className={styles.quickActionIcon}><Bell size={18} /></span>
                                     <span>Thông báo</span>
                                 </Link>
                                 <Link href="/owner/taxes" className={styles.quickAction}>
-                                    <span className={styles.quickActionIcon}>📑</span>
+                                    <span className={styles.quickActionIcon}><FileText size={18} /></span>
                                     <span>Thuế & Chứng từ</span>
                                 </Link>
                                 <Link href="/profile" className={styles.quickAction}>
-                                    <span className={styles.quickActionIcon}>👤</span>
+                                    <span className={styles.quickActionIcon}><User size={18} /></span>
                                     <span>Hồ sơ cá nhân</span>
                                 </Link>
                                 <Link href="/support" className={`${styles.quickAction} ${styles.quickActionSupport}`}>
-                                    <span className={styles.quickActionIcon}>🎧</span>
+                                    <span className={styles.quickActionIcon}><Headphones size={18} /></span>
                                     <span>Liên hệ hỗ trợ</span>
                                 </Link>
                             </div>

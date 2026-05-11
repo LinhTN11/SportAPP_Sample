@@ -30,7 +30,7 @@
 .gradientOrb1 {
     width: 500px;
     height: 500px;
-    background: linear-gradient(135deg, #FF6E40, #D81B60);
+    background: #FF6E40;
     top: -150px;
     right: -150px;
 }
@@ -88,10 +88,7 @@
 .authLogo {
     font-size: 32px;
     font-weight: 800;
-    background: linear-gradient(135deg, #FF6E40, #D81B60);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: #FF6E40;
     margin-bottom: 2rem;
     letter-spacing: -0.02em;
     position: relative;
@@ -106,7 +103,7 @@
     transform: translateX(-50%);
     width: 60px;
     height: 4px;
-    background: linear-gradient(90deg, #FF6E40, #D81B60);
+    background: #FF6E40;
     border-radius: 2px;
 }
 
@@ -155,7 +152,7 @@
 
 .roleOption.selected {
     border-color: #FF6E40;
-    background: linear-gradient(135deg, rgba(255, 110, 64, 0.08), rgba(216, 27, 96, 0.05));
+    background: rgba(255, 110, 64, 0.08);
     box-shadow: 0 4px 16px rgba(255, 110, 64, 0.2);
 }
 
@@ -217,7 +214,7 @@
 .authBtn {
     width: 100%;
     padding: 1rem;
-    background: linear-gradient(135deg, #FF6E40, #D81B60);
+    background: #FF6E40;
     border: none;
     border-radius: 12px;
     color: white;
@@ -280,7 +277,7 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05));
+    background: rgba(239, 68, 68, 0.1);
     border: 1px solid rgba(239, 68, 68, 0.3);
     border-radius: 12px;
     padding: 1rem;
@@ -340,7 +337,7 @@
 .demoBtn:hover {
     transform: translateY(-2px);
     border-color: #FF6E40;
-    background: linear-gradient(135deg, rgba(255, 110, 64, 0.05), rgba(216, 27, 96, 0.02));
+    background: rgba(255, 110, 64, 0.05);
     box-shadow: 0 4px 12px rgba(255, 110, 64, 0.15);
 }
 
@@ -360,7 +357,7 @@
 }
 
 .authSwitch a:hover {
-    color: #D81B60;
+    color: #FF8157;
     text-decoration: underline;
 }
 

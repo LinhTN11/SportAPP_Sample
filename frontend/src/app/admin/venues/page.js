@@ -9,9 +9,9 @@ import { useAuth } from '@/lib/auth';
 import {
     MapPin, Clock, User, Phone, ChevronDown, CheckCircle2,
     XCircle, Shield, Calendar, Image as ImageIcon, Building2,
-    FileText,
+    FileText, ClipboardList, CheckCircle
 } from 'lucide-react';
-import { getSportIcon, getSportLabel } from '@/components/venue/SportIcons';
+import { getSportIcon, getSportLabel, getSportColorClass } from '@/components/venue/SportIcons';
 import StatusBadge from '@/components/ui/StatusBadge';
 import styles from './admin.module.css';
 
@@ -77,7 +77,7 @@ export default function AdminVenuesPage() {
         setActionLoading(venueId);
         try {
             await venuesAPI.approve(venueId);
-            showToast('Đã duyệt sân thành công! ✅');
+            showToast('Đã duyệt sân thành công!');
             loadVenues();
             setExpandedId(null);
         } catch (err) {
@@ -178,7 +178,7 @@ export default function AdminVenuesPage() {
                 ) : filteredVenues.length === 0 ? (
                     <div className="empty-state">
                         <div className="empty-state-icon">
-                            {filter === 'PENDING' ? '📋' : filter === 'APPROVED' ? '✅' : filter === 'REJECTED' ? '❌' : '🏟️'}
+                            {filter === 'PENDING' ? <ClipboardList size={48} color="#D1D5DB" /> : filter === 'APPROVED' ? <CheckCircle size={48} color="#D1D5DB" /> : filter === 'REJECTED' ? <XCircle size={48} color="#D1D5DB" /> : <Building2 size={48} color="#D1D5DB" />}
                         </div>
                         <div className="empty-state-title">
                             {filter === 'PENDING' ? 'Không có sân chờ duyệt' : `Không có sân ${filter === 'APPROVED' ? 'đã duyệt' : filter === 'REJECTED' ? 'bị từ chối' : ''}`}
@@ -240,8 +240,9 @@ export default function AdminVenuesPage() {
                                         {venue.sportTypes?.length > 0 && (
                                             <div className={styles.venueSportTags}>
                                                 {venue.sportTypes.map(st => (
-                                                    <span key={st} className="sport-tag">
-                                                        {getSportIcon(st)} {getSportLabel(st)}
+                                                    <span key={st} className={`sport-tag ${getSportColorClass(st)}`}>
+                                                        <span style={{ display: 'flex' }}>{getSportIcon(st)}</span>
+                                                        {getSportLabel(st)}
                                                     </span>
                                                 ))}
                                             </div>

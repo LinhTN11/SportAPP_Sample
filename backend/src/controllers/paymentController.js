@@ -55,7 +55,7 @@ const mockPay = async (req, res, next) => {
                 data: {
                     userId: booking.customerId,
                     type: 'PAYMENT_SUCCESS',
-                    title: 'Payment successful! ✅',
+                    title: 'Payment successful!',
                     body: `Your payment of ${Number(paymentAmount).toLocaleString('vi-VN')}đ has been confirmed.`,
                     data: { bookingId: booking.id, paymentId: payment.id },
                 },
@@ -65,7 +65,7 @@ const mockPay = async (req, res, next) => {
                 data: {
                     userId: booking.field.venue.ownerId,
                     type: 'BOOKING_CONFIRMED',
-                    title: 'New booking confirmed! 📅',
+                    title: 'New booking confirmed!',
                     body: `A customer booked ${booking.field.name} on ${booking.bookingDate.toISOString().split('T')[0]}`,
                     data: { bookingId: booking.id },
                 },
@@ -81,7 +81,7 @@ const mockPay = async (req, res, next) => {
                 data: {
                     userId: booking.customerId,
                     type: 'PAYMENT_FAILED',
-                    title: 'Payment failed ❌',
+                    title: 'Payment failed',
                     body: `Your payment failed. Please try again before the hold expires.`,
                     data: { bookingId: booking.id },
                 },

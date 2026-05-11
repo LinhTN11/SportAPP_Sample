@@ -72,12 +72,19 @@ export default function VenueCard({
 
                 {/* Rating */}
                 <div className={styles.rating}>
-                    {[1, 2, 3, 4, 5].map(s => (
-                        <Star key={s} size={14}
-                            fill={s <= Math.round(venue.avgRating || 0) ? '#FFC107' : 'none'}
-                            color="#FFC107"
-                        />
-                    ))}
+                    <div style={{ display: 'flex', gap: '2px', alignItems: 'center' }}>
+                        {[1, 2, 3, 4, 5].map(s => {
+                            const fillPercent = Math.max(0, Math.min(1, (venue.avgRating || 0) - (s - 1))) * 100;
+                            return (
+                                <div key={s} style={{ position: 'relative', display: 'inline-block', width: 14, height: 14 }}>
+                                    <Star size={14} color="#FFC107" strokeWidth={2} style={{ position: 'absolute', left: 0, top: 0 }} />
+                                    <div style={{ position: 'absolute', left: 0, top: 0, width: `${fillPercent}%`, overflow: 'hidden' }}>
+                                        <Star size={14} fill="#FFC107" color="#FFC107" strokeWidth={2} />
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
                     <span className={styles.ratingValue}>
                         {venue.avgRating?.toFixed(1) || '0.0'}
                     </span>
@@ -113,20 +120,21 @@ export default function VenueCard({
                 {venue.sportTypes?.length > 0 && (
                     <div className={styles.sportTags}>
                         {venue.sportTypes.slice(0, 2).map(st => (
-                            <span key={st} className="sport-tag">
-                                <span className={getSportColorClass(st)} style={{ display: 'flex' }}>
+                            <span key={st} className={`sport-tag ${getSportColorClass(st)}`}>
+                                <span style={{ display: 'flex' }}>
                                     {getSportIcon(st)}
                                 </span>
                                 {getSportLabel(st)}
                             </span>
                         ))}
                         {venue.sportTypes.length > 2 && (
-                            <span className="sport-tag" style={{ color: 'var(--text-secondary)' }}>
+                            <span className="sport-tag sport-color-default">
                                 +{venue.sportTypes.length - 2}
                             </span>
                         )}
                     </div>
                 )}
+
             </div>
 
             {/* Action bar — owner mode only */}

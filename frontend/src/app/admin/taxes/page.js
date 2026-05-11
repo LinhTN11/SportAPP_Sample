@@ -270,7 +270,7 @@ export default function AdminTaxesPage() {
                                 {isEditingPlatform ? (
                                     <input type="text" value={platformSettings.taxCode} onChange={e => setPlatformSettings(p => ({ ...p, taxCode: e.target.value }))} placeholder="VD: 0101234567" style={{ width: '100%', padding: '11px 14px', borderRadius: '10px', border: `2px solid ${platformSettings.taxCode ? '#3b82f6' : '#fed7aa'}`, fontSize: '14px', outline: 'none', boxSizing: 'border-box', fontFamily: 'monospace', letterSpacing: '1px' }} />
                                 ) : (
-                                    <div style={{ padding: '11px 14px', borderRadius: '10px', background: '#f8fafc', border: `1px solid ${platformSettings.taxCode ? '#e2e8f0' : '#fca5a5'}`, fontSize: '14px', fontFamily: 'monospace', letterSpacing: '1px', color: platformSettings.taxCode ? '#0f172a' : '#dc2626', fontStyle: platformSettings.taxCode ? 'normal' : 'italic' }}>{platformSettings.taxCode || '⚠ Chưa cập nhật'}</div>
+                                    <div style={{ padding: '11px 14px', borderRadius: '10px', background: '#f8fafc', border: `1px solid ${platformSettings.taxCode ? '#e2e8f0' : '#fca5a5'}`, fontSize: '14px', fontFamily: 'monospace', letterSpacing: '1px', color: platformSettings.taxCode ? '#0f172a' : '#dc2626', fontStyle: platformSettings.taxCode ? 'normal' : 'italic' }}>{platformSettings.taxCode || 'Chưa cập nhật'}</div>
                                 )}
                             </div>
                             {/* Người đại diện */}
@@ -288,7 +288,7 @@ export default function AdminTaxesPage() {
                                 {isEditingPlatform ? (
                                     <textarea value={platformSettings.address} onChange={e => setPlatformSettings(p => ({ ...p, address: e.target.value }))} placeholder="VD: Tòa nhà Landmark 81, TP. Hồ Chí Minh" rows={2} style={{ width: '100%', padding: '11px 14px', borderRadius: '10px', border: `2px solid ${platformSettings.address ? '#3b82f6' : '#fed7aa'}`, fontSize: '14px', outline: 'none', resize: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
                                 ) : (
-                                    <div style={{ padding: '11px 14px', borderRadius: '10px', background: '#f8fafc', border: `1px solid ${platformSettings.address ? '#e2e8f0' : '#fca5a5'}`, fontSize: '14px', color: platformSettings.address ? '#0f172a' : '#dc2626', fontStyle: platformSettings.address ? 'normal' : 'italic', minHeight: '48px' }}>{platformSettings.address || '⚠ Chưa cập nhật'}</div>
+                                    <div style={{ padding: '11px 14px', borderRadius: '10px', background: '#f8fafc', border: `1px solid ${platformSettings.address ? '#e2e8f0' : '#fca5a5'}`, fontSize: '14px', color: platformSettings.address ? '#0f172a' : '#dc2626', fontStyle: platformSettings.address ? 'normal' : 'italic', minHeight: '48px' }}>{platformSettings.address || 'Chưa cập nhật'}</div>
                                 )}
                             </div>
                         </div>
@@ -364,8 +364,8 @@ export default function AdminTaxesPage() {
                                                         <div style={{ fontWeight: 600 }}>{v.owner.fullName}</div>
                                                         <div style={{ fontSize: '11px', color: '#94a3b8' }}>{v.owner.phone}</div>
                                                         {v.owner.taxCode
-                                                            ? <div style={{ fontSize: '11px', color: '#16a34a', fontFamily: 'monospace' }}>✓ MST: {v.owner.taxCode}</div>
-                                                            : <div style={{ fontSize: '11px', color: '#dc2626' }}>⚠ Chưa có mã số thuế</div>
+                                                            ? <div style={{ fontSize: '11px', color: '#16a34a', fontFamily: 'monospace' }}>MST: {v.owner.taxCode}</div>
+                                                            : <div style={{ fontSize: '11px', color: '#dc2626' }}>Chưa có mã số thuế</div>
                                                         }
                                                     </div>
                                                 </div>

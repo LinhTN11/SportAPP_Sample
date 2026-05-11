@@ -7,7 +7,7 @@ import dynamic from 'next/dynamic';
 import { matchmakingAPI } from '@/lib/api';
 import Avatar from '@/components/Avatar';
 import { useAuth } from '@/lib/auth';
-import { CalendarDays, Clock, MapPin, Building2, ChevronDown } from 'lucide-react';
+import { CalendarDays, Clock, MapPin, Building2, ChevronDown, Users, ClipboardList } from 'lucide-react';
 import styles from './matchmaking.module.css';
 import DatePicker from '@/components/ui/DatePicker';
 
@@ -219,7 +219,7 @@ function MatchmakingContent() {
         <div className={styles.page}>
             <div className="container">
                 <div className={styles.header}>
-                    <h1 className="heading-lg">Ghép trận 🤝</h1>
+                    <h1 className="heading-lg">Ghép trận <Users size={28} style={{ display: 'inline', verticalAlign: 'text-bottom' }} /></h1>
                     <p className={styles.subtitle}>Tìm đối thủ hoặc để hệ thống tự ghép cho bạn</p>
                 </div>
 
@@ -287,7 +287,7 @@ function MatchmakingContent() {
                             <div className={styles.grid}>{[1, 2, 3].map(i => <div key={i} className={styles.skeletonCard}><div className="skeleton" style={{ height: 20, width: '50%', marginBottom: 8 }} /><div className="skeleton" style={{ height: 16, width: '70%' }} /></div>)}</div>
                         ) : posts.length === 0 ? (
                             <div className="empty-state">
-                                <div className="empty-state-icon">🤝</div>
+                                <div className="empty-state-icon"><Users size={48} color="#D1D5DB" /></div>
                                 <div className="empty-state-title">Chưa có bài ghép trận</div>
                                 <div className="empty-state-text">Hãy tạo bài đăng để tìm đối thủ</div>
                                 <button className="btn btn-primary" onClick={() => setActiveTab('create')}>Tạo bài →</button>
@@ -369,7 +369,7 @@ function MatchmakingContent() {
                     <div className={styles.grid}>
                         {myPosts.length === 0 ? (
                             <div className="empty-state" style={{ gridColumn: '1/-1' }}>
-                                <div className="empty-state-icon">📋</div>
+                                <div className="empty-state-icon"><ClipboardList size={48} color="#D1D5DB" /></div>
                                 <div className="empty-state-title">Bạn chưa có bài đăng</div>
                                 <button className="btn btn-primary" onClick={() => setActiveTab('create')}>Tạo ngay →</button>
                             </div>

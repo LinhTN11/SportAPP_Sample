@@ -5,7 +5,7 @@
 import { useState, useEffect, useRef } from 'react';
 import {
     X, CheckCircle, Clock, QrCode, Shield,
-    CalendarDays, MapPin, CreditCard, Banknote, ArrowRight, Sparkles
+    CalendarDays, MapPin, CreditCard, Banknote, ArrowRight, Sparkles, PartyPopper
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import styles from './PaymentQRModal.module.css';
@@ -131,7 +131,7 @@ export default function PaymentQRModal({ booking, onClose, onConfirm, paymentTyp
                                 <CheckCircle size={48} color="#10B981" strokeWidth={1.8} />
                             </div>
                             <p className={styles.successText}>Thanh toán thành công!</p>
-                            <p className={styles.successSub}>Booking đã được xác nhận. Chúc bạn thi đấu vui vẻ! 🎉</p>
+                            <p className={styles.successSub}>Booking đã được xác nhận. Chúc bạn thi đấu vui vẻ! <PartyPopper size={18} style={{ display: 'inline', marginLeft: '4px', verticalAlign: 'text-bottom' }} /></p>
                             <div className={styles.successAmount}>{payAmountFormatted}đ</div>
                         </div>
 

@@ -212,15 +212,15 @@ export default function PublicProfilePage({ params }) {
                                     {venue.sportTypes?.length > 0 && (
                                         <div className={venueStyles.sportTags}>
                                             {venue.sportTypes.slice(0, 2).map(st => (
-                                                <span key={st} className="sport-tag">
-                                                    <span className={getSportColorClass(st)} style={{ display: 'flex' }}>
+                                                <span key={st} className={`sport-tag ${getSportColorClass(st)}`}>
+                                                    <span style={{ display: 'flex' }}>
                                                         {getSportIcon(st)}
                                                     </span>
                                                     {getSportLabel(st)}
                                                 </span>
                                             ))}
                                             {venue.sportTypes.length > 2 && (
-                                                <span className="sport-tag" style={{ color: 'var(--text-secondary)' }}>
+                                                <span className="sport-tag sport-color-default">
                                                     +{venue.sportTypes.length - 2}
                                                 </span>
                                             )}

@@ -365,9 +365,19 @@ function VenuesContent() {
                                             <h3 className={styles.venueName}>{venue.name}</h3>
 
                                             <div className={styles.venueRating}>
-                                                {[1, 2, 3, 4, 5].map((star) => (
-                                                    <Star key={star} size={16} fill="#FFC107" color="#FFC107" />
-                                                ))}
+                                                <div style={{ display: 'flex', gap: '2px', alignItems: 'center' }}>
+                                                    {[1, 2, 3, 4, 5].map((star) => {
+                                                        const fillPercent = Math.max(0, Math.min(1, (venue.avgRating || 0) - (star - 1))) * 100;
+                                                        return (
+                                                            <div key={star} style={{ position: 'relative', display: 'inline-block', width: 16, height: 16 }}>
+                                                                <Star size={16} color="#FFC107" strokeWidth={2} style={{ position: 'absolute', left: 0, top: 0 }} />
+                                                                <div style={{ position: 'absolute', left: 0, top: 0, width: `${fillPercent}%`, overflow: 'hidden' }}>
+                                                                    <Star size={16} fill="#FFC107" color="#FFC107" strokeWidth={2} />
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
                                                 <span className={styles.ratingValue}>
                                                     {venue.avgRating?.toFixed(1) || '5'}
                                                 </span>
@@ -400,15 +410,15 @@ function VenuesContent() {
                                             {venue.sportTypes?.length > 0 && (
                                                 <div className={styles.sportTags}>
                                                     {venue.sportTypes.slice(0, 2).map(st => (
-                                                        <span key={st} className="sport-tag">
-                                                            <span className={getSportColorClass(st)} style={{ display: 'flex' }}>
+                                                        <span key={st} className={`sport-tag ${getSportColorClass(st)}`}>
+                                                            <span style={{ display: 'flex' }}>
                                                                 {getSportIcon(st)}
                                                             </span>
                                                             {getSportLabel(st)}
                                                         </span>
                                                     ))}
                                                     {venue.sportTypes.length > 2 && (
-                                                        <span className="sport-tag" style={{ color: 'var(--text-secondary)' }}>
+                                                        <span className="sport-tag sport-color-default">
                                                             +{venue.sportTypes.length - 2}
                                                         </span>
                                                     )}

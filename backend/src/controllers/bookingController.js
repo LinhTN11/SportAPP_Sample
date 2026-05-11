@@ -215,7 +215,7 @@ const confirmBooking = async (req, res, next) => {
             data: {
                 userId: booking.customerId,
                 type: 'BOOKING_CONFIRMED',
-                title: 'Booking confirmed! ✅',
+                title: 'Booking confirmed!',
                 body: `Your booking at ${booking.field.venue.name} on ${booking.bookingDate.toISOString().split('T')[0]} from ${booking.startTime} to ${booking.endTime} is confirmed.`,
                 data: { bookingId: booking.id },
             },
@@ -225,7 +225,7 @@ const confirmBooking = async (req, res, next) => {
             data: {
                 userId: booking.field.venue.ownerId,
                 type: 'BOOKING_CONFIRMED',
-                title: 'New booking! 📅',
+                title: 'New booking!',
                 body: `${req.user.fullName} booked ${booking.field.name} on ${booking.bookingDate.toISOString().split('T')[0]} (${booking.startTime} - ${booking.endTime})`,
                 data: { bookingId: booking.id },
             },

@@ -30,7 +30,6 @@ const StatusBadge = ({ status }) => {
     const s = STATUS_CONFIG[status] || { label: status, color: '#64748b', bg: '#f8fafc', border: '#f1f5f9' };
     return (
         <span className={styles.statusBadge} style={{ backgroundColor: s.bg, color: s.color, border: `1.5px solid ${s.border}` }}>
-            <span style={{ width: 5, height: 5, borderRadius: '50%', backgroundColor: s.color, flexShrink: 0 }} />
             {s.label}
         </span>
     );

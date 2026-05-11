@@ -1,11 +1,3 @@
-module.exports = {
-  content: [
-    "./src/**/*.{js,ts,jsx,tsx,mdx}",
-    "./app/**/*.{js,ts,jsx,tsx,mdx}",
-    "./components/**/*.{js,ts,jsx,tsx,mdx}"
-  ],
-  theme: {
-    extend: {},
-  },
-  plugins: [],
-}
+// Tailwind CSS v4 không sử dụng file này nữa.
+// Toàn bộ config (theme, content scan) được khai báo trong globals.css
+// bằng @theme và @source directives.

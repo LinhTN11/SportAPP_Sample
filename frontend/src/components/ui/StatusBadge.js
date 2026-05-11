@@ -1,25 +1,27 @@
 'use client';
 
+import { CheckCircle, Clock, XCircle, PauseCircle } from 'lucide-react';
+
 const statusConfig = {
     APPROVED: {
         label: 'Đang hoạt động',
         bg: '#10B981',
-        icon: '✅',
+        icon: <CheckCircle size={14} />,
     },
     PENDING: {
         label: 'Chờ duyệt',
         bg: '#F59E0B',
-        icon: '⏳',
+        icon: <Clock size={14} />,
     },
     REJECTED: {
         label: 'Bị từ chối',
         bg: '#EF4444',
-        icon: '❌',
+        icon: <XCircle size={14} />,
     },
     SUSPENDED: {
         label: 'Tạm ngưng',
         bg: '#6B7280',
-        icon: '⏸️',
+        icon: <PauseCircle size={14} />,
     },
 };
 
@@ -42,6 +44,7 @@ export default function StatusBadge({ status, className = '' }) {
                 whiteSpace: 'nowrap',
             }}
         >
+            {config.icon}
             {config.label}
         </span>
     );

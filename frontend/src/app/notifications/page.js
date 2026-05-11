@@ -101,7 +101,7 @@ const MOCK_NOTIFICATIONS = [
         date: 'Hôm nay',
         unread: false,
         meta: [
-            { label: '⭐ 4.0 / 5', color: 'orange' },
+            { label: '4.0 / 5', color: 'orange' },
         ],
         actions: [
             { label: 'Xem đánh giá', type: 'secondary', href: '/venues' },
@@ -337,13 +337,19 @@ export default function NotificationsPage() {
                         if (d.toDateString() === today.toDateString()) dateStr = 'Hôm nay';
                         else if (d.toDateString() === yesterday.toDateString()) dateStr = 'Hôm qua';
 
+                        // Helper to strip emojis
+                        const stripEmojis = (str) => {
+                            if (!str) return '';
+                            return str.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F900}-\u{1F9FF}\u{1F1E6}-\u{1F1FF}]/gu, '').trim();
+                        };
+
                         return {
                             id: n.id,
                             type: n.type,
                             iconType,
                             category,
-                            title: n.title,
-                            desc: n.body,
+                            title: stripEmojis(n.title),
+                            desc: stripEmojis(n.body),
                             time: d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
                             date: dateStr,
                             unread: !n.isRead,

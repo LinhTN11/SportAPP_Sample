@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth';
+import { AlertTriangle, Crown, Home, User } from 'lucide-react';
 import styles from './auth.module.css';
 
 export default function LoginPage() {
@@ -51,7 +52,7 @@ export default function LoginPage() {
 
                 {error && (
                     <div className={styles.errorBox}>
-                        <span className={styles.errorIcon}>⚠️</span>
+                        <span className={styles.errorIcon}><AlertTriangle size={18} /></span>
                         {error}
                     </div>
                 )}
@@ -90,13 +91,13 @@ export default function LoginPage() {
                     <p className={styles.demoTitle}>Tài khoản demo (password: password123)</p>
                     <div className={styles.demoAccounts}>
                         <button className={styles.demoBtn} onClick={() => fillDemo('admin@sportapp.com')}>
-                            👑 Admin
+                            <Crown size={14} className={styles.demoIcon} style={{marginRight: '4px', display: 'inline', verticalAlign: 'text-bottom'}} /> Admin
                         </button>
                         <button className={styles.demoBtn} onClick={() => fillDemo('owner@sportapp.com')}>
-                            🏠 Owner
+                            <Home size={14} className={styles.demoIcon} style={{marginRight: '4px', display: 'inline', verticalAlign: 'text-bottom'}} /> Owner
                         </button>
                         <button className={styles.demoBtn} onClick={() => fillDemo('khach1@sportapp.com')}>
-                            👤 Customer
+                            <User size={14} className={styles.demoIcon} style={{marginRight: '4px', display: 'inline', verticalAlign: 'text-bottom'}} /> Customer
                         </button>
                     </div>
                 </div>

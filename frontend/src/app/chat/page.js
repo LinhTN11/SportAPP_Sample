@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { io } from 'socket.io-client';
-import { ChevronDown, Send, X, Maximize2, Minimize2 } from 'lucide-react';
+import { ChevronDown, Send, X, Maximize2, Minimize2, MapPin, CheckCheck } from 'lucide-react';
 import { chatbotAPI, bookingsAPI } from '@/lib/api';
 import BotToolResults from '@/components/chat/BotToolResults';
 import ChatCardRenderer from '@/components/chat/ChatCardRenderer';
@@ -246,7 +246,7 @@ function MessageBubble({
                     <Avatar conv={{ ...conv, type: 'bot' }} size={28} />
                     <div>
                         <div className={`${styles.venueTag} ${styles.incoming}`}>
-                            📍 {msg.venueName}
+                            <MapPin size={16} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: 4 }} /> {msg.venueName}
                         </div>
                         <div className={`${styles.bubble} ${styles.incoming}`}>
                             {msg.text}
@@ -286,7 +286,7 @@ function MessageBubble({
                         )}
                         <div className={`${styles.bubbleTime} ${isOut ? styles.outgoing : ''}`}>
                             {msg.time}
-                            {isOut && msg.read && ' ✓✓'}
+                            {isOut && msg.read && <CheckCheck size={14} style={{ display: 'inline', verticalAlign: 'text-bottom', marginLeft: 4 }} />}
                         </div>
                     </div>
                 </div>

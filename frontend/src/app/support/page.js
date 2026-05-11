@@ -4,12 +4,13 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { usersAPI, chatAPI } from '@/lib/api';
+import { CreditCard, Lock, Building2, Receipt, Users, MessageSquare, Shield, Headphones, Check, Zap, MessageCircle, Lightbulb, Mail, Clock, ChevronUp, ChevronDown } from 'lucide-react';
 import styles from './support.module.css';
 
 const SUPPORT_CATEGORIES = [
     {
         id: 'payment',
-        icon: '💳',
+        icon: <CreditCard size={32} />,
         title: 'Thanh toán & Đặt sân',
         desc: 'Lỗi thanh toán, hoàn tiền, sự cố khi đặt sân',
         color: '#3b82f6',
@@ -17,7 +18,7 @@ const SUPPORT_CATEGORIES = [
     },
     {
         id: 'account',
-        icon: '🔐',
+        icon: <Lock size={32} />,
         title: 'Tài khoản',
         desc: 'Tài khoản bị khóa, quên mật khẩu, bảo mật',
         color: '#8b5cf6',
@@ -25,7 +26,7 @@ const SUPPORT_CATEGORIES = [
     },
     {
         id: 'venue',
-        icon: '🏟️',
+        icon: <Building2 size={32} />,
         title: 'Khiếu nại chủ sân',
         desc: 'Sân không đúng mô tả, chủ sân vi phạm quy định',
         color: '#ef4444',
@@ -33,7 +34,7 @@ const SUPPORT_CATEGORIES = [
     },
     {
         id: 'tax',
-        icon: '🧾',
+        icon: <Receipt size={32} />,
         title: 'Thuế & Chứng từ',
         desc: 'Câu hỏi về chứng từ điện tử, mã số thuế',
         color: '#f59e0b',
@@ -41,7 +42,7 @@ const SUPPORT_CATEGORIES = [
     },
     {
         id: 'match',
-        icon: '⚽',
+        icon: <Users size={32} />,
         title: 'Ghép trận & Tìm đối',
         desc: 'Sự cố khi ghép trận, người chơi không đáng tin',
         color: '#10b981',
@@ -49,7 +50,7 @@ const SUPPORT_CATEGORIES = [
     },
     {
         id: 'other',
-        icon: '💬',
+        icon: <MessageSquare size={32} />,
         title: 'Vấn đề khác',
         desc: 'Góp ý, phản hồi chung về nền tảng SportApp',
         color: '#64748b',
@@ -143,7 +144,7 @@ export default function SupportPage() {
             <div className={styles.hero}>
                 <div className={styles.heroContent}>
                     <div className={styles.heroBadge}>
-                        <span>🛡️</span> Trung tâm hỗ trợ SportApp
+                        <span><Shield size={18} style={{ display: 'inline', verticalAlign: 'text-bottom' }} /></span> Trung tâm hỗ trợ SportApp
                     </div>
                     <h1 className={styles.heroTitle}>
                         Chúng tôi luôn sẵn sàng<br />
@@ -171,13 +172,13 @@ export default function SupportPage() {
                 </div>
                 <div className={styles.heroIllustration}>
                     <div className={styles.heroCircle}>
-                        <span style={{ fontSize: '64px' }}>🎧</span>
+                        <span><Headphones size={64} color="#10b981" /></span>
                     </div>
                     <div className={styles.floatingCard} style={{ top: '10%', right: '-10px' }}>
-                        <span>✓</span> Đã giải quyết
+                        <span><Check size={16} color="#10b981" style={{ display: 'inline', verticalAlign: 'text-bottom' }} /></span> Đã giải quyết
                     </div>
                     <div className={styles.floatingCard} style={{ bottom: '15%', left: '-10px', animationDelay: '1s' }}>
-                        <span>⚡</span> Phản hồi nhanh
+                        <span><Zap size={16} color="#f59e0b" style={{ display: 'inline', verticalAlign: 'text-bottom' }} /></span> Phản hồi nhanh
                     </div>
                 </div>
             </div>
@@ -207,7 +208,7 @@ export default function SupportPage() {
                                     <div className={styles.categoryDesc}>{cat.desc}</div>
                                 </div>
                                 {selectedCategory === cat.id && (
-                                    <div className={styles.categoryCheck} style={{ color: cat.color }}>✓</div>
+                                    <div className={styles.categoryCheck} style={{ color: cat.color }}><Check size={20} /></div>
                                 )}
                             </button>
                         ))}
@@ -221,7 +222,7 @@ export default function SupportPage() {
                             <div className={styles.adminAvatar}>
                                 {adminInfo?.avatarUrl
                                     ? <img src={adminInfo.avatarUrl} alt="Admin" />
-                                    : '🛡️'
+                                    : <Shield size={24} color="#6B7280" />
                                 }
                             </div>
                             <div>
@@ -257,7 +258,7 @@ export default function SupportPage() {
                             {isConnecting ? (
                                 <><span className={styles.spinner} /> Đang kết nối...</>
                             ) : (
-                                <>💬 Nhắn tin với bộ phận hỗ trợ</>
+                                <><MessageCircle size={18} style={{ display: 'inline', verticalAlign: 'text-bottom' }} /> Nhắn tin với bộ phận hỗ trợ</>
                             )}
                         </button>
 
@@ -268,7 +269,7 @@ export default function SupportPage() {
 
                     {/* ── Quick tips ── */}
                     <div className={styles.tipsCard}>
-                        <div className={styles.tipsTitle}>💡 Mẹo hữu ích</div>
+                        <div className={styles.tipsTitle}><Lightbulb size={20} style={{ display: 'inline', verticalAlign: 'text-bottom' }} /> Mẹo hữu ích</div>
                         <ul className={styles.tipsList}>
                             <li>Mô tả càng chi tiết sẽ được giải quyết càng nhanh</li>
                             <li>Đính kèm ảnh chụp màn hình nếu có lỗi hiển thị</li>
@@ -278,11 +279,11 @@ export default function SupportPage() {
 
                         <div className={styles.contactMeta} style={{ marginTop: '20px' }}>
                             <div className={styles.metaRow}>
-                                <span>📧</span>
+                                <span><Mail size={16} /></span>
                                 <span>support@sportapp.vn</span>
                             </div>
                             <div className={styles.metaRow}>
-                                <span>🕐</span>
+                                <span><Clock size={16} /></span>
                                 <span>8:00 – 22:00, Thứ 2 – CN</span>
                             </div>
                         </div>
@@ -301,7 +302,7 @@ export default function SupportPage() {
                                     onClick={() => setActiveAccordion(activeAccordion === i ? null : i)}
                                 >
                                     <span>{item.q}</span>
-                                    <span className={styles.faqChevron}>{activeAccordion === i ? '▲' : '▼'}</span>
+                                    <span className={styles.faqChevron}>{activeAccordion === i ? <ChevronUp size={16} /> : <ChevronDown size={16} />}</span>
                                 </button>
                                 {activeAccordion === i && (
                                     <div className={styles.faqAnswer}>{item.a}</div>

@@ -334,7 +334,7 @@ const approveVenue = async (req, res, next) => {
             data: {
                 userId: venue.ownerId,
                 type: 'VENUE_APPROVED',
-                title: 'Venue approved! 🎉',
+                title: 'Venue approved!',
                 body: `Your venue "${venue.name}" has been approved. You can now add fields and pricing.`,
                 data: { venueId: venue.id },
             },

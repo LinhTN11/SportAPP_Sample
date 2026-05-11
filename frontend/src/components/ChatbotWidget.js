@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { ChevronDown, Send, X, Maximize2, Minimize2 } from 'lucide-react';
+import { ChevronDown, Send, X, Maximize2, Minimize2, XCircle, Building2, Hand } from 'lucide-react';
 import axios from 'axios';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
@@ -369,7 +369,7 @@ export default function ChatbotWidget() {
         } catch (err) {
             setMessages(prev => [...prev, {
                 role: 'assistant',
-                content: '❌ Không thể kết nối đến server. Vui lòng thử lại sau.',
+                content: 'Không thể kết nối đến server. Vui lòng thử lại sau.',
                 error: true,
                 toolResults: [],
             }]);
@@ -451,7 +451,7 @@ export default function ChatbotWidget() {
                                     if (isFields) {
                                         return (
                                             <div key={j} className={styles.fieldSelectionCard}>
-                                                <div className={styles.fieldCardIcon}>🏟️</div>
+                                                <div className={styles.fieldCardIcon}><Building2 size={24} /></div>
                                                 <div className={styles.fieldCardInfo}>
                                                     <div className={styles.fieldCardName}>{label}</div>
                                                     <div className={styles.fieldCardPrice}>
@@ -545,10 +545,10 @@ export default function ChatbotWidget() {
                                         });
                                 }}
                             >
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: 14, height: 14, marginRight: 4 }}>
                                     <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
                                 </svg>
-                                📥 {result.data.filename}
+                                {result.data.filename}
                             </a>
                         );
                     }
@@ -908,8 +908,16 @@ export default function ChatbotWidget() {
                                     <div className={styles.weatherTemp}>
                                         {weather.current.temperature}°C · {weather.current.description}
                                     </div>
-                                    <div className={styles.weatherDesc}>
-                                        💧 {weather.current.humidity}% · 💨 {weather.current.windSpeed} km/h
+                                    <div className={styles.weatherDesc} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5s-3 3.5-3 5.5a7 7 0 0 0 7 7z"/></svg>
+                                            {weather.current.humidity}%
+                                        </span>
+                                        <span style={{ color: 'var(--text-tertiary)' }}>·</span>
+                                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1 1 11 8H2"/><path d="M12.6 19.4A2 2 0 1 0 14 16H2"/></svg>
+                                            {weather.current.windSpeed} km/h
+                                        </span>
                                     </div>
                                     <div className={styles.weatherDate}>{dateStr}</div>
                                 </div>
@@ -928,7 +936,7 @@ export default function ChatbotWidget() {
                     <div className={styles.messagesArea}>
                         {messages.length === 0 && (
                             <div className={styles.welcomeMsg}>
-                                <h4>Xin chào, {user?.fullName || 'bạn'}! 👋</h4>
+                                <h4>Xin chào, {user?.fullName || 'bạn'}! <Hand size={20} style={{ display: 'inline-block', verticalAlign: 'text-bottom' }} /></h4>
                                 <p>
                                     Tôi là trợ lý AI của SportApp. Tôi có thể giúp bạn tìm sân, đặt sân,
                                     {user?.role === 'OWNER' && ' xuất báo cáo tài chính,'}
@@ -973,6 +981,7 @@ export default function ChatbotWidget() {
                                             <div className={`${styles.msgBubble} ${msg.role === 'user' ? styles.msgBubbleUser :
                                                 msg.error ? styles.msgBubbleError : styles.msgBubbleBot
                                                 }`}>
+                                                {msg.error && <XCircle size={16} style={{ display: 'inline-block', marginRight: '6px', verticalAlign: 'text-bottom' }} />}
                                                 {msg.content}
                                             </div>
                                         )}

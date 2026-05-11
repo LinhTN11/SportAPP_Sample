@@ -161,7 +161,7 @@ const sendRequest = async (req, res, next) => {
             data: {
                 userId: post.userId,
                 type: 'MATCH_REQUEST',
-                title: 'New match request! ⚽',
+                title: 'New match request!',
                 body: `${req.user.fullName} wants to join your game on ${post.bookingDate.toISOString().split('T')[0]}`,
                 data: { postId: post.id, requestId: request.id },
             },
@@ -259,7 +259,7 @@ const acceptRequest = async (req, res, next) => {
             data: {
                 userId: request.requesterId,
                 type: 'MATCH_ACCEPTED',
-                title: 'Match accepted! 🎉',
+                title: 'Match accepted!',
                 body: `${req.user.fullName} accepted your match request. Start chatting to finalize details!`,
                 data: { postId: request.postId, chatRoomId: chatRoom.id },
             },

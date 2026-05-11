@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
+import { Building2, Users, MessageCircle, Smartphone, Wallet, Star } from 'lucide-react';
 import styles from './page.module.css';
 import PageFooter from '../components/PageFooter';
 
@@ -79,10 +80,10 @@ export default function HomePage() {
               {isAuthenticated ? (
                 <>
                   <Link href="/venues" className={styles.btnPrimary}>
-                    🏟️ Tìm sân ngay
+                    <Building2 size={18} /> Tìm sân ngay
                   </Link>
                   <Link href="/matchmaking" className={styles.btnOutline}>
-                    🤝 Ghép trận
+                    <Users size={18} /> Ghép trận
                   </Link>
                 </>
               ) : (
@@ -230,37 +231,37 @@ export default function HomePage() {
 
             <div className={styles.featureGrid}>
               <div className={styles.featureCard}>
-                <div className={`${styles.featureIconWrap} ${styles.iconPurple}`}>🏟️</div>
+                <div className={`${styles.featureIconWrap} ${styles.iconPurple}`}><Building2 size={24} /></div>
                 <h3 className={styles.featureTitle}>Đặt sân nhanh chóng</h3>
                 <p className={styles.featureDesc}>Tìm sân trống, xem giá theo khung giờ, đặt cọc online chỉ trong vài click.</p>
               </div>
 
               <div className={styles.featureCard}>
-                <div className={`${styles.featureIconWrap} ${styles.iconYellow}`}>🤝</div>
+                <div className={`${styles.featureIconWrap} ${styles.iconYellow}`}><Users size={24} /></div>
                 <h3 className={styles.featureTitle}>Ghép trận thông minh</h3>
                 <p className={styles.featureDesc}>Tự tìm đối thủ hoặc để hệ thống tự động ghép theo môn, khung giờ và khu vực.</p>
               </div>
 
               <div className={styles.featureCard}>
-                <div className={`${styles.featureIconWrap} ${styles.iconPurple}`}>💬</div>
+                <div className={`${styles.featureIconWrap} ${styles.iconPurple}`}><MessageCircle size={24} /></div>
                 <h3 className={styles.featureTitle}>Chat trực tiếp</h3>
                 <p className={styles.featureDesc}>Nhắn tin real-time với đối thủ hoặc chủ sân để thống nhất lịch chơi.</p>
               </div>
 
               <div className={styles.featureCard}>
-                <div className={`${styles.featureIconWrap} ${styles.iconBlue}`}>📱</div>
+                <div className={`${styles.featureIconWrap} ${styles.iconBlue}`}><Smartphone size={24} /></div>
                 <h3 className={styles.featureTitle}>QR Code & Link riêng</h3>
                 <p className={styles.featureDesc}>Mỗi sân có link đặt và mã QR riêng. Chia sẻ dễ dàng qua mạng xã hội.</p>
               </div>
 
               <div className={styles.featureCard}>
-                <div className={`${styles.featureIconWrap} ${styles.iconOrange}`}>💰</div>
+                <div className={`${styles.featureIconWrap} ${styles.iconOrange}`}><Wallet size={24} /></div>
                 <h3 className={styles.featureTitle}>Giá minh bạch</h3>
                 <p className={styles.featureDesc}>Xem rõ giá theo khung giờ, không phí ẩn. Cọc chỉ 10%, thanh toán linh hoạt.</p>
               </div>
 
               <div className={styles.featureCard}>
-                <div className={`${styles.featureIconWrap} ${styles.iconYellow}`}>⭐</div>
+                <div className={`${styles.featureIconWrap} ${styles.iconYellow}`}><Star size={24} /></div>
                 <h3 className={styles.featureTitle}>Đánh giá & Review</h3>
                 <p className={styles.featureDesc}>Đọc review từ người chơi khác, đánh giá sau khi sử dụng để cộng đồng tốt hơn.</p>
               </div>

@@ -164,7 +164,7 @@ async function handleAutoMatch(prisma) {
                         data: {
                             userId,
                             type: 'MATCH_AUTO',
-                            title: 'Auto-match found! 🎯',
+                            title: 'Auto-match found!',
                             body: `System found a match for you: ${a.sportType} on ${dateStr} (${a.startTime}-${a.endTime}). Chat with your opponent now!`,
                             data: { postId: a.id, requestId: request.id, chatRoomId: chatRoom.id },
                         },
@@ -234,7 +234,7 @@ async function handleAutoCompleteBookings(prisma) {
                 data: {
                     userId: b.customerId,
                     type: 'BOOKING_COMPLETED',
-                    title: 'Hoàn thành đặt sân ✅',
+                    title: 'Hoàn thành đặt sân',
                     body: `Lịch đặt sân ${b.field.name} tại ${b.field.venue.name} đã hoàn thành. Cảm ơn bạn đã sử dụng dịch vụ!`,
                     data: { bookingId: b.id },
                 },

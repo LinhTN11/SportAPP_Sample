@@ -34,11 +34,11 @@ const translations = {
         'auth.owner': 'Chủ sân',
 
         // Home
-        'home.badge': '🚀 Nền tảng thể thao thông minh',
+        'home.badge': 'Nền tảng thể thao thông minh',
         'home.title1': 'Đặt sân. Ghép trận.',
         'home.title2': 'Tất cả trong một.',
         'home.desc': 'Tìm và đặt sân thể thao chỉ trong vài phút. Ghép đối thủ tự động hoặc thủ công.',
-        'home.findNow': '🏟️ Tìm sân ngay',
+        'home.findNow': 'Tìm sân ngay',
         'home.startFree': 'Bắt đầu miễn phí',
         'home.whyUs': 'Tại sao chọn SportApp?',
         'home.whyUsDesc': 'Mọi thứ bạn cần cho trải nghiệm thể thao hoàn hảo',
@@ -68,17 +68,17 @@ const translations = {
         'booking.total': 'Tổng tiền',
         'booking.depositAmount': 'Tiền cọc (10%)',
         'booking.holdTime': 'Giữ chỗ',
-        'booking.payNow': '💳 Thanh toán ngay',
+        'booking.payNow': 'Thanh toán ngay',
         'booking.success': 'Đặt sân thành công!',
         'booking.successMsg': 'Bạn sẽ nhận được thông báo xác nhận.',
 
         // Matchmaking
-        'match.title': 'Ghép trận 🤝',
+        'match.title': 'Ghép trận',
         'match.subtitle': 'Tìm đối thủ hoặc để hệ thống tự ghép cho bạn',
-        'match.browse': '🔍 Tìm đối',
-        'match.myPosts': '📋 Bài của tôi',
-        'match.create': '✏️ Tạo bài',
-        'match.sendRequest': '🤝 Gửi lời mời',
+        'match.browse': 'Tìm đối',
+        'match.myPosts': 'Bài của tôi',
+        'match.create': 'Tạo bài',
+        'match.sendRequest': 'Gửi lời mời',
         'match.autoMatch': 'Ghép tự động',
         'match.autoMatchDesc': 'Hệ thống tự tìm người trùng điều kiện',
 
@@ -125,11 +125,11 @@ const translations = {
         'auth.owner': 'Venue Owner',
 
         // Home
-        'home.badge': '🚀 Smart Sports Platform',
+        'home.badge': 'Smart Sports Platform',
         'home.title1': 'Book Fields. Find Opponents.',
         'home.title2': 'All in One.',
         'home.desc': 'Find and book sports fields in minutes. Auto or manual opponent matching.',
-        'home.findNow': '🏟️ Find a Field',
+        'home.findNow': 'Find a Field',
         'home.startFree': 'Start for Free',
         'home.whyUs': 'Why SportApp?',
         'home.whyUsDesc': 'Everything for your perfect sports experience',
@@ -159,17 +159,17 @@ const translations = {
         'booking.total': 'Total',
         'booking.depositAmount': 'Deposit (10%)',
         'booking.holdTime': 'Hold time',
-        'booking.payNow': '💳 Pay Now',
+        'booking.payNow': 'Pay Now',
         'booking.success': 'Booking Confirmed!',
         'booking.successMsg': 'You will receive a confirmation notification.',
 
         // Matchmaking
-        'match.title': 'Matchmaking 🤝',
+        'match.title': 'Matchmaking',
         'match.subtitle': 'Find opponents or let the system auto-match',
-        'match.browse': '🔍 Browse',
-        'match.myPosts': '📋 My Posts',
-        'match.create': '✏️ Create Post',
-        'match.sendRequest': '🤝 Send Request',
+        'match.browse': 'Browse',
+        'match.myPosts': 'My Posts',
+        'match.create': 'Create Post',
+        'match.sendRequest': 'Send Request',
         'match.autoMatch': 'Auto Match',
         'match.autoMatchDesc': 'System finds matching players automatically',
 
@@ -191,8 +191,8 @@ export function getTranslation(lang = 'vi') {
 
 export function getLanguages() {
     return [
-        { code: 'vi', label: '🇻🇳 Tiếng Việt' },
-        { code: 'en', label: '🇬🇧 English' },
+        { code: 'vi', label: 'Tiếng Việt' },
+        { code: 'en', label: 'English' },
     ];
 }
 
