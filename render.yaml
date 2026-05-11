@@ -1,0 +1,73 @@
+# =============================================================
+# render.yaml — Render Blueprint (Infrastructure as Code)
+# BookingSport App: Backend + Frontend + PostgreSQL
+# =============================================================
+# Usage: Push this file to your repo, then go to
+# https://dashboard.render.com/select-repo?type=blueprint
+# and select your repo to auto-create all services.
+# =============================================================
+
+databases:
+  # ── PostgreSQL (Render Managed) ──
+  - name: bookingsport-db
+    plan: free            # free | starter ($7/mo) | standard ($20/mo)
+    databaseName: bookingsport
+    user: bookingsport_user
+    region: singapore     # closest to Vietnam — options: oregon, frankfurt, singapore, ohio
+    postgresMajorVersion: "16"
+
+services:
+  # ── Backend — Express + Prisma + Socket.io ──
+  - type: web
+    name: bookingsport-api
+    runtime: node
+    region: singapore
+    plan: free            # free | starter ($7/mo, always-on)
+    rootDir: backend
+    buildCommand: npm install && npx prisma generate && npx prisma migrate deploy
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      # Database — auto-linked from the managed PostgreSQL above
+      - key: DATABASE_URL
+        fromDatabase:
+          name: bookingsport-db
+          property: connectionString
+      # App config
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "10000"
+      # Security — set these manually in Render Dashboard (don't commit secrets)
+      - key: JWT_SECRET
+        generateValue: true     # Render auto-generates a random 64-char string
+      # CORS — will be updated after frontend deploys (see instructions)
+      - key: CLIENT_URL
+        value: https://bookingsport-frontend.onrender.com
+      # Redis (optional — set to true only if you provision Redis)
+      - key: REDIS_ENABLED
+        value: "false"
+      # Uncomment if you add a Redis service:
+      # - key: REDIS_URL
+      #   fromService:
+      #     type: redis
+      #     name: bookingsport-redis
+      #     property: connectionString
+
+  # ── Frontend — Next.js (SSR, needs Web Service) ──
+  - type: web
+    name: bookingsport-frontend
+    runtime: node
+    region: singapore
+    plan: free
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "10000"
+      # Points frontend API calls to the backend service
+      - key: NEXT_PUBLIC_API_URL
+        value: https://bookingsport-api.onrender.com/api
