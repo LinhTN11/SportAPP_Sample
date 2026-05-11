@@ -122,6 +122,15 @@ const getMessages = async (req, res, next) => {
             data: { isRead: true },
         });
 
+        // Notify other tabs/components that messages are read
+        const io = req.app.get('io');
+        if (io) {
+            io.to(`user:${req.user.id}`).emit('all_messages_read', {
+                roomId: req.params.roomId,
+                userId: req.user.id
+            });
+        }
+
         res.json({
             success: true,
             data: { messages: messages.reverse() },

@@ -169,6 +169,7 @@ function setupSocket(io, prisma) {
                         roomId,
                     };
                     emitToRoom(roomId, 'all_messages_read', payload);
+                    emitToUser(socket.user.id, 'all_messages_read', payload);
                 }
             } catch (err) {
                 console.error('Mark read error:', err);

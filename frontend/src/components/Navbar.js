@@ -45,6 +45,13 @@ export default function Navbar() {
         }
       });
 
+      socket.on('all_messages_read', () => {
+        // Re-fetch count when messages are read in another tab/component
+        chatAPI.getUnreadCount()
+          .then(({ data }) => setChatUnreadCount(data.data.unreadCount))
+          .catch(() => {});
+      });
+
       return () => {
         socket.disconnect();
       };

@@ -450,9 +450,14 @@ function ChatApp() {
     const fileInputRef = useRef(null);
     const socketRef = useRef(null);
     const myIdRef = useRef(null);
+    const activeConvIdRef = useRef(null);
     const typingTimeoutsRef = useRef({});
     const lastTypingEmitRef = useRef(0);
     const geoLocationRef = useRef(null);
+
+    useEffect(() => {
+        activeConvIdRef.current = activeConvId;
+    }, [activeConvId]);
 
     const activeConv = conversations.find(c => c.id === activeConvId);
     const currentMsgs = activeConvId ? (messages[activeConvId] || []) : [];
@@ -820,6 +825,15 @@ function ChatApp() {
             }, 2600);
         });
 
+        socket.on('all_messages_read', (data) => {
+            setConversations(prev => prev.map(c => {
+                if (c.id === data.roomId) {
+                    return { ...c, unread: 0 };
+                }
+                return c;
+            }));
+        });
+
         function handleIncomingMessage(m) {
             setMessages(prev => {
                 const arr = prev[m.roomId] || [];
@@ -852,14 +866,19 @@ function ChatApp() {
                 return { ...prev, [m.roomId]: [...arr, newMsg] };
             });
 
+            // Sync with activeConvIdRef to avoid stale closure issues if needed,
+            // but activeConvId is in scope if we define it differently.
+            // However, we can just use setConversations with the latest activeConvId logic.
             setConversations(prev => prev.map(c => {
                 if (c.id === m.roomId) {
                     const isIncoming = m.senderId !== myIdRef.current;
+                    // If we are currently in this room, don't increment unread
+                    const shouldIncrement = isIncoming && c.id !== activeConvIdRef.current;
                     return {
                         ...c,
                         lastMsg: formatLastMsg(m.content, m.type),
                         time: new Date(m.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
-                        unread: (isIncoming && c.id !== activeConvId) ? (c.unread || 0) + 1 : (c.unread || 0)
+                        unread: shouldIncrement ? (c.unread || 0) + 1 : 0
                     };
                 }
                 return c;
@@ -976,6 +995,10 @@ function ChatApp() {
                         read: m.isRead
                     }));
                     setMessages(prev => ({ ...prev, [activeConvId]: formattedMsgs }));
+                    setConversations(prev => prev.map(c => {
+                        if (c.id === activeConvId) return { ...c, unread: 0 };
+                        return c;
+                    }));
 
                     // Try to find MATCH_INIT message to populate banner
                     const initMsg = msgsList.find(m => m.type === 'SYSTEM' && m.content.includes('MATCH_INIT'));
