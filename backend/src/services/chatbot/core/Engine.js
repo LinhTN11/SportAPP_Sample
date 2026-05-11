@@ -13,7 +13,7 @@ const {
 const { resolveId } = require('../utils/resolver');
 const { normalizeText, normalizeSearchText } = require('../utils/fuzzySearch');
 const AI_API_URL = process.env.AI_API_URL || 'https://openrouter.ai/api/v1';
-const AI_MODEL = process.env.AI_MODEL || 'google/gemini-2.0-flash-001';
+const AI_MODEL = process.env.AI_MODEL || 'openai/gpt-oss-120b:free';
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 
 // Create axios instance for AI calls
