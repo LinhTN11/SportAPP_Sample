@@ -55,6 +55,7 @@ const getSlotPrice = (pricingRules, slotStartMinutes, slotDurationMinutes, dayOf
 
 const CHATBOT_ID = 'sportapp-ai';
 const CHAT_STATE_STORAGE_KEY = 'sportapp-chat-page-state-v1';
+const getChatStateKey = (userId) => `${CHAT_STATE_STORAGE_KEY}-${userId || 'guest'}`;
 const getAiHistoryKey = (userId) => `sportapp-ai-chat-history-v2-${userId || 'guest'}`;
 const EMOJIS = ['😀', '😂', '😍', '😎', '🤝', '🔥', '⚽', '🏸', '🎾', '🏀', '👍', '❤️'];
 const AI_GREETING = 'Xin chào! Tôi là trợ lý ảo SportApp. Tôi có thể giúp gì cho bạn hôm nay?';
@@ -510,13 +511,19 @@ function ChatApp() {
         if (typeof window === 'undefined') return;
 
         try {
-            const raw = sessionStorage.getItem(CHAT_STATE_STORAGE_KEY);
+            const stateKey = getChatStateKey(user?.id);
+            const historyKey = getAiHistoryKey(user?.id);
+
+            const raw = sessionStorage.getItem(stateKey);
             if (raw) {
                 const parsed = JSON.parse(raw);
                 if (parsed?.activeConvId) setActiveConvId(parsed.activeConvId);
+            } else {
+                // Reset if no state for this user
+                setActiveConvId(CHATBOT_ID);
             }
 
-            const aiHistoryRaw = sessionStorage.getItem(getAiHistoryKey(user?.id));
+            const aiHistoryRaw = sessionStorage.getItem(historyKey);
             if (aiHistoryRaw) {
                 const aiHistoryParsed = JSON.parse(aiHistoryRaw);
                 if (Array.isArray(aiHistoryParsed?.messages)) {
@@ -524,27 +531,20 @@ function ChatApp() {
                     setBotHistory(transcript);
                     setMessages(prev => ({ ...prev, [CHATBOT_ID]: toChatbotUiMessages(transcript) }));
                     aiHistorySyncKeyRef.current = serializeAiHistory(transcript);
-                } else if (Array.isArray(parsed?.botMessages)) {
-                    setMessages(prev => ({ ...prev, [CHATBOT_ID]: parsed.botMessages }));
-                    const transcript = toAiTranscriptFromUiMessages(parsed.botMessages);
-                    setBotHistory(transcript);
-                    aiHistorySyncKeyRef.current = serializeAiHistory(transcript);
                 }
-            } else if (raw) {
-                const parsed = JSON.parse(raw);
-                if (Array.isArray(parsed?.botMessages)) {
-                    setMessages(prev => ({ ...prev, [CHATBOT_ID]: parsed.botMessages }));
-                    const transcript = toAiTranscriptFromUiMessages(parsed.botMessages);
-                    setBotHistory(transcript);
-                    aiHistorySyncKeyRef.current = serializeAiHistory(transcript);
-                }
+            } else {
+                // Reset bot history if no history for this user
+                const greeting = [{ role: 'assistant', content: AI_GREETING, createdAt: new Date().toISOString() }];
+                setBotHistory(greeting);
+                setMessages(prev => ({ ...prev, [CHATBOT_ID]: toChatbotUiMessages(greeting) }));
+                aiHistorySyncKeyRef.current = serializeAiHistory(greeting);
             }
         } catch (error) {
             console.warn('Failed to restore chat page state:', error);
         } finally {
             setHasRestoredChatState(true);
         }
-    }, []);
+    }, [user?.id]);
 
     useEffect(() => {
         if (typeof window === 'undefined' || !hasRestoredChatState) return;
@@ -564,7 +564,7 @@ function ChatApp() {
         };
 
         try {
-            sessionStorage.setItem(CHAT_STATE_STORAGE_KEY, JSON.stringify(payload));
+            sessionStorage.setItem(getChatStateKey(user?.id), JSON.stringify(payload));
             sessionStorage.setItem(getAiHistoryKey(user?.id), JSON.stringify({ messages: transcript }));
             // Dispatch custom event for same-tab sync
             window.dispatchEvent(new CustomEvent('ai-history-updated', { detail: { messages: transcript, historyKey } }));

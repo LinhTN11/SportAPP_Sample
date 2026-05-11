@@ -51,7 +51,7 @@ export function AuthProvider({ children }) {
         localStorage.removeItem('sportapp_user');
         try {
             Object.keys(sessionStorage).forEach(key => {
-                if (key.startsWith('sportapp-ai-chat-history')) {
+                if (key.startsWith('sportapp-')) {
                     sessionStorage.removeItem(key);
                 }
             });
