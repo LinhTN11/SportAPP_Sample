@@ -13,7 +13,7 @@ const {
 const { resolveId } = require('../utils/resolver');
 const { normalizeText, normalizeSearchText } = require('../utils/fuzzySearch');
 const AI_API_URL = process.env.AI_API_URL || 'https://openrouter.ai/api/v1';
-const AI_MODEL = process.env.AI_MODEL || 'google/gemini-2.0-flash-001';
+const AI_MODEL = 'google/gemini-2.0-pro-exp-02-05:free';
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 
 // Create axios instance for AI calls
@@ -61,6 +61,29 @@ function looksLikeWeatherIntent(message) {
     return /\b(thoi tiet|weather|mua khong|co mua khong|troi co mua|nang|gio|du bao)\b/.test(normalized);
 }
 
+function extractCityFromWeatherIntent(message) {
+    const normalized = normalizeIntentText(message);
+    const keywords = ['o', 'tai', 'khu vuc', 'thanh pho', 'tinh'];
+    const parts = message.split(' ');
+    
+    // Simple look-ahead after keywords
+    for (let i = 0; i < parts.length; i++) {
+        const p = normalizeIntentText(parts[i]);
+        if (keywords.includes(p) && i + 1 < parts.length) {
+            return parts.slice(i + 1).join(' ').trim();
+        }
+    }
+    
+    // Fallback: try to find common city names or just the last part
+    const weatherWords = ['thoi tiet', 'weather', 'du bao', 'mua', 'nang'];
+    let clean = message;
+    weatherWords.forEach(w => {
+        const regex = new RegExp(w, 'gi');
+        clean = clean.replace(regex, '');
+    });
+    return clean.trim() || null;
+}
+
 function extractJsonObject(text) {
     if (!text || typeof text !== 'string') return null;
     const match = text.match(/\{[\s\S]*\}/);
@@ -72,68 +95,8 @@ function extractJsonObject(text) {
     }
 }
 
-async function inferChatIntentWithLlm(userMessage) {
-    if (!looksLikeSportsIntent(userMessage) && !looksLikeWeatherIntent(userMessage)) return null;
-
-    const messages = [
-        {
-            role: 'system',
-            content: `Bạn là bộ phân tích ý định cho chatbot SportApp.
-Nhiệm vụ: sửa lỗi chính tả gần đúng, chuẩn hóa tiếng Việt, và trích xuất ý định.
-Chỉ trả về JSON hợp lệ, không markdown, không giải thích.
-
-Schema:
-{
-    "intent": "search" | "booking" | "cancel" | "weather" | "other",
-  "searchName": string | null,
-  "venueQuery": string | null,
-  "sportType": string | null,
-  "city": string | null,
-  "district": string | null,
-  "confidence": number,
-  "needsClarification": boolean,
-    "clarificationHint": string | null
-}
-
-Quy tắc:
-- Nếu người dùng muốn đặt sân, set intent = "booking".
-- Nếu người dùng chỉ đang tìm sân, set intent = "search".
-- Nếu người dùng muốn hủy booking, set intent = "cancel".
-- Nếu người dùng hỏi thời tiết, mưa, nắng, hoặc dự báo, set intent = "weather".
-- Nếu tên sân bị gõ sai nhưng bạn đoán được tên gần đúng, hãy chuẩn hóa vào searchName/venueQuery.
-- Nếu không chắc, đặt needsClarification = true và confidence thấp.
-- Không bịa tên sân nếu không có manh mối rõ ràng.`
-        },
-        { role: 'user', content: userMessage }
-    ];
-
-    try {
-        const response = await aiApi.post('/chat/completions', {
-            model: AI_MODEL,
-            messages,
-            temperature: 0,
-        });
-
-        const content = response.data?.choices?.[0]?.message?.content || '';
-        const parsed = extractJsonObject(content);
-        if (!parsed || typeof parsed !== 'object') return null;
-
-        return {
-            intent: parsed.intent || 'other',
-            searchName: typeof parsed.searchName === 'string' ? parsed.searchName.trim() : null,
-            venueQuery: typeof parsed.venueQuery === 'string' ? parsed.venueQuery.trim() : null,
-            sportType: typeof parsed.sportType === 'string' ? parsed.sportType.trim() : null,
-            city: typeof parsed.city === 'string' ? parsed.city.trim() : null,
-            district: typeof parsed.district === 'string' ? parsed.district.trim() : null,
-            confidence: Number.isFinite(Number(parsed.confidence)) ? Number(parsed.confidence) : 0,
-            needsClarification: Boolean(parsed.needsClarification),
-            clarificationHint: typeof parsed.clarificationHint === 'string' ? parsed.clarificationHint.trim() : null,
-        };
-    } catch (error) {
-        console.warn('[AI Engine] LLM intent inference failed:', error.message);
-        return null;
-    }
-}
+// Removed inferChatIntentWithLlm to save API calls.
+// Complex intent resolution is now handled directly by the main LLM turn.
 
 async function searchVenueByNameStrictly(name, userLocation, prisma) {
     if (!name) return null;
@@ -250,37 +213,32 @@ class ChatbotEngine {
             // 3. Build system prompt
             const systemPrompt = promptManager.buildSystemPrompt(user.role, user.fullName, coords, locationLabel);
             
-            // 4. Resolve IDs & Instant Command Bypass (NEW: Direct command execution)
+            // 4. Resolve IDs & Instant Command Bypass (Optimized to avoid unnecessary LLM calls)
             const availableActions = registry.getToolDefinitions(user.role).map(t => t.function.name);
             const firstWord = userMessage.split(' ')[0];
-            const semanticIntent = await inferChatIntentWithLlm(userMessage);
-            const intentVenueQuery = semanticIntent?.venueQuery || semanticIntent?.searchName || null;
-            const intentCity = semanticIntent?.city || null;
-            const intentDistrict = semanticIntent?.district || null;
-            const intentSportType = semanticIntent?.sportType || null;
 
-            // 4a. Natural-language direct intent bypass for "đặt sân + tên sân"
-            const venueNameFromIntent = extractVenueNameFromBookingIntent(userMessage);
-            const bookingQuery = intentVenueQuery || venueNameFromIntent;
-            if (semanticIntent?.intent === 'weather' || looksLikeWeatherIntent(userMessage)) {
+            // 4a. Natural-language direct intent bypass using regex and DB resolution (NO API CALL)
+            if (looksLikeWeatherIntent(userMessage)) {
                 try {
-                    const weatherResponse = await getWeatherByUserLocation(coords, locationLabel, intentCity, prisma);
+                    const inferredCity = extractCityFromWeatherIntent(userMessage);
+                    console.log(`[AI Engine] Weather bypass attempt for city: ${inferredCity}`);
+                    const weatherResponse = await getWeatherByUserLocation(coords, locationLabel, inferredCity, prisma);
                     if (weatherResponse) return weatherResponse;
                 } catch (weatherErr) {
                     console.error('[AI Engine] Weather bypass failed:', weatherErr.message);
                 }
             }
 
-            if ((semanticIntent?.intent === 'booking' || venueNameFromIntent) && bookingQuery && !userMessage.startsWith('BOOK_VENUE:')) {
+            const venueNameFromIntent = extractVenueNameFromBookingIntent(userMessage);
+            if (venueNameFromIntent && !userMessage.startsWith('BOOK_VENUE:')) {
                 try {
-                    console.log(`[AI Engine] Booking intent bypass for venue name: ${bookingQuery}`);
-
-                    const resolvedTarget = await resolveBookingTargetStrict(bookingQuery, prisma);
+                    console.log(`[AI Engine] Booking intent bypass for venue name: ${venueNameFromIntent}`);
+                    const resolvedTarget = await resolveBookingTargetStrict(venueNameFromIntent, prisma);
 
                     if (resolvedTarget.type === 'field' || resolvedTarget.type === 'venue') {
                         const fieldId = resolvedTarget.type === 'field'
                             ? resolvedTarget.data.id
-                            : bookingQuery;
+                            : venueNameFromIntent;
 
                         const bookingTry = await registry.executeAction('create_booking', {
                             args: { fieldId },
@@ -310,78 +268,28 @@ class ChatbotEngine {
                         }
                     }
 
-                    const searchTry = await searchVenueByNameStrictly(bookingQuery, coords, prisma)
-                        || await registry.executeAction('search_venues', {
-                            args: {
-                                name: bookingQuery,
-                                city: intentCity || undefined,
-                                district: intentDistrict || undefined,
-                                sportType: intentSportType || undefined,
-                            },
-                            userId: user.id,
-                            userRole: user.role,
-                            userLocation: coords,
-                            prisma
-                        });
-
-                    const searchSummary = sanitizeAssistantText(responseFormatter.format(searchTry.type, searchTry));
-                    return {
-                        role: 'assistant',
-                        message: searchSummary,
-                        toolResults: [
-                            {
-                                tool_call_id: 'intent_search_' + Date.now(),
-                                role: 'tool',
-                                name: 'search_venues',
-                                content: searchSummary,
-                                data: searchTry.data,
-                                type: searchTry.type,
-                                success: searchTry.success
-                            }
-                        ]
-                    };
-                } catch (intentErr) {
-                    console.error('[AI Engine] Booking intent bypass failed:', intentErr.message);
-                }
-            }
-
-            if (semanticIntent?.intent === 'search' && intentVenueQuery) {
-                try {
-                    const searchTry = await searchVenueByNameStrictly(intentVenueQuery, coords, prisma)
-                        || await registry.executeAction('search_venues', {
-                            args: {
-                                name: intentVenueQuery,
-                                city: intentCity || undefined,
-                                district: intentDistrict || undefined,
-                                sportType: intentSportType || undefined,
-                            },
-                            userId: user.id,
-                            userRole: user.role,
-                            userLocation: coords,
-                            prisma
-                        });
-
-                    if (searchTry) {
+                    // If exact venue found but not booking, try search result directly
+                    const searchTry = await searchVenueByNameStrictly(venueNameFromIntent, coords, prisma);
+                    if (searchTry && searchTry.success) {
                         const searchSummary = sanitizeAssistantText(responseFormatter.format(searchTry.type, searchTry));
                         return {
                             role: 'assistant',
                             message: searchSummary,
                             toolResults: [
                                 {
-                                    tool_call_id: 'intent_search_llm_' + Date.now(),
+                                    tool_call_id: 'intent_search_' + Date.now(),
                                     role: 'tool',
                                     name: 'search_venues',
                                     content: searchSummary,
                                     data: searchTry.data,
                                     type: searchTry.type,
-                                    success: searchTry.success,
-                                    meta: searchTry.meta,
+                                    success: searchTry.success
                                 }
                             ]
                         };
                     }
-                } catch (searchErr) {
-                    console.error('[AI Engine] LLM search bypass failed:', searchErr.message);
+                } catch (intentErr) {
+                    console.error('[AI Engine] Intent bypass failed:', intentErr.message);
                 }
             }
             
