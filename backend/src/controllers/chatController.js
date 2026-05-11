@@ -40,10 +40,20 @@ const getRooms = async (req, res, next) => {
             orderBy: { joinedAt: 'desc' },
         });
 
-        const rooms = memberships.map(m => ({
-            ...m.room,
-            lastMessage: m.room.messages[0] || null,
-            unreadCount: 0,
+        const rooms = await Promise.all(memberships.map(async m => {
+            const unreadCount = await prisma.message.count({
+                where: {
+                    roomId: m.room.id,
+                    senderId: { not: req.user.id },
+                    isRead: false
+                }
+            });
+
+            return {
+                ...m.room,
+                lastMessage: m.room.messages[0] || null,
+                unreadCount,
+            };
         }));
 
         res.json({ success: true, data: { rooms } });
@@ -51,6 +61,31 @@ const getRooms = async (req, res, next) => {
         next(error);
     }
 };
+
+// GET /api/chat/unread-count
+const getUnreadCount = async (req, res, next) => {
+    try {
+        const memberships = await prisma.chatRoomMember.findMany({
+            where: { userId: req.user.id },
+            select: { roomId: true }
+        });
+
+        const roomIds = memberships.map(m => m.roomId);
+
+        const unreadCount = await prisma.message.count({
+            where: {
+                roomId: { in: roomIds },
+                senderId: { not: req.user.id },
+                isRead: false
+            }
+        });
+
+        res.json({ success: true, data: { unreadCount } });
+    } catch (error) {
+        next(error);
+    }
+};
+
 
 // GET /api/chat/rooms/:roomId/messages
 const getMessages = async (req, res, next) => {
@@ -415,6 +450,7 @@ const getRoomMatchInfo = async (req, res, next) => {
 
 module.exports = { 
     getRooms, 
+    getUnreadCount,
     getMessages, 
     createRoom, 
     sendMessage,

@@ -116,6 +116,7 @@ export const matchmakingAPI = {
 // Chat API
 export const chatAPI = {
     getRooms: () => api.get('/chat/rooms'),
+    getUnreadCount: () => api.get('/chat/unread-count'),
     getMessages: (roomId, params) => api.get(`/chat/rooms/${roomId}/messages`, { params }),
     getRoomMatchInfo: (roomId) => api.get(`/chat/rooms/${roomId}/match-info`),
     createRoom: (targetUserId) => api.post('/chat/rooms', { targetUserId }),

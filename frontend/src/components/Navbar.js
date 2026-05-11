@@ -5,22 +5,49 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { useEffect, useState, useRef } from 'react';
-import { notificationsAPI } from '@/lib/api';
+import { notificationsAPI, chatAPI } from '@/lib/api';
 import { User, History, LogOut, LogIn, UserPlus, ChevronDown, Mail } from 'lucide-react';
+import { io } from 'socket.io-client';
 import styles from './Navbar.module.css';
+
+const SERVER_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000').replace(/\/api\/?$/, '');
 
 export default function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
   const pathname = usePathname();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [chatUnreadCount, setChatUnreadCount] = useState(0);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
     if (isAuthenticated) {
+      // 1. Fetch system notifications unread
       notificationsAPI.list({ unreadOnly: 'true' })
         .then(({ data }) => setUnreadCount(data.data.unreadCount))
         .catch(() => {});
+
+      // 2. Fetch chat messages unread
+      chatAPI.getUnreadCount()
+        .then(({ data }) => setChatUnreadCount(data.data.unreadCount))
+        .catch(() => {});
+
+      // 3. Setup Socket for real-time updates
+      const token = localStorage.getItem('sportapp_token');
+      if (!token) return;
+
+      const socket = io(SERVER_URL, { auth: { token } });
+      
+      socket.on('message_notification', () => {
+        // Increment count when new message arrives and user is not on chat page
+        if (pathname !== '/chat') {
+          setChatUnreadCount(prev => prev + 1);
+        }
+      });
+
+      return () => {
+        socket.disconnect();
+      };
     }
   }, [isAuthenticated, pathname]);
 
@@ -60,6 +87,9 @@ export default function Navbar() {
             {item.label}
             {item.href === '/notifications' && unreadCount > 0 && (
               <span className={styles.unreadBadge}>{unreadCount > 99 ? '99+' : unreadCount}</span>
+            )}
+            {item.href === '/chat' && chatUnreadCount > 0 && pathname !== '/chat' && (
+              <span className={styles.unreadBadge}>{chatUnreadCount > 99 ? '99+' : chatUnreadCount}</span>
             )}
             {pathname === item.href && <span className={styles.navLinkUnderline} />}
           </Link>

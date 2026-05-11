@@ -797,11 +797,11 @@ function ChatApp() {
         const socket = io(SERVER_URL, { auth: { token } });
         socketRef.current = socket;
 
-        socket.on('new-message', (m) => {
+        socket.on('new_message', (m) => {
             handleIncomingMessage(m);
         });
 
-        socket.on('message-notification', (data) => {
+        socket.on('message_notification', (data) => {
             handleIncomingMessage(data.message);
         });
 
@@ -890,10 +890,10 @@ function ChatApp() {
         if (!socketRef.current || !activeConvId) return;
 
         const socket = socketRef.current;
-        socket.emit('join-room', activeConvId);
+        socket.emit('join_room', activeConvId);
 
         return () => {
-            socket.emit('leave-room', activeConvId);
+            socket.emit('leave_room', activeConvId);
         };
     }, [activeConvId]);
 
