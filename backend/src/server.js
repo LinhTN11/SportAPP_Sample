@@ -128,8 +128,20 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/tax', taxRoutes);
 
 // Health check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+app.get('/api/health', async (req, res) => {
+  let dbStatus = 'ok';
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+  } catch (e) {
+    dbStatus = 'error';
+  }
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || 'development',
+    database: dbStatus,
+  });
 });
 
 // Global error handler

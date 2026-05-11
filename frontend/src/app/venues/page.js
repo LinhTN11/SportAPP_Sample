@@ -2,7 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { venuesAPI } from '@/lib/api';
@@ -19,6 +19,14 @@ const SERVER_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000').
 const ITEMS_PER_PAGE = 6;
 
 export default function VenuesPage() {
+    return (
+        <Suspense fallback={<div className={styles.page}><div style={{display:'flex',justifyContent:'center',padding:'80px 0'}}><span className="spinner" /></div></div>}>
+            <VenuesContent />
+        </Suspense>
+    );
+}
+
+function VenuesContent() {
     const searchParams = useSearchParams();
     const urlSportType = searchParams.get('sportType') || '';
     const urlCity = searchParams.get('city') || '';

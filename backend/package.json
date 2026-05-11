@@ -9,6 +9,7 @@
     "test:chatbot-fallback": "node scripts/test-chatbot-tool-fallback.js",
     "prisma:generate": "npx prisma generate",
     "prisma:migrate": "npx prisma migrate dev",
+    "prisma:migrate:deploy": "npx prisma migrate deploy",
     "prisma:studio": "npx prisma studio",
     "prisma:seed": "node prisma/seed.js",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -40,10 +41,13 @@
     "qrcode": "^1.5.4",
     "redis": "^5.11.0",
     "socket.io": "^4.8.3",
-    "uuid": "^13.0.0"
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"
+  },
+  "engines": {
+    "node": "20.x"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
