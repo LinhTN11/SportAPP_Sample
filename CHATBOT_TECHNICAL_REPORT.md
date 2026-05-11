@@ -5,7 +5,7 @@
 - **Đối tượng sử dụng:** 
   - **CUSTOMER:** Tìm sân, đặt sân, hỏi lịch trống, thời tiết, FAQ.
   - **OWNER:** Quản lý sân của mình, xem thống kê, báo cáo.
-  - **ADMIN:** Thống kê toàn sàn, xuất báo cáo, quản trị vận hành.
+  - **ADMIN:** Thống kê toàn sân, xuất báo cáo, quản trị vận hành.
 - **Phạm vi hỗ trợ:** Tìm kiếm sân, đặt/hủy sân, tra cứu lịch trống, thời tiết, FAQ/RAG, báo cáo và thống kê.
 
 ## 2. Kiến trúc tổng quan
