@@ -456,6 +456,7 @@ function ChatApp() {
     const typingTimeoutsRef = useRef({});
     const lastTypingEmitRef = useRef(0);
     const geoLocationRef = useRef(null);
+    const lastHandledTargetUserIdRef = useRef(null);
 
     // Ensure myIdRef is always up to date with the authenticated user
     useEffect(() => {
@@ -757,10 +758,14 @@ function ChatApp() {
 
     // Handle incoming chat request from URL ?user=
     useEffect(() => {
-        if (targetUserId) {
+        if (targetUserId && user?.id) {
+            // Only handle if it's a NEW targetUserId or we haven't successfully switched yet
+            if (lastHandledTargetUserIdRef.current === targetUserId) return;
+
             const existing = conversations.find(c => c.targetUserId === targetUserId);
             if (existing) {
                 setActiveConvId(existing.id);
+                lastHandledTargetUserIdRef.current = targetUserId;
             } else {
                 import('@/lib/api').then(async ({ usersAPI, chatAPI }) => {
                     try {
@@ -779,7 +784,7 @@ function ChatApp() {
                         const isVenue = u.role === 'OWNER';
                         const newConv = {
                             id: roomId, type: isVenue ? 'venue' : 'user',
-                            roomType: room.type, // Added roomType here
+                            roomType: room.type, 
                             name: u.fullName,
                             avatar: u.avatarUrl,
                             initials: u.fullName.charAt(0).toUpperCase(),
@@ -793,8 +798,8 @@ function ChatApp() {
 
                         const formattedMsgs = msgsList.map(m => ({
                             id: m.id,
-                            type: m.type === 'SYSTEM' ? 'system' : (m.senderId === myIdRef.current ? 'outgoing' : 'incoming'),
-                            isOutgoing: m.senderId === myIdRef.current,
+                            type: m.type === 'SYSTEM' ? 'system' : (m.senderId === user.id ? 'outgoing' : 'incoming'),
+                            isOutgoing: m.senderId === user.id,
                             originalType: m.type,
                             text: m.content,
                             data: m.type === 'SYSTEM' ? (() => { try { return JSON.parse(m.content); } catch(e) { return null; } })() : null,
@@ -805,13 +810,14 @@ function ChatApp() {
                         setConversations(prev => [newConv, ...prev.filter(c => c.id !== roomId)]);
                         setMessages(prev => ({ ...prev, [roomId]: formattedMsgs }));
                         setActiveConvId(roomId);
+                        lastHandledTargetUserIdRef.current = targetUserId;
                     } catch (err) {
                         console.error('Failed to init real chat', err);
                     }
                 });
             }
         }
-    }, [targetUserId, conversations]);
+    }, [targetUserId, conversations, user?.id]);
 
     // Initialize socket connection (ONCE)
     useEffect(() => {
@@ -1026,8 +1032,8 @@ function ChatApp() {
                     const msgsList = res.data?.data?.messages || [];
                     const formattedMsgs = msgsList.map(m => ({
                         id: m.id,
-                        type: m.type === 'SYSTEM' ? 'system' : (m.senderId === myIdRef.current ? 'outgoing' : 'incoming'),
-                        isOutgoing: m.senderId === myIdRef.current, // Added here too
+                        type: m.type === 'SYSTEM' ? 'system' : (m.senderId === user?.id ? 'outgoing' : 'incoming'),
+                        isOutgoing: m.senderId === user?.id, 
                         originalType: m.type,
                         text: m.content,
                         data: m.type === 'SYSTEM' ? (() => { try { return JSON.parse(m.content); } catch(e) { return null; } })() : null,
@@ -1058,7 +1064,7 @@ function ChatApp() {
                 }).catch(e => console.error("Failed to fetch messages for room", e));
             });
         }
-    }, [activeConvId]);
+    }, [activeConvId, user?.id]);
 
     const handleAction = (action, data) => {
         if (action === 'accept_venue') {
