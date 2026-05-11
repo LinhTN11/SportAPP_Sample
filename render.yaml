@@ -68,6 +68,8 @@ services:
         value: production
       - key: PORT
         value: "10000"
+      - key: HOSTNAME
+        value: "0.0.0.0"
       # Points frontend API calls to the backend service
       - key: NEXT_PUBLIC_API_URL
         value: https://bookingsport-api.onrender.com/api
