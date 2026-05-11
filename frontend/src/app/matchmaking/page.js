@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { matchmakingAPI } from '@/lib/api';
@@ -15,6 +15,14 @@ import DatePicker from '@/components/ui/DatePicker';
 const MapPicker = dynamic(() => import('@/components/MapPicker'), { ssr: false });
 
 export default function MatchmakingPage() {
+    return (
+        <Suspense fallback={<div className={styles.page}><div className="container"><div className="spinner" /></div></div>}>
+            <MatchmakingContent />
+        </Suspense>
+    );
+}
+
+function MatchmakingContent() {
     const router = useRouter();
     const { user, isAuthenticated, loading: authLoading } = useAuth();
     const [activeTab, setActiveTab] = useState('browse'); // browse | my | create
