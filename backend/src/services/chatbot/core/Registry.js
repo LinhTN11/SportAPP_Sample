@@ -23,6 +23,14 @@ class ActionRegistry {
             if (file.endsWith('.action.js')) {
                 const action = require(path.join(actionsPath, file));
                 const actionName = action.definition.function.name;
+                
+                // Ensure the parameters object has a 'required' array (strict requirement for some models)
+                if (action.definition.function.parameters && 
+                    action.definition.function.parameters.type === 'object' && 
+                    !action.definition.function.parameters.required) {
+                    action.definition.function.parameters.required = [];
+                }
+
                 this.actions.set(actionName, action);
                 console.log(`[Chatbot Registry] Registered action: ${actionName}`);
             }
