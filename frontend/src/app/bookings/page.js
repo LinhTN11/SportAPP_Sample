@@ -4,7 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { bookingsAPI, reviewsAPI } from '@/lib/api';
+import { bookingsAPI, reviewsAPI, getImageUrl } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { CalendarDays, Clock, Wallet, X, Star, Send, MessageSquare, Sparkles, Calendar, Building2 } from 'lucide-react';
 import styles from './bookings.module.css';
@@ -163,8 +163,7 @@ export default function BookingsPage() {
                         {bookings.map((booking) => {
                             const isCancelled = booking.status === 'CANCELLED' || booking.status === 'EXPIRED';
                             const venueImages = booking.field?.venue?.images;
-                            const SERVER_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000').replace(/\/api\/?$/, '');
-                            const imgSrc = venueImages?.length > 0 ? `${SERVER_URL}${venueImages[0]}` : null;
+                            const imgSrc = venueImages?.length > 0 ? getImageUrl(venueImages[0]) : null;
                             return (
                                 <div key={booking.id} className={styles.bookingCard}>
                                     {/* Venue Image */}

@@ -5,7 +5,7 @@
 import { useState, useEffect, useMemo, use, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { venuesAPI, bookingsAPI, reviewsAPI } from '@/lib/api';
+import { venuesAPI, bookingsAPI, reviewsAPI, getImageUrl } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { 
     MapPin, Star, Share2, Heart, ChevronRight, ChevronDown, ChevronLeft,
@@ -397,14 +397,14 @@ export default function VenueDetailPage({ params }) {
                     {images.length > 0 ? (
                         <>
                             <img 
-                                src={images[0].startsWith('http') ? images[0] : `${SERVER_URL}${images[0]}`} 
+                                src={getImageUrl(images[0])} 
                                 className={styles.mainImage} 
                                 alt={venue.name} 
                                 onClick={() => openGallery(0)} 
                             />
                             {images.length === 2 && (
                                 <img 
-                                    src={images[1].startsWith('http') ? images[1] : `${SERVER_URL}${images[1]}`} 
+                                    src={getImageUrl(images[1])} 
                                     className={styles.sideImage} 
                                     alt={venue.name} 
                                     onClick={() => openGallery(1)} 
@@ -413,13 +413,13 @@ export default function VenueDetailPage({ params }) {
                             {images.length >= 3 && (
                                 <>
                                     <img 
-                                        src={images[1].startsWith('http') ? images[1] : `${SERVER_URL}${images[1]}`} 
+                                        src={getImageUrl(images[1])} 
                                         className={styles.sideImage} 
                                         alt={`${venue.name} 2`} 
                                         onClick={() => openGallery(1)} 
                                     />
                                     <div className={styles.lastImageWrapper} onClick={() => openGallery(2)}>
-                                        <img src={images[2].startsWith('http') ? images[2] : `${SERVER_URL}${images[2]}`} alt={`${venue.name} 3`} />
+                                        <img src={getImageUrl(images[2])} alt={`${venue.name} 3`} />
                                         {images.length > 3 && (
                                             <div className={styles.moreImagesOverlay}>
                                                 + {images.length - 3} Ảnh khác
@@ -499,7 +499,7 @@ export default function VenueDetailPage({ params }) {
                                         <div className={styles.ownerInfo}>
                                             <div className={`avatar avatar-lg ${styles.ownerAvatar}`}>
                                                 {venue.owner.avatarUrl ? (
-                                                    <img src={venue.owner.avatarUrl.startsWith('http') ? venue.owner.avatarUrl : `${SERVER_URL}${venue.owner.avatarUrl}`} alt={venue.owner.fullName} />
+                                                    <img src={getImageUrl(venue.owner.avatarUrl)} alt={venue.owner.fullName} />
                                                 ) : (
                                                     venue.owner.fullName?.charAt(0) || 'U'
                                                 )}
@@ -816,7 +816,7 @@ export default function VenueDetailPage({ params }) {
                     
                     <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
                         <img 
-                            src={images[currentImageIndex].startsWith('http') ? images[currentImageIndex] : `${SERVER_URL}${images[currentImageIndex]}`} 
+                            src={getImageUrl(images[currentImageIndex])} 
                             alt={`Gallery image ${currentImageIndex + 1}`} 
                         />
                         

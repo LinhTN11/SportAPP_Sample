@@ -3,6 +3,7 @@
 
 import Link from 'next/link';
 import { MapPin, Star } from 'lucide-react';
+import { getImageUrl } from '@/lib/api';
 import styles from './ChatbotWidget.module.css';
 
 export default function VenueChatCard({ venue, onBookClick }) {
@@ -11,9 +12,7 @@ export default function VenueChatCard({ venue, onBookClick }) {
         return new Intl.NumberFormat('vi-VN').format(price) + 'đ/h';
     };
 
-    const imgSrc = venue.images && venue.images.length > 0
-        ? (venue.images[0].startsWith('http') ? venue.images[0] : `${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000'}${venue.images[0]}`)
-        : null;
+    const imgSrc = getImageUrl(venue.images?.[0]);
 
     return (
         <div style={{

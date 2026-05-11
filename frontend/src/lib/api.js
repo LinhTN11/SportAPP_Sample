@@ -7,6 +7,19 @@ const api = axios.create({
     headers: { 'Content-Type': 'application/json' },
 });
 
+/**
+ * Normalizes image URLs to handle both external (Cloudinary) and internal (legacy local) paths.
+ */
+export const getImageUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith('http')) return url;
+    if (url.startsWith('data:')) return url;
+    
+    const baseUrl = API_BASE.replace(/\/api\/?$/, '');
+    const cleanUrl = url.startsWith('/') ? url : `/${url}`;
+    return `${baseUrl}${cleanUrl}`;
+};
+
 
 api.interceptors.request.use((config) => {
     if (typeof window !== 'undefined') {

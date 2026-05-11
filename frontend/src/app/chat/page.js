@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import { ChevronDown, Send, X, Maximize2, Minimize2, MapPin, CheckCheck } from 'lucide-react';
-import { chatbotAPI, bookingsAPI } from '@/lib/api';
+import { chatbotAPI, bookingsAPI, getImageUrl } from '@/lib/api';
 import BotToolResults from '@/components/chat/BotToolResults';
 import ChatCardRenderer from '@/components/chat/ChatCardRenderer';
 import ChatComposer from '@/components/chat/ChatComposer';
@@ -142,7 +142,7 @@ const BotIcon = ({ size = 20 }) => (
 
 /* ─── Avatar Component ─── */
 function Avatar({ conv, size = 46 }) {
-    const avatarSrc = conv?.avatar ? (conv.avatar.startsWith('http') ? conv.avatar : `${SERVER_URL}${conv.avatar}`) : null;
+    const avatarSrc = getImageUrl(conv?.avatar);
     const isBot = conv?.type === 'bot' || conv?.id === CHATBOT_ID;
 
     return (
@@ -212,7 +212,7 @@ function MessageBubble({
         /^https?:\/\/.*\/uploads\//i.test(msg.text || '');
 
     const imageSrc = isImageMessage
-        ? (msg.text?.startsWith('http') ? msg.text : `${SERVER_URL}${msg.text}`)
+        ? getImageUrl(msg.text)
         : null;
 
     if (isSystem) {
@@ -382,7 +382,7 @@ function VenueSelectionModal({ isOpen, onClose, venues, onSelect }) {
                     {venues.length === 0 && <div style={{padding: '40px', textAlign: 'center', color: '#6B7280'}}>Không tìm thấy sân phù hợp...</div>}
                     {venues.map(v => (
                         <div key={v.id} className={styles.modalVenueItem} onClick={() => onSelect(v)}>
-                            <img src={v.images?.[0] || 'https://via.placeholder.com/64'} className={styles.modalVenueThumb} alt={v.name} />
+                            <img src={getImageUrl(v.images?.[0]) || 'https://via.placeholder.com/64'} className={styles.modalVenueThumb} alt={v.name} />
                             <div className={styles.modalVenueInfo}>
                                 <div className={styles.modalVenueName}>{v.name}</div>
                                 <div className={styles.modalVenueAddr}>{v.address}</div>
@@ -507,6 +507,15 @@ function ChatApp() {
     const [hasRestoredChatState, setHasRestoredChatState] = useState(false);
     const aiHistorySyncKeyRef = useRef('');
 
+    // Reset all chat state when user changes (e.g. logout/login in same tab)
+    useEffect(() => {
+        setMessages({});
+        setActiveConvId(CHATBOT_ID);
+        setConversations([]);
+        setBotHistory([]);
+        setHasRestoredChatState(false);
+    }, [user?.id]);
+
     useEffect(() => {
         if (typeof window === 'undefined') return;
 
@@ -571,7 +580,7 @@ function ChatApp() {
         } catch (error) {
             console.warn('Failed to persist chat page state:', error);
         }
-    }, [activeConvId, botHistory, messages, hasRestoredChatState]);
+    }, [activeConvId, botHistory, messages, hasRestoredChatState, user?.id]);
 
     // Listen for AI chat history updates from widget (same-tab sync)
     useEffect(() => {

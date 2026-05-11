@@ -1,9 +1,10 @@
-/* eslint-disable @next/next/no-img-element */
+import { getImageUrl } from '@/lib/api';
+
 // Reusable Avatar component – shows image if avatarUrl exists, otherwise initials
 export default function Avatar({ user, size = 'md', className = '' }) {
     const sizeClass = size === 'sm' ? 'avatar-sm' : size === 'lg' ? 'avatar-lg' : '';
     const name = user?.fullName || user?.name || '?';
-    const url = user?.avatarUrl;
+    const url = getImageUrl(user?.avatarUrl);
 
     return (
         <div className={`avatar ${sizeClass} ${className}`} style={url ? { padding: 0, overflow: 'hidden' } : {}}>

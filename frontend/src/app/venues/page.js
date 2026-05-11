@@ -5,7 +5,7 @@
 import { useState, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { venuesAPI } from '@/lib/api';
+import { venuesAPI, getImageUrl } from '@/lib/api';
 import { Search, MapPin, Star, Heart, ChevronLeft, ChevronRight, Car, Wifi, Lock, UtensilsCrossed, ChevronDown } from 'lucide-react';
 import styles from './venues.module.css';
 import PageFooter from '../../components/PageFooter';
@@ -350,7 +350,7 @@ function VenuesContent() {
                                     <Link key={venue.id} href={`/venues/${venue.id}`} className={styles.venueCard}>
                                         <div className={styles.venueImage}>
                                             {venue.images?.length > 0 ? (
-                                                <img src={`${SERVER_URL}${venue.images[0]}`} alt={venue.name} />
+                                                <img src={getImageUrl(venue.images[0])} alt={venue.name} />
                                             ) : (
                                                 <div className={styles.venuePlaceholder}>
                                                     {getSportIcon(venue.sportTypes?.[0])}

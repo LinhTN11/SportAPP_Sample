@@ -4,7 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { usersAPI, bookingsAPI, reviewsAPI, uploadAPI } from '@/lib/api';
+import { usersAPI, bookingsAPI, reviewsAPI, uploadAPI, getImageUrl } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { 
     Mail, Phone, Calendar, CheckCircle, XCircle,
@@ -112,7 +112,7 @@ export default function ProfilePage() {
         try {
             setCoverUploading(true);
             const { data: uploadData } = await uploadAPI.single(file);
-            const coverUrl = `${SERVER_URL}${uploadData.data.url}`;
+            const coverUrl = getImageUrl(uploadData.data.url);
             await usersAPI.updateProfile({ coverImageUrl: coverUrl });
             updateUser({ ...user, coverImageUrl: coverUrl });
         } catch (err) {
@@ -161,7 +161,7 @@ export default function ProfilePage() {
                     <div className={styles.heroContent}>
                         <div className={styles.avatarLarge}>
                             {user.avatarUrl ? (
-                                <img src={user.avatarUrl} alt={user.fullName} />
+                                <img src={getImageUrl(user.avatarUrl)} alt={user.fullName} />
                             ) : (
                                 user.fullName?.charAt(0)?.toUpperCase()
                             )}

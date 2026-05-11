@@ -4,7 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { venuesAPI } from '@/lib/api';
+import { venuesAPI, getImageUrl } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import {
     MapPin, Clock, User, Phone, ChevronDown, CheckCircle2,
@@ -199,7 +199,7 @@ export default function AdminVenuesPage() {
                                     {/* Thumbnail */}
                                     <div className={styles.venueThumb}>
                                         {venue.images?.length > 0 ? (
-                                            <img src={`${SERVER_URL}${venue.images[0]}`} alt={venue.name} />
+                                            <img src={getImageUrl(venue.images[0])} alt={venue.name} />
                                         ) : (
                                             <div className={styles.thumbPlaceholder}>
                                                 <span>{getSportIcon(venue.sportTypes?.[0])}</span>
@@ -255,7 +255,7 @@ export default function AdminVenuesPage() {
                                             <div className={styles.ownerInfo}>
                                                 <div className={styles.ownerAvatar}>
                                                     {venue.owner.avatarUrl
-                                                        ? <img src={venue.owner.avatarUrl} alt="" />
+                                                        ? <img src={getImageUrl(venue.owner.avatarUrl)} alt="" />
                                                         : venue.owner.fullName?.charAt(0) || 'O'
                                                     }
                                                 </div>
@@ -368,7 +368,7 @@ export default function AdminVenuesPage() {
                                                 <div className={styles.imageGallery}>
                                                     {venue.images.map((img, idx) => (
                                                         <div key={idx} className={styles.galleryImage}>
-                                                            <img src={`${SERVER_URL}${img}`} alt={`${venue.name} ${idx + 1}`} />
+                                                            <img src={getImageUrl(img)} alt={`${venue.name} ${idx + 1}`} />
                                                         </div>
                                                     ))}
                                                 </div>

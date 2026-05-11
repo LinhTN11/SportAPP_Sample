@@ -4,7 +4,7 @@
 import { use, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { usersAPI, venuesAPI } from '@/lib/api';
+import { usersAPI, venuesAPI, getImageUrl } from '@/lib/api';
 import { 
     Mail, Phone, Calendar, CheckCircle, XCircle,
     MapPin, Star, Heart, Car, Wifi, Lock, UtensilsCrossed, Building2
@@ -84,7 +84,7 @@ export default function PublicProfilePage({ params }) {
                     <div className={profileStyles.heroContent}>
                         <div className={profileStyles.avatarLarge}>
                             {user.avatarUrl ? (
-                                <img src={user.avatarUrl.startsWith('http') ? user.avatarUrl : `${SERVER_URL}${user.avatarUrl}`} alt={user.fullName} />
+                                <img src={getImageUrl(user.avatarUrl)} alt={user.fullName} />
                             ) : (
                                 user.fullName?.charAt(0)?.toUpperCase()
                             )}
@@ -169,7 +169,7 @@ export default function PublicProfilePage({ params }) {
                             <Link key={venue.id} href={`/venues/${venue.id}`} className={venueStyles.venueCard}>
                                 <div className={venueStyles.venueImage}>
                                     {venue.images?.length > 0 ? (
-                                        <img src={venue.images[0].startsWith('http') ? venue.images[0] : `${SERVER_URL}${venue.images[0]}`} alt={venue.name} />
+                                        <img src={getImageUrl(venue.images[0])} alt={venue.name} />
                                     ) : (
                                         <div className={venueStyles.venuePlaceholder}>
                                             {getSportIcon(venue.sportTypes?.[0])}

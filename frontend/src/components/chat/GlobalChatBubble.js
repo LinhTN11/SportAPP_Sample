@@ -5,7 +5,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { usePathname } from 'next/navigation';
 import { MessageCircle, X, ChevronLeft, Send, Smile, Image as ImageIcon, Bot } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
-import { chatAPI, uploadAPI, chatbotAPI, bookingsAPI, matchmakingAPI } from '@/lib/api';
+import { chatAPI, uploadAPI, chatbotAPI, bookingsAPI, matchmakingAPI, getImageUrl } from '@/lib/api';
 import {
     CHAT_SOCKET_URL,
     createChatSocket,
@@ -686,7 +686,7 @@ export default function GlobalChatBubble() {
                                                         msg.type === 'IMAGE' ? styles.imageBubble : ''
                                                     ].join(' ')}>
                                                         {msg.type === 'IMAGE' ? (
-                                                            <img src={msg.content.startsWith('http') ? msg.content : `${CHAT_SOCKET_URL}${msg.content}`} alt="Attached" className={styles.msgImage} />
+                                                            <img src={getImageUrl(msg.content)} alt="Attached" className={styles.msgImage} />
                                                         ) : (
                                                             msg.content
                                                         )}

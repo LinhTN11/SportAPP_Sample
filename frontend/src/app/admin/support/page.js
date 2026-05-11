@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
-import { chatAPI } from '@/lib/api';
+import { chatAPI, getImageUrl } from '@/lib/api';
 import styles from '../dashboard/dashboard.module.css';
 import { MessageSquare, RefreshCcw, User, Clock, ChevronRight, ShieldCheck } from 'lucide-react';
 
@@ -184,9 +184,7 @@ export default function AdminSupportPage() {
                                 const otherUser = other?.user;
                                 const badge = getRoleBadge(otherUser?.role);
                                 const lastMsg = room.lastMessage;
-                                const avatarSrc = otherUser?.avatarUrl
-                                    ? (otherUser.avatarUrl.startsWith('http') ? otherUser.avatarUrl : `${SERVER_URL}${otherUser.avatarUrl}`)
-                                    : null;
+                                const avatarSrc = getImageUrl(otherUser?.avatarUrl);
 
                                 return (
                                     <button

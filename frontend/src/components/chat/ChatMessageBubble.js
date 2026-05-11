@@ -3,13 +3,14 @@
 
 import { MapPin } from 'lucide-react';
 import styles from '@/app/chat/chat.module.css';
+import { getImageUrl } from '@/lib/api';
 import ChatCardRenderer from './ChatCardRenderer';
 
 const CHATBOT_ID = 'sportapp-ai';
 const SERVER_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000';
 
 function BubbleAvatar({ conv, size = 28 }) {
-    const avatarSrc = conv?.avatar ? (conv.avatar.startsWith('http') ? conv.avatar : `${SERVER_URL}${conv.avatar}`) : null;
+    const avatarSrc = getImageUrl(conv?.avatar);
     const isBot = conv?.type === 'bot' || conv?.id === CHATBOT_ID;
 
     return (
@@ -97,10 +98,10 @@ export default function ChatMessageBubble({
                         <div className={`${styles.bubble} ${isOut ? styles.outgoing : styles.incoming} ${msg.isBot ? styles.msgBubbleBot : ''} ${msg.originalType === 'IMAGE' ? styles.bubbleImage : ''}`}>
                             {msg.originalType === 'IMAGE' ? (
                                 <img
-                                    src={`${SERVER_URL}${msg.text}`}
+                                    src={getImageUrl(msg.text)}
                                     className={styles.messageImage}
                                     alt="Sent content"
-                                    onClick={() => window.open(`${SERVER_URL}${msg.text}`, '_blank')}
+                                    onClick={() => window.open(getImageUrl(msg.text), '_blank')}
                                 />
                             ) : (
                                 msg.text

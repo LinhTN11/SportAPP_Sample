@@ -4,6 +4,7 @@
 import { MapPin, Star, Clock, Settings, Pencil, Trash2 } from 'lucide-react';
 import StatusBadge from '../ui/StatusBadge';
 import { SportIcons, sportTypeLabels, getSportIcon, getSportLabel, getSportColorClass } from './SportIcons';
+import { getImageUrl } from '@/lib/api';
 import styles from './VenueCard.module.css';
 
 
@@ -43,7 +44,7 @@ export default function VenueCard({
             <div className={styles.image}>
                 {hasImage ? (
                     <img
-                        src={`${SERVER_URL}${venue.images[0]}`}
+                        src={getImageUrl(venue.images[0])}
                         alt={venue.name}
                     />
                 ) : (

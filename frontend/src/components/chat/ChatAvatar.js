@@ -2,12 +2,13 @@
 /* eslint-disable @next/next/no-img-element */
 
 import styles from '@/app/chat/chat.module.css';
+import { getImageUrl } from '@/lib/api';
 
 const SERVER_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000';
 const CHATBOT_ID = 'sportapp-ai';
 
 export default function ChatAvatar({ conv, size = 46, className = '' }) {
-    const avatarSrc = conv?.avatar ? (conv.avatar.startsWith('http') ? conv.avatar : `${SERVER_URL}${conv.avatar}`) : null;
+    const avatarSrc = getImageUrl(conv?.avatar);
     const isBot = conv?.type === 'bot' || conv?.id === CHATBOT_ID;
 
     return (

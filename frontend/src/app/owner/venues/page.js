@@ -5,7 +5,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import { venuesAPI, fieldsAPI, uploadAPI } from '@/lib/api';
+import { venuesAPI, fieldsAPI, uploadAPI, getImageUrl } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { MapPin, Clock, Settings, Pencil, Trash2, Camera, Phone, ClipboardList, Pause, DollarSign, CheckCircle2, Clock3, Map, CircleDollarSign, BarChart2, Save, ChevronDown } from 'lucide-react';
 import { sportTypeLabels, getSportIcon, getSportLabel } from '@/components/venue/SportIcons';
@@ -602,7 +602,7 @@ export default function OwnerVenuesPage() {
                                         {/* Existing images */}
                                         {editExistingImages.map((url, i) => (
                                             <div key={i} className={styles.imagePreviewItem}>
-                                                <img src={`${SERVER_URL}${url}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                <img src={getImageUrl(url)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                                 <button type="button" className={styles.imageRemove} onClick={() => removeEditExistingImage(i)}>×</button>
                                             </div>
                                         ))}

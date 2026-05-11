@@ -6,6 +6,7 @@ import VenueChatCard from '../VenueChatCard';
 import BookingCreatedCard from './BookingCreatedCard';
 import DatePicker from '../ui/DatePicker';
 import CustomSelect from '../ui/CustomSelect';
+import { getImageUrl } from '@/lib/api';
 import { Calendar, Clock, MapPin, CheckCircle2, CloudRain, Wind, Droplets, AlertTriangle, Activity, Sun, CloudSun } from 'lucide-react';
 
 /**
@@ -330,7 +331,7 @@ export default function ChatCardRenderer({
         return (
             <div className={styles.venueSuggestCard}>
                 <div className={styles.suggestImageContainer}>
-                    <img src={data.venueImage} alt={data.venueName} className={styles.suggestImg} />
+                    <img src={getImageUrl(data.venueImage)} alt={data.venueName} className={styles.suggestImg} />
                     <div className={styles.suggestBadge}>Gợi ý sân</div>
                 </div>
                 <div className={styles.suggestBody}>

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { useEffect, useState, useRef } from 'react';
-import { notificationsAPI, chatAPI } from '@/lib/api';
+import { notificationsAPI, chatAPI, getImageUrl } from '@/lib/api';
 import { User, History, LogOut, LogIn, UserPlus, ChevronDown, Mail } from 'lucide-react';
 import { io } from 'socket.io-client';
 import styles from './Navbar.module.css';
@@ -112,7 +112,7 @@ export default function Navbar() {
             >
               <div className={styles.avatar}>
                 {user.avatarUrl
-                  ? <img src={user.avatarUrl} alt="Avatar" className={styles.avatarImg} />
+                  ? <img src={getImageUrl(user.avatarUrl)} alt="Avatar" className={styles.avatarImg} />
                   : <User size={18} className={styles.avatarIcon} />
                 }
               </div>
@@ -145,7 +145,7 @@ export default function Navbar() {
                     <div className={styles.userInfoRow}>
                       <div className={styles.avatarLarge}>
                         {user.avatarUrl
-                          ? <img src={user.avatarUrl} alt="Avatar" className={styles.avatarImg} />
+                          ? <img src={getImageUrl(user.avatarUrl)} alt="Avatar" className={styles.avatarImg} />
                           : <User size={22} className={styles.avatarIcon} />
                         }
                       </div>
