@@ -83,6 +83,13 @@ const createBooking = async (req, res, next) => {
             return res.status(404).json({ success: false, message: 'Field not found or inactive' });
         }
 
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const bookingDateObj = new Date(bookingDate);
+        if (bookingDateObj < today) {
+            return res.status(400).json({ success: false, message: 'Cannot book for a past date' });
+        }
+
         const unavailableIds = await getUnavailableFieldIds(bookingDate, startTime, endTime);
         if (unavailableIds.has(fieldId)) {
             return res.status(409).json({ success: false, message: 'Field is already booked for this time slot' });

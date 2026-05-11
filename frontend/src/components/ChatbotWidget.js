@@ -156,7 +156,7 @@ export default function ChatbotWidget() {
 
                         // Check Past Time
                         const today = new Date();
-                        const todayStr = today.toISOString().split('T')[0];
+                        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
                         const nowMinutes = today.getHours() * 60 + today.getMinutes();
                         const isPast = bookingDate === todayStr && current < nowMinutes;
 
@@ -755,7 +755,7 @@ export default function ChatbotWidget() {
                                                 <DatePicker
                                                     value={bookingDate}
                                                     onChange={(val) => setBookingDate(val)}
-                                                    minDate={new Date().toISOString().split('T')[0]}
+                                                    minDate={`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`}
                                                 />
                                             </div>
                                         </div>

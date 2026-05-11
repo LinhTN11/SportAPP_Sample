@@ -81,7 +81,8 @@ export default function OwnerDashboardPage() {
             setAllBookings(allBk);
 
             // Compute stats
-            const today = new Date().toISOString().slice(0, 10);
+            const now = new Date();
+            const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
             const todayBks = allBk.filter(b => b.bookingDate?.slice(0, 10) === today);
             const confirmedBks = allBk.filter(b => b.status === 'CONFIRMED');
             const completedBks = allBk.filter(b => b.status === 'COMPLETED');

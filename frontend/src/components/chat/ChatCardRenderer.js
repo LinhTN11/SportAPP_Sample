@@ -256,7 +256,7 @@ export default function ChatCardRenderer({
                     <div className={styles.formTwoColRow}>
                         <div className={styles.formItem}>
                             <label className={styles.premiumLabel}>NGÀY ĐẶT</label>
-                            <DatePicker value={safeBookingDate} onChange={safeSetBookingDate} minDate={new Date().toISOString().split('T')[0]} />
+                            <DatePicker value={safeBookingDate} onChange={safeSetBookingDate} minDate={`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`} />
                         </div>
                         <div className={styles.formItem}>
                             <label className={styles.premiumLabel}>THANH TOÁN</label>

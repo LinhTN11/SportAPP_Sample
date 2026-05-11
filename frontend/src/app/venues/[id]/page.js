@@ -27,7 +27,9 @@ export default function VenueDetailPage({ params }) {
     
     const [venue, setVenue] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    const [selectedDate, setSelectedDate] = useState(todayStr);
     const [selectedField, setSelectedField] = useState(null);
     const [bookedSlots, setBookedSlots] = useState([]);
     const [selectedSlots, setSelectedSlots] = useState([]);
@@ -269,7 +271,7 @@ export default function VenueDetailPage({ params }) {
             const endTime = `${eH.toString().padStart(2, '0')}:${eM.toString().padStart(2, '0')}`;
             
             // Ensure date is strictly YYYY-MM-DD
-            const formattedDate = new Date(selectedDate).toISOString().split('T')[0];
+            const formattedDate = selectedDate;
             
             const payload = {
                 fieldId: selectedField.id,
@@ -706,7 +708,7 @@ export default function VenueDetailPage({ params }) {
                                         <DatePicker 
                                             value={selectedDate} 
                                             onChange={(val) => setSelectedDate(val)} 
-                                            minDate={new Date().toISOString().split('T')[0]} 
+                                            minDate={todayStr} 
                                         />
                                     </div>
                                     <div className={styles.formItem} ref={fieldDropdownRef}>

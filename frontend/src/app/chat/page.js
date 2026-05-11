@@ -652,7 +652,7 @@ function ChatApp() {
                         });
 
                         const today = new Date();
-                        const todayStr = today.toISOString().split('T')[0];
+                        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
                         const nowMinutes = today.getHours() * 60 + today.getMinutes();
                         const isPast = bookingDate === todayStr && current < nowMinutes;
 
