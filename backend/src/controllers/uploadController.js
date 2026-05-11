@@ -3,7 +3,8 @@ const uploadSingle = (req, res) => {
     if (!req.file) {
         return res.status(400).json({ success: false, message: 'No file uploaded' });
     }
-    const url = `/uploads/${req.file.filename}`;
+    // multer-storage-cloudinary provides the URL in req.file.path
+    const url = req.file.path;
     res.json({ success: true, data: { url } });
 };
 
@@ -12,7 +13,7 @@ const uploadMultiple = (req, res) => {
     if (!req.files || req.files.length === 0) {
         return res.status(400).json({ success: false, message: 'No files uploaded' });
     }
-    const urls = req.files.map(f => `/uploads/${f.filename}`);
+    const urls = req.files.map(f => f.path);
     res.json({ success: true, data: { urls } });
 };
 
